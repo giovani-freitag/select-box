@@ -1,0 +1,19 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": [
+        "../packages/core/src/index.ts",
+        "../packages/react/src/index.ts",
+        "../packages/webcomponents/src/index.ts",
+        "../packages/addon-clear-button/src/index.ts"
+    ],
+    "entryPointStrategy": "resolve",
+    "out": "api",
+    "plugin": ["typedoc-plugin-markdown"],
+    "readme": "none",
+    "githubPages": false,
+    "hideGenerator": true,
+    "excludePrivate": true,
+    "excludeInternal": true,
+    "excludeExternals": true,
+    "tsconfig": "../tsconfig.typedoc.json"
+}

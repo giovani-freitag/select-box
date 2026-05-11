@@ -4,7 +4,7 @@
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
-            "outputs": ["dist/**"]
+            "outputs": ["dist/**", ".vitepress/dist/**", "api/**", "public/examples/**"]
         },
         "typecheck": {
             "dependsOn": ["^build"],
