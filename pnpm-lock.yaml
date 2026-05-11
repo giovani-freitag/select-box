@@ -29,6 +29,9 @@ importers:
       '@select-box/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@select-box/jquery':
+        specifier: workspace:*
+        version: link:../packages/jquery
       '@select-box/lit':
         specifier: workspace:*
         version: link:../packages/lit
@@ -41,6 +44,9 @@ importers:
       '@select-box/webcomponents':
         specifier: workspace:*
         version: link:../packages/webcomponents
+      jquery:
+        specifier: ^3.7.1
+        version: 3.7.1
       lit:
         specifier: ^3.2.1
         version: 3.3.2
@@ -108,6 +114,39 @@ importers:
       eslint:
         specifier: ^9.17.0
         version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.18)(happy-dom@15.11.7)
+
+  packages/jquery:
+    devDependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/jquery':
+        specifier: ^3.5.32
+        version: 3.5.34
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      happy-dom:
+        specifier: ^15.11.7
+        version: 15.11.7
+      jquery:
+        specifier: ^3.7.1
+        version: 3.7.1
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.14)(typescript@5.9.3)(yaml@2.8.4)
@@ -1224,6 +1263,9 @@ packages:
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
+  '@types/jquery@3.5.34':
+    resolution: {integrity: sha512-3m3939S3erqmTLJANS/uy0B6V7BorKx7RorcGZVjZ62dF5PAGbKEDZK1CuLtKombJkFA2T1jl8LAIIs7IV6gBQ==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -1249,6 +1291,9 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+
+  '@types/sizzle@2.3.10':
+    resolution: {integrity: sha512-TC0dmN0K8YcWEAEfiPi5gJP14eJe30TTGjkvek3iM/1NdHHsdCA/Td6GvNndMOo/iSnIsZ4HuuhrYPDAmbxzww==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -1921,6 +1966,9 @@ packages:
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
+
+  jquery@3.7.1:
+    resolution: {integrity: sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==}
 
   js-beautify@1.15.4:
     resolution: {integrity: sha512-9/KXeZUKKJwqCXUdBxFJ3vPh467OCckSBmYDwSK/EtV090K+iMJ7zx2S3HLVDIWFQdqMIsZWbnaGiba18aWhaA==}
@@ -3421,6 +3469,10 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
+  '@types/jquery@3.5.34':
+    dependencies:
+      '@types/sizzle': 2.3.10
+
   '@types/json-schema@7.0.15': {}
 
   '@types/linkify-it@5.0.0': {}
@@ -3447,6 +3499,8 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
+
+  '@types/sizzle@2.3.10': {}
 
   '@types/trusted-types@2.0.7': {}
 
@@ -4229,6 +4283,8 @@ snapshots:
       '@pkgjs/parseargs': 0.11.0
 
   joycon@3.1.1: {}
+
+  jquery@3.7.1: {}
 
   js-beautify@1.15.4:
     dependencies:

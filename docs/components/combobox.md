@@ -8,12 +8,38 @@ real example app from `examples/<framework>/` running in an iframe.
 <ClientOnly>
 <FrameworkExample
   :frameworks="[
+    { id: 'jquery', label: 'jQuery', src: '/examples/jquery/index.html' },
     { id: 'lit', label: 'Lit', src: '/examples/lit/index.html' },
     { id: 'react', label: 'React', src: '/examples/react/index.html' },
     { id: 'vue', label: 'Vue', src: '/examples/vue/index.html' },
     { id: 'webcomponents', label: 'Web Components', src: '/examples/webcomponents/index.html' }
   ]"
 >
+
+<template #jquery-code>
+
+```ts
+import "@select-box/jquery";
+import jQuery from "jquery";
+
+const fruits = [
+    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+    { value: { id: 3, name: "lemon" }, label: "Lemon" },
+];
+
+jQuery("#fruit")
+    .selectBox({
+        options: fruits,
+        placeholder: "Search fruits…",
+        ungroupedLabel: "Citrus",
+    })
+    .on("selectbox:valuechange", (_event, value) => {
+        console.log(value);
+    });
+```
+
+</template>
 
 <template #lit-code>
 

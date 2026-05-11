@@ -26,6 +26,7 @@ export default defineConfig({
         build: {
             rollupOptions: {
                 input: {
+                    jqueryExample: resolve(docsRoot, "examples/jquery/index.html"),
                     litExample: resolve(docsRoot, "examples/lit/index.html"),
                     reactExample: resolve(docsRoot, "examples/react/index.html"),
                     vueExample: resolve(docsRoot, "examples/vue/index.html"),

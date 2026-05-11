@@ -7,22 +7,8 @@ import {
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 /**
- * Lit-flavoured wrapper around the framework-agnostic
- * `SingleSelectBoxController`. Implements `ReactiveController` so it
- * plugs into a host `LitElement` and triggers `requestUpdate()` on every
- * snapshot change.
- *
- *     class FruitPicker extends LitElement {
- *         selectBox = new SelectBoxController<Fruit>(this, { options });
- *         render() {
- *             const state = this.selectBox.state;
- *             return html`<button @click=${() => this.selectBox.toggle()}>…</button>`;
- *         }
- *     }
- *
- * Lifecycle is bound to the host element: `hostConnected` opens the
- * subscription; `hostDisconnected` tears it down and destroys the
- * underlying controller so the addon contract is honoured.
+ * Lit `ReactiveController` adapter for the select-box core; requests a host
+ * re-render on every snapshot change.
  */
 export class SelectBoxController<TValue> implements ReactiveController {
     private readonly host: ReactiveControllerHost;
