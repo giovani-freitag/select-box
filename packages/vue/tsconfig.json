@@ -1,0 +1,11 @@
+{
+    "extends": "@select-box/tsconfig/library.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": ".",
+        "jsx": "preserve",
+        "types": ["vite/client", "node"]
+    },
+    "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts"],
+    "exclude": ["node_modules", "dist", "*.config.ts"]
+}

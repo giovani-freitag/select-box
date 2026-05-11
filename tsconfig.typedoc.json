@@ -6,5 +6,5 @@
         "jsx": "react-jsx"
     },
     "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
-    "exclude": ["node_modules", "**/dist", "**/tests"]
+    "exclude": ["node_modules", "**/dist", "**/tests", "packages/vue/**"]
 }

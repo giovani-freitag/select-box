@@ -26,7 +26,9 @@ export default defineConfig({
         build: {
             rollupOptions: {
                 input: {
+                    litExample: resolve(docsRoot, "examples/lit/index.html"),
                     reactExample: resolve(docsRoot, "examples/react/index.html"),
+                    vueExample: resolve(docsRoot, "examples/vue/index.html"),
                     webcomponentsExample: resolve(docsRoot, "examples/webcomponents/index.html"),
                 },
             },

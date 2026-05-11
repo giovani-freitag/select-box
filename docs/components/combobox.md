@@ -8,10 +8,48 @@ real example app from `examples/<framework>/` running in an iframe.
 <ClientOnly>
 <FrameworkExample
   :frameworks="[
+    { id: 'lit', label: 'Lit', src: '/examples/lit/index.html' },
     { id: 'react', label: 'React', src: '/examples/react/index.html' },
+    { id: 'vue', label: 'Vue', src: '/examples/vue/index.html' },
     { id: 'webcomponents', label: 'Web Components', src: '/examples/webcomponents/index.html' }
   ]"
 >
+
+<template #lit-code>
+
+```ts
+import { SelectBoxController } from "@select-box/lit";
+import { html, LitElement } from "lit";
+
+const fruits = [
+    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+    { value: { id: 3, name: "lemon" }, label: "Lemon" },
+];
+
+class FruitPicker extends LitElement {
+    private readonly selectBox = new SelectBoxController(this, {
+        options: fruits,
+        ungroupedLabel: "Citrus",
+    });
+
+    render() {
+        const state = this.selectBox.state;
+        return html`
+            <button @click=${() => this.selectBox.toggle()}>
+                ${state.selectedOption?.label ?? "Search fruits…"}
+            </button>
+            ${state.open
+                ? html`<!-- popover markup using state.filteredGroups -->`
+                : null}
+        `;
+    }
+}
+
+customElements.define("fruit-picker", FruitPicker);
+```
+
+</template>
 
 <template #react-code>
 
@@ -36,6 +74,34 @@ export function App() {
         />
     );
 }
+```
+
+</template>
+
+<template #vue-code>
+
+```vue
+<script setup lang="ts">
+import { SelectBox } from "@select-box/vue";
+import { ref } from "vue";
+
+const fruits = [
+    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+    { value: { id: 3, name: "lemon" }, label: "Lemon" },
+];
+
+const committed = ref(null);
+</script>
+
+<template>
+    <SelectBox
+        :options="fruits"
+        placeholder="Search fruits…"
+        ungroupedLabel="Citrus"
+        @value-change="(value) => (committed = value)"
+    />
+</template>
 ```
 
 </template>

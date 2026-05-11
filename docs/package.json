@@ -11,10 +11,14 @@
     },
     "dependencies": {
         "@select-box/core": "workspace:*",
+        "@select-box/lit": "workspace:*",
         "@select-box/react": "workspace:*",
+        "@select-box/vue": "workspace:*",
         "@select-box/webcomponents": "workspace:*",
+        "lit": "^3.2.1",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "vue": "^3.5.13"
     },
     "devDependencies": {
         "@types/react": "^19.0.2",
