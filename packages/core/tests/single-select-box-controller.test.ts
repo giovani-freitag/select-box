@@ -34,6 +34,20 @@ describe("SingleSelectBoxController", () => {
         expect(snapshot.filteredGroups[2]?.options).toHaveLength(1);
     });
 
+    test("opens with the selected option active when there is a current value", () => {
+        const controller = new SingleSelectBoxController<Fruit>({
+            options: fruits,
+            initialValue: fruits[2]!.value,
+        });
+
+        controller.open();
+
+        const snapshot = controller.getState();
+
+        expect(snapshot.activeOption?.label).toBe("Peach");
+        expect(snapshot.activeIndex).toBe(2);
+    });
+
     test("opens with first selectable option active and skips disabled ones during keyboard nav", () => {
         const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
 

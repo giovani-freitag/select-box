@@ -69,7 +69,7 @@ export class SingleSelectBoxController<TValue> {
     open(): void {
         if (this.currentOpen) return;
         this.currentOpen = true;
-        this.currentActiveIndex = this.firstSelectableIndex(this.computeFilteredGroups());
+        this.currentActiveIndex = this.initialActiveIndexOnOpen();
         this.publish();
     }
 
@@ -203,6 +203,14 @@ export class SingleSelectBoxController<TValue> {
 
     private firstSelectableIndex(groups: ReadonlyArray<SelectGroup<TValue>>): number {
         return this.flattenSelectable(groups).length === 0 ? NO_ACTIVE_INDEX : 0;
+    }
+
+    private initialActiveIndexOnOpen(): number {
+        const flat = this.flattenSelectable(this.computeFilteredGroups());
+        if (flat.length === 0) return NO_ACTIVE_INDEX;
+        if (this.currentValue === null) return 0;
+        const selectedIndex = flat.findIndex((option) => Object.is(option.value, this.currentValue));
+        return selectedIndex === -1 ? 0 : selectedIndex;
     }
 
     private findOptionByValue(value: TValue | null): SelectOption<TValue> | null {
