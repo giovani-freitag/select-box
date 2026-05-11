@@ -1,0 +1,37 @@
+{
+    "name": "@select-box/core",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Framework-agnostic core for the select-box combobox library.",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsup",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint src tests",
+        "clean": "rm -rf dist .turbo"
+    },
+    "devDependencies": {
+        "@select-box/eslint-config": "workspace:*",
+        "@select-box/tsconfig": "workspace:*",
+        "eslint": "^9.17.0",
+        "tsup": "^8.3.5",
+        "typescript": "^5.7.2",
+        "vitest": "^2.1.8"
+    }
+}

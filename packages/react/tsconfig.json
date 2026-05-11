@@ -1,0 +1,10 @@
+{
+    "extends": "@select-box/tsconfig/library.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": ".",
+        "jsx": "react-jsx"
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx", "*.config.ts"],
+    "exclude": ["node_modules", "dist"]
+}

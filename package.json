@@ -1,0 +1,26 @@
+{
+    "name": "select-box",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Framework-agnostic combobox/select-box core and per-framework wrappers.",
+    "type": "module",
+    "engines": {
+        "node": ">=20.10",
+        "pnpm": ">=10"
+    },
+    "packageManager": "pnpm@11.0.9",
+    "scripts": {
+        "build": "turbo run build",
+        "test": "turbo run test",
+        "typecheck": "turbo run typecheck",
+        "lint": "turbo run lint",
+        "clean": "turbo run clean && rm -rf node_modules"
+    },
+    "devDependencies": {
+        "@select-box/eslint-config": "workspace:*",
+        "@types/node": "^22.10.2",
+        "eslint": "^9.17.0",
+        "turbo": "^2.3.3",
+        "typescript": "^5.7.2"
+    }
+}
