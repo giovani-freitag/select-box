@@ -90,6 +90,10 @@ const SHADOW_TEMPLATE = `
         box-sizing: border-box;
         cursor: pointer;
     }
+    .option.active {
+        background: Highlight;
+        color: HighlightText;
+    }
     .option.disabled {
         opacity: 0.4;
         cursor: not-allowed;

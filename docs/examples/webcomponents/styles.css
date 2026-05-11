@@ -94,6 +94,11 @@ select-box::part(option):hover {
     background: var(--example-option-hover-bg);
 }
 
+select-box::part(option-active) {
+    background: #2563eb;
+    color: #ffffff;
+}
+
 select-box::part(group-label) {
     padding: 0.5rem 0.875rem 0.25rem;
     color: var(--example-muted);

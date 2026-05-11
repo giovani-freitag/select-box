@@ -62,6 +62,7 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
     useNotifyOnValueChange(state.value, onValueChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
+    const searchRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         if (!state.open) return;
         function handleMouseDown(event: globalThis.MouseEvent): void {
@@ -74,6 +75,14 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
             document.removeEventListener("mousedown", handleMouseDown);
         };
     }, [state.open, controller]);
+
+    useEffect(() => {
+        if (!state.open) return;
+        // Browsers honour HTMLInputElement.focus() reliably across iframe
+        // contexts, while the `autoFocus` attribute is a one-time hint
+        // that often misfires when the iframe lacks OS focus on mount.
+        searchRef.current?.focus({ preventScroll: true });
+    }, [state.open]);
 
     function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
         if (event.key === "ArrowDown") {
@@ -127,9 +136,9 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
             {state.open ? (
                 <div className="select-box-popover" role="listbox" data-select-popover>
                     <input
+                        ref={searchRef}
                         className="select-box-search"
                         type="text"
-                        autoFocus
                         placeholder={placeholder ?? "Search…"}
                         value={state.query}
                         onChange={(event) => controller.setQuery(event.target.value)}

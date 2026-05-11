@@ -264,7 +264,10 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "option";
-                button.setAttribute("part", "option");
+                const parts = ["option"];
+                if (isActive) parts.push("option-active");
+                if (option.disabled) parts.push("option-disabled");
+                button.setAttribute("part", parts.join(" "));
                 button.dataset["selectOption"] = "";
                 if (isActive) {
                     button.classList.add("active");
