@@ -254,24 +254,45 @@ and it makes reentrancy structurally impossible.
   core by default** — every behaviour beyond bare single/multi commit
   is an opt-in install.
 
-**First-party addons** (separate packages, none auto-loaded):
+**First-party addons** (separate packages, none auto-loaded). Status
+key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
+`[plan]` planned, no design yet.
 
-- `@select-box/addon-hoist-selected` — pins selected options to the top
+- `[wip]` `@select-box/addon-clear-button` — clear-selection affordance. The
+  default wrappers (`<SelectBox />`, `<select-box>`) render an `×` next
+  to the trigger value when the addon is installed and there is a
+  selection. Config: `{ label?: string; ariaLabel?: string }`. Exposes
+  `snapshot.addons["clear-button"]: { visible, label, ariaLabel }`.
+  Implementation lives at [packages/addon-clear-button/](packages/addon-clear-button/);
+  re-wire the example once the ready `<SelectBox />` component lands.
+- `[plan]` `@select-box/addon-inline-search` — Selectize-style "search input
+  *is* the trigger". When installed, the trigger renders a text input
+  in place of the static label; focusing it puts the controller into
+  search mode and shows the popover; the placeholder swaps for the
+  selected option's label when blurred. Hook surface needed:
+  `extendSnapshot` (for `inputMode: "label" | "search"`) and
+  `onKeyDown` (for the typing experience). Config:
+  `{ keepQueryOnBlur?: boolean }`.
+- `[wip]` `@select-box/addon-hoist-selected` — pins selected options to the top
   of the list. Always active while there is at least one selection.
   Order of pinned items matches the order of the controller's `value`
   array (stable; the consumer decides via selection order). Config:
   `{ separator?: boolean; when?: "always" | "popoverOpen" }`,
   default `when: "always"`. Exposes
-  `snapshot.addons["hoist-selected"].pinnedKeys`.
-- `@select-box/addon-create-option` — adds an "Add `<query>`" row when
-  the query has no match.
-- `@select-box/addon-remove-button` — per-row remove affordance for
-  multi mode (chip-list trigger).
-- `@select-box/addon-clear-button` — global clear action surface.
-- `@select-box/addon-restore-on-backspace` — selectize parity.
-- `@select-box/addon-persist` — saves/restores selection to
+  `snapshot.addons["hoist-selected"].pinnedKeys`. Requires the
+  `transformGroups` hook (not yet wired in core).
+- `[plan]` `@select-box/addon-create-option` — adds an "Add `<query>`" row
+  when the query has no match. Requires `interceptCommit` + a snapshot
+  flag for the synthetic row.
+- `[plan]` `@select-box/addon-remove-button` — per-row remove affordance for
+  multi mode (chip-list trigger). Activates with the multi-mode
+  milestone (M2).
+- `[plan]` `@select-box/addon-restore-on-backspace` — selectize parity:
+  Backspace on empty query in multi mode pops the last chip back into
+  the input as editable text. Requires `onKeyDown` + `interceptCommit`.
+- `[plan]` `@select-box/addon-persist` — saves/restores selection to
   `localStorage` (wrapped behind a `StorageService`, per service-layer
-  pattern).
+  pattern). Config: `{ key: string; storage?: "local" | "session" }`.
 
 ## 5. Wrapper consistency
 
