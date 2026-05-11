@@ -1,12 +1,3 @@
-/**
- * Public types shared by every controller and wrapper.
- *
- * The library accepts options either as a flat list with an optional
- * `group` key, or as pre-built `SelectGroup` records. The controller
- * always normalises both inputs into an ordered list of groups and
- * publishes them through the snapshot as `filteredGroups`.
- */
-
 export interface SelectOption<TValue> {
     readonly value: TValue;
     readonly label: string;
@@ -23,9 +14,7 @@ export interface SelectGroup<TValue> {
 }
 
 /**
- * Strategy that filters options against the current query. Returns the
- * subset that should remain visible. The default implementation is a
- * case-insensitive substring match on the label.
+ * Strategy that filters options against the current query.
  */
 export interface OptionFilterStrategy<TValue> {
     filter(
@@ -35,10 +24,7 @@ export interface OptionFilterStrategy<TValue> {
 }
 
 /**
- * Augmented by addon packages via declaration merging. Each first-party
- * addon adds an optional entry keyed by its `name`, so consumers read
- * `snapshot.addons["clear-button"]` etc. with full type safety once the
- * addon's package is installed.
+ * Augmented by addon packages via declaration merging; each addon adds its keyed slice.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SelectBoxAddonSnapshots {}
@@ -56,20 +42,15 @@ export interface SelectBoxSnapshot<TValue> {
 }
 
 /**
- * Optional context surfaced to every addon hook. Read-only by contract —
- * addons compute new data and return it; they never mutate the snapshot
- * or call mutators on the controller. Hooks run after the base snapshot
- * is built, so `snapshot` already reflects the user-driven state.
+ * Read-only context passed to every addon hook.
  */
 export interface AddonHookContext<TValue> {
     readonly snapshot: SelectBoxSnapshot<TValue>;
 }
 
 /**
- * Plugin contract. Constructor stores config only; `attach()` is called
- * once at registration with the initial snapshot for any one-time setup;
- * `detach()` is called on controller `destroy()`. Optional hooks are
- * pure transformers — they never receive a mutable controller.
+ * Plugin contract: addons attach at registration, detach on controller destroy, and may
+ * publish an extra snapshot slice via `extendSnapshot`.
  */
 export interface SelectBoxAddon<TValue> {
     readonly name: string;

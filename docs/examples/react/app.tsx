@@ -28,7 +28,7 @@ export function App() {
                 options={fruits}
                 ungroupedLabel="Citrus"
                 placeholder="Search fruits…"
-                onValueChange={setCommittedValue}
+                onChange={setCommittedValue}
             />
 
             <dl className="snapshot">

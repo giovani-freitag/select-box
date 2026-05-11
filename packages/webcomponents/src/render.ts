@@ -1,9 +1,3 @@
-/**
- * Builds the static Shadow DOM scaffolding for `<select-box>` and returns
- * references to the nodes the controller paints into on each snapshot
- * change. The same nodes are reused across the element's lifetime —
- * `paintList` replaces children of `list`, never `list` itself.
- */
 export interface SelectBoxShadowRefs {
     readonly trigger: HTMLButtonElement;
     readonly value: HTMLSpanElement;
@@ -13,6 +7,9 @@ export interface SelectBoxShadowRefs {
     readonly list: HTMLDivElement;
 }
 
+/**
+ * Builds the static Shadow DOM scaffolding for `<select-box>` and returns the painted node refs.
+ */
 export function renderSelectBoxShadow(shadowRoot: ShadowRoot): SelectBoxShadowRefs {
     shadowRoot.innerHTML = SHADOW_TEMPLATE;
     return {

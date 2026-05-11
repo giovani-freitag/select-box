@@ -34,7 +34,7 @@ jQuery("#fruit")
         placeholder: "Search fruits…",
         ungroupedLabel: "Citrus",
     })
-    .on("selectbox:valuechange", (_event, value) => {
+    .on("change", (_event, value) => {
         console.log(value);
     });
 ```
@@ -59,6 +59,11 @@ class FruitPicker extends LitElement {
         ungroupedLabel: "Citrus",
     });
 
+    /** Native form-element contract: read the committed value via `.value`. */
+    get value() {
+        return this.selectBox.state.value;
+    }
+
     render() {
         const state = this.selectBox.state;
         return html`
@@ -73,6 +78,11 @@ class FruitPicker extends LitElement {
 }
 
 customElements.define("fruit-picker", FruitPicker);
+
+// Consumer side:
+document.querySelector("fruit-picker").addEventListener("change", (event) => {
+    console.log(event.target.value);
+});
 ```
 
 </template>
@@ -96,7 +106,7 @@ export function App() {
             options={fruits}
             placeholder="Search fruits…"
             ungroupedLabel="Citrus"
-            onValueChange={setCommitted}
+            onChange={setCommitted}
         />
     );
 }
@@ -125,7 +135,7 @@ const committed = ref(null);
         :options="fruits"
         placeholder="Search fruits…"
         ungroupedLabel="Citrus"
-        @value-change="(value) => (committed = value)"
+        @change="(value) => (committed = value)"
     />
 </template>
 ```
@@ -148,8 +158,8 @@ const committed = ref(null);
 
     const element = document.getElementById("fruit");
     element.options = fruits;
-    element.addEventListener("valuechange", (event) => {
-        console.log(event.detail.value);
+    element.addEventListener("change", (event) => {
+        console.log(event.target.value);
     });
 </script>
 ```
@@ -166,7 +176,7 @@ const committed = ref(null);
 | Options (flat) | `options` | `.options` (property) |
 | Options (grouped) | `groups` | `.groups` (property) |
 | Initial value | `defaultValue` | `.value` (property) |
-| Change callback | `onValueChange` | `valuechange` event |
+| Change callback | `onChange` | `change` event (read `event.target.value`) |
 | Placeholder | `placeholder` | `placeholder` attribute |
 | Ungrouped label | `ungroupedLabel` | `ungrouped-label` attribute |
 | Addons | `addons` | `.addons` (property) |

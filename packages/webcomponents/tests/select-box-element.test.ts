@@ -57,23 +57,22 @@ describe("<select-box>", () => {
         element.remove();
     });
 
-    test("dispatches valuechange CustomEvent when an option is committed", () => {
+    test("dispatches change Event when an option is committed; value is on the element", () => {
         const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
         element.options = fruits;
         document.body.append(element);
 
-        const events: Array<Fruit | null> = [];
-        element.addEventListener("valuechange", (event) => {
-            const custom = event as CustomEvent<{ value: Fruit | null }>;
-            events.push(custom.detail.value);
+        const observed: Array<Fruit | null> = [];
+        element.addEventListener("change", (event) => {
+            observed.push((event.target as SelectBoxElement<Fruit>).value);
         });
 
         element.shadowRoot!.querySelector<HTMLButtonElement>(".trigger")?.click();
         const firstOption = element.shadowRoot!.querySelector<HTMLButtonElement>(".option");
         firstOption?.click();
 
-        expect(events).toHaveLength(1);
-        expect(events[0]?.name).toBe("apple");
+        expect(observed).toHaveLength(1);
+        expect(observed[0]?.name).toBe("apple");
         expect(element.value?.name).toBe("apple");
 
         element.remove();

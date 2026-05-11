@@ -20,11 +20,7 @@ export const packageName = "@select-box/webcomponents" as const;
 const TAG_NAME = "select-box";
 
 /**
- * Registers `<select-box>` as a global custom element. Safe to call
- * multiple times — re-registration is skipped if the tag is already
- * defined. Importing the package triggers this side-effect; consumers
- * who want manual control should import `SelectBoxElement` directly
- * and call `customElements.define` themselves.
+ * Registers `<select-box>` as a global custom element; idempotent.
  */
 export function defineSelectBoxElement(tagName: string = TAG_NAME): void {
     if (customElements.get(tagName)) return;

@@ -1,12 +1,7 @@
 import type { OptionFilterStrategy, SelectOption } from "./types.js";
 
 /**
- * Default filter: case-insensitive substring match against `label`. An
- * empty query keeps every option.
- *
- * Pluggable — consumers can pass any `OptionFilterStrategy` in the
- * controller config. M2 introduces a fuzzy-match strategy as a separate
- * implementation.
+ * Default filter: case-insensitive substring match against `label`; empty query keeps every option.
  */
 export class SubstringFilterStrategy<TValue> implements OptionFilterStrategy<TValue> {
     filter(

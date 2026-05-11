@@ -26,7 +26,7 @@ const element = document.getElementById("fruit") as SelectBoxElement<Fruit>;
 const committed = document.getElementById("committed")!;
 
 element.options = fruits;
-element.addEventListener("valuechange", (event) => {
-    const detail = (event as CustomEvent<{ value: Fruit | null }>).detail;
-    committed.textContent = detail.value ? JSON.stringify(detail.value) : "null";
+element.addEventListener("change", (event) => {
+    const value = (event.target as SelectBoxElement<Fruit>).value;
+    committed.textContent = value ? JSON.stringify(value) : "null";
 });

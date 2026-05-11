@@ -12,20 +12,7 @@ type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller";
 const VIEWS = new WeakMap<HTMLElement, SelectBoxView<unknown>>();
 
 /**
- * Registers `$.fn.selectBox` on the supplied jQuery instance. Idempotent —
- * calling it twice is harmless.
- *
- *     $("#fruit").selectBox({ options: fruits, placeholder: "Pick a fruit" });
- *     $("#fruit").selectBox("open");
- *     const controller = $("#fruit").selectBox("controller");
- *     $("#fruit").selectBox("destroy");
- *
- * Each host element in the collection has its content replaced with a
- * rendered combobox; the host itself stays in the DOM so selectors like
- * `$("#fruit")` keep working between calls. Value changes dispatch the
- * jQuery custom event `selectbox:valuechange` on the host:
- *
- *     $("#fruit").on("selectbox:valuechange", (event, value) => { … });
+ * Registers `$.fn.selectBox` on the supplied jQuery instance; idempotent.
  */
 export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
     if (typeof (jq.fn as { selectBox?: unknown }).selectBox === "function") return;
@@ -53,7 +40,7 @@ function initialize<TValue>(
         const view = new SelectBoxView<TValue>({
             ...config,
             onValueChange: (value) => {
-                jq(host).trigger("selectbox:valuechange", [value]);
+                jq(host).trigger("change", [value]);
             },
         });
         host.replaceChildren(view.root);

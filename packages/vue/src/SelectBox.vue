@@ -20,7 +20,7 @@ export interface SelectBoxProps<TValue> {
 }
 
 const props = withDefaults(defineProps<SelectBoxProps<TValue>>(), { defaultValue: null });
-const emit = defineEmits<{ (event: "valueChange", value: TValue | null): void }>();
+const emit = defineEmits<{ (event: "change", value: TValue | null): void }>();
 
 const { state, controller } = useSelectBox<TValue>({
     ...(props.options !== undefined ? { options: props.options } : {}),
@@ -63,7 +63,7 @@ watch(
     (next) => {
         if (Object.is(next, previousValue)) return;
         previousValue = next;
-        emit("valueChange", next);
+        emit("change", next);
     },
 );
 

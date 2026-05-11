@@ -6,15 +6,7 @@ import {
 } from "@select-box/core";
 
 /**
- * Vanilla DOM view that wires a `SingleSelectBoxController` into an
- * existing host element. The host element is replaced by the view's
- * root container; the jQuery plugin owns the lifecycle (init via
- * `$.fn.selectBox(config)`, destroy via `$.fn.selectBox("destroy")`).
- *
- * Rendering is light-DOM (no Shadow DOM) so the consumer's stylesheet
- * can style every part of the combobox directly. CSS classes follow the
- * same convention as the React/Vue components (`select-box-trigger`,
- * `select-box-option-active`, …).
+ * Light-DOM combobox view that wires a `SingleSelectBoxController` into a host element.
  */
 export class SelectBoxView<TValue> {
     readonly root: HTMLDivElement;

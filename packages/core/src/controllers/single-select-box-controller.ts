@@ -14,12 +14,7 @@ import type {
 const NO_ACTIVE_INDEX = -1;
 
 /**
- * State + mutations for a single-select combobox. Pure, framework-
- * agnostic. Wrappers subscribe to `getState`/`subscribe` and call the
- * mutator methods in response to user interaction.
- *
- * Construction is config-only (no I/O). Disposal via `destroy()` clears
- * the listener set so subscribers stop receiving updates.
+ * Framework-agnostic state and mutations for a single-select combobox.
  */
 export class SingleSelectBoxController<TValue> {
     private readonly store: Store<SelectBoxSnapshot<TValue>>;
@@ -47,9 +42,7 @@ export class SingleSelectBoxController<TValue> {
     }
 
     /**
-     * Registers an addon. The addon's `attach()` runs immediately with
-     * the current snapshot, then a new snapshot is published so the
-     * addon's slice appears under `snapshot.addons[addon.name]`. Chainable.
+     * Registers an addon and publishes a new snapshot reflecting its slice.
      */
     use(addon: SelectBoxAddon<TValue>): this {
         this.registeredAddons.push(addon);

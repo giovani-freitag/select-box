@@ -3,17 +3,7 @@ import type { SelectGroup, SelectOption } from "./types.js";
 const UNGROUPED_KEY = "__ungrouped__";
 
 /**
- * Collapses `options` (flat-with-group) and `groups` (already grouped)
- * into a single ordered list of `SelectGroup`s.
- *
- * Order is stable and predictable:
- *   1. pre-built groups in the order received
- *   2. groups synthesised from `options[].group` in first-seen order
- *   3. a trailing synthetic group for options without a `group` key,
- *      keyed by `UNGROUPED_KEY` and labelled with `ungroupedLabel`
- *
- * When `options[].group` matches the key of a pre-built group, the
- * flat options are appended to that group.
+ * Collapses flat `options` and pre-built `groups` into a single stable ordered group list.
  */
 export function normalizeOptionsToGroups<TValue>(input: {
     options?: ReadonlyArray<SelectOption<TValue>>;

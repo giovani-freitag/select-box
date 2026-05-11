@@ -21,7 +21,7 @@ const fruits = [
 
 const committed = ref<Fruit | null>(null);
 
-function handleValueChange(value: Fruit | null): void {
+function handleChange(value: Fruit | null): void {
     committed.value = value;
 }
 </script>
@@ -33,7 +33,7 @@ function handleValueChange(value: Fruit | null): void {
             :options="fruits"
             ungrouped-label="Citrus"
             placeholder="Search fruits…"
-            @value-change="handleValueChange"
+            @change="handleChange"
         />
 
         <dl class="snapshot">

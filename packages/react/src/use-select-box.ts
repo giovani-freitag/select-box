@@ -7,14 +7,7 @@ export interface UseSelectBoxResult<TValue> {
 }
 
 /**
- * React-side entry point for the select-box library. Owns a single
- * `SingleSelectBoxController` instance for the lifetime of the
- * component (the config is read only on first render — change options
- * by passing a new controller through your own state if you need it).
- *
- * Returns the live snapshot and the controller. Components dispatch
- * user interaction to the controller and read the snapshot fields
- * directly — same shape across every wrapper.
+ * React hook owning a controller for the component's lifetime; config is read on first render only.
  */
 export function useSelectBox<TValue>(config: SingleSelectBoxConfig<TValue>): UseSelectBoxResult<TValue> {
     const [controller] = useState(() => new SingleSelectBoxController<TValue>(config));

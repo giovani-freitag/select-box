@@ -22,14 +22,7 @@ declare module "@select-box/core" {
 }
 
 /**
- * Publishes a snapshot slice the wrapper renders as a clear affordance
- * (typically next to the trigger). Stays opt-in — installing this addon
- * is the only way to surface the affordance, so consumers can keep
- * dropdowns simple when they don't want one.
- *
- * The addon doesn't trigger `controller.clear()` itself — that stays a
- * wrapper concern, since only the wrapper has the live controller
- * reference. The addon only declares "render the button when visible".
+ * Publishes a snapshot slice describing when to render a clear affordance; the wrapper owns the click handler.
  */
 export class ClearButtonAddon<TValue> implements SelectBoxAddon<TValue> {
     readonly name = CLEAR_BUTTON_ADDON_NAME;

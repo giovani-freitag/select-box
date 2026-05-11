@@ -47,10 +47,10 @@ describe("$.fn.selectBox", () => {
         expect(options).toEqual(["Apple", "Pear", "Lemon"]);
     });
 
-    test("committing an option triggers the selectbox:valuechange event", () => {
+    test("committing an option triggers the change event with the new value", () => {
         jQuery("#fruit").selectBox<Fruit>({ options: fruits });
         const events: Array<Fruit | null> = [];
-        jQuery("#fruit").on("selectbox:valuechange", (_event, value: Fruit | null) => {
+        jQuery("#fruit").on("change", (_event, value: Fruit | null) => {
             events.push(value);
         });
         jQuery("#fruit").selectBox("open");

@@ -12,20 +12,7 @@ import { renderSelectBoxShadow, type SelectBoxShadowRefs } from "./render.js";
 const OBSERVED_ATTRIBUTES = ["placeholder", "ungrouped-label"] as const;
 
 /**
- * `<select-box>` custom element. Headless behaviour is delegated to
- * `SingleSelectBoxController`; the element renders the same combobox UI
- * the React wrapper does, scoped behind Shadow DOM.
- *
- * Two-phase init: the constructor only attaches the Shadow root and
- * binds method refs. The controller is created in `connectedCallback`
- * — that's also when the element first paints. `disconnectedCallback`
- * tears down listeners and destroys the controller.
- *
- * API surface:
- *   - Attributes: `placeholder`, `ungrouped-label` (kebab-case strings)
- *   - Properties: `options`, `groups`, `value`, `addons`, `filter`
- *     (JS data, set imperatively)
- *   - Events: `valuechange` (CustomEvent<{ value: TValue | null }>)
+ * `<select-box>` custom element backed by `SingleSelectBoxController`, rendered into Shadow DOM.
  */
 export class SelectBoxElement<TValue = unknown> extends HTMLElement {
     static get observedAttributes(): ReadonlyArray<string> {
@@ -197,7 +184,10 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         this.paintSnapshot(snapshot);
         if (!Object.is(snapshot.value, this.previousValue)) {
             this.previousValue = snapshot.value;
-            this.dispatchEvent(new CustomEvent("valuechange", { detail: { value: snapshot.value } }));
+            // Match the native form-element contract: plain `change` event
+            // that bubbles to parent forms. The value is read off the
+            // element via the `.value` getter, just like `<select>`.
+            this.dispatchEvent(new Event("change", { bubbles: true }));
         }
     };
 

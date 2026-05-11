@@ -1,11 +1,7 @@
 export type StoreListener = () => void;
 
 /**
- * Tiny observer store. Holds a single snapshot reference and notifies
- * listeners whenever `setState` replaces it. Designed for the
- * `useSyncExternalStore` contract: `getState` returns the same
- * reference until something actually changes, so wrappers can use
- * referential equality to skip re-renders.
+ * Observer store with referential-equality change detection.
  */
 export class Store<TState> {
     private currentState: TState;

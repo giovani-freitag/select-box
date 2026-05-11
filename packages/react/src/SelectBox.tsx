@@ -11,10 +11,10 @@ import { useSelectBox } from "./use-select-box.js";
 export interface SelectBoxProps<TValue> {
     readonly options?: ReadonlyArray<SelectOption<TValue>>;
     readonly groups?: ReadonlyArray<SelectGroup<TValue>>;
-    /** Initial value. The component owns the selection internally; listen via `onValueChange`. */
+    /** Initial value. The component owns the selection internally; listen via `onChange`. */
     readonly defaultValue?: TValue | null;
-    /** Fires whenever the committed value changes (including `clear()`). */
-    readonly onValueChange?: (value: TValue | null) => void;
+    /** Fires whenever the committed value changes (including `clear()`). Matches native `<select>` semantics. */
+    readonly onChange?: (value: TValue | null) => void;
     readonly placeholder?: string;
     readonly ungroupedLabel?: string;
     readonly addons?: ReadonlyArray<SelectBoxAddon<TValue>>;
@@ -26,21 +26,14 @@ export interface SelectBoxProps<TValue> {
 }
 
 /**
- * Default single-select combobox component. Drop-in for the common case;
- * for custom markup or layout, use `useSelectBox()` directly instead and
- * render against the snapshot.
- *
- * Styling is **not bundled** — the component emits stable class names
- * (`select-box`, `select-box-trigger`, `select-box-option`, …) and data
- * attributes (`data-select-trigger`, `data-select-option`, …) that
- * consumers target with their own CSS or design-system rules.
+ * Default single-select combobox component; use `useSelectBox()` directly for custom markup.
  */
 export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
     const {
         options,
         groups,
         defaultValue = null,
-        onValueChange,
+        onChange,
         placeholder,
         ungroupedLabel,
         addons,
@@ -59,7 +52,7 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
         initialValue: defaultValue,
     });
 
-    useNotifyOnValueChange(state.value, onValueChange);
+    useNotifyOnChange(state.value, onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -200,12 +193,12 @@ function renderGroups<TValue>(
     ));
 }
 
-function useNotifyOnValueChange<TValue>(
+function useNotifyOnChange<TValue>(
     currentValue: TValue | null,
-    onValueChange: ((value: TValue | null) => void) | undefined,
+    onChange: ((value: TValue | null) => void) | undefined,
 ): void {
-    const callbackRef = useRef(onValueChange);
-    callbackRef.current = onValueChange;
+    const callbackRef = useRef(onChange);
+    callbackRef.current = onChange;
     const previousValueRef = useRef<TValue | null>(currentValue);
 
     useEffect(() => {

@@ -34,6 +34,11 @@ export class FruitPicker extends LitElement {
 
     private previousValue: Fruit | null = null;
 
+    /** Currently-selected fruit, or `null`. Mirrors the native form-element contract. */
+    get value(): Fruit | null {
+        return this.selectBox.state.value;
+    }
+
     // Render into light DOM so the example's stylesheet applies.
     protected createRenderRoot(): HTMLElement {
         return this;
@@ -54,7 +59,10 @@ export class FruitPicker extends LitElement {
 
         if (!Object.is(snapshot.value, this.previousValue)) {
             this.previousValue = snapshot.value;
-            this.dispatchEvent(new CustomEvent("valuechange", { detail: { value: snapshot.value } }));
+            // Plain `change` event that bubbles, matching `<select>` and
+            // `<select-box>`. Consumers read the new value via
+            // `event.target.value` rather than `event.detail`.
+            this.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         if (snapshot.open) {
