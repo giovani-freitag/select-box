@@ -4,15 +4,22 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "pnpm run sync:examples && vitepress dev .",
-        "build": "pnpm run sync:examples && pnpm run typedoc && vitepress build .",
+        "dev": "vitepress dev .",
+        "build": "pnpm run typedoc && vitepress build .",
         "preview": "vitepress preview .",
-        "sync:examples": "node scripts/sync-examples.mjs",
         "typedoc": "typedoc --options typedoc.json"
     },
+    "dependencies": {
+        "@select-box/core": "workspace:*",
+        "@select-box/react": "workspace:*",
+        "@select-box/webcomponents": "workspace:*",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
     "devDependencies": {
-        "@select-box/example-react": "workspace:*",
-        "@select-box/example-webcomponents": "workspace:*",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "@vitejs/plugin-react": "^4.3.4",
         "typedoc": "^0.28.4",
         "typedoc-plugin-markdown": "^4.4.0",
         "vitepress": "^1.5.0"

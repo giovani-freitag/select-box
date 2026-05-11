@@ -22,28 +22,21 @@ export function App() {
     const [committedValue, setCommittedValue] = useState<Fruit | null>(null);
 
     return (
-        <main className="page">
-            <header>
-                <h1>select-box</h1>
-                <p className="subtitle">React example · ready-to-use &lt;SelectBox /&gt;</p>
-            </header>
+        <main className="demo">
+            <label className="field-label">Pick a fruit</label>
+            <SelectBox<Fruit>
+                options={fruits}
+                ungroupedLabel="Citrus"
+                placeholder="Search fruits…"
+                onValueChange={setCommittedValue}
+            />
 
-            <section className="demo">
-                <label className="field-label">Pick a fruit</label>
-                <SelectBox<Fruit>
-                    options={fruits}
-                    ungroupedLabel="Citrus"
-                    placeholder="Search fruits…"
-                    onValueChange={setCommittedValue}
-                />
-
-                <dl className="snapshot">
-                    <dt>Last committed value</dt>
-                    <dd>
-                        <code>{committedValue ? JSON.stringify(committedValue) : "null"}</code>
-                    </dd>
-                </dl>
-            </section>
+            <dl className="snapshot">
+                <dt>Last committed value</dt>
+                <dd>
+                    <code>{committedValue ? JSON.stringify(committedValue) : "null"}</code>
+                </dd>
+            </dl>
         </main>
     );
 }

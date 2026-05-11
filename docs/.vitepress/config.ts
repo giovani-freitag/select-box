@@ -1,9 +1,37 @@
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitepress";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { serveExamples } from "./plugin-serve-examples.js";
+
+const docsRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export default defineConfig({
     title: "select-box",
     description: "Framework-agnostic combobox/select-box library — core + per-framework wrappers.",
     cleanUrls: true,
+    vue: {
+        template: {
+            compilerOptions: {
+                isCustomElement: (tag) => tag.includes("-"),
+            },
+        },
+    },
+    vite: {
+        plugins: [
+            serveExamples({ docsRoot }),
+            react({ include: /\/examples\/.*\.(jsx|tsx)$/ }),
+        ],
+        build: {
+            rollupOptions: {
+                input: {
+                    reactExample: resolve(docsRoot, "examples/react/index.html"),
+                    webcomponentsExample: resolve(docsRoot, "examples/webcomponents/index.html"),
+                },
+            },
+        },
+    },
     themeConfig: {
         nav: [
             { text: "Guide", link: "/guide/getting-started" },

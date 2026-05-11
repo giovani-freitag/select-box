@@ -1,6 +1,10 @@
 import "@select-box/webcomponents";
 import type { SelectBoxElement } from "@select-box/webcomponents";
 
+import { wireExampleTheme } from "./theme.js";
+
+wireExampleTheme();
+
 interface Fruit {
     readonly id: number;
     readonly name: string;

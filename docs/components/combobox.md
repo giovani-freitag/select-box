@@ -2,31 +2,20 @@
 
 A single-select combobox with grouped options, fuzzy filter, keyboard
 navigation, and an opt-in addon system. Switch the framework tab below
-to see the same behaviour in each wrapper.
-
-## Live demo
+to see the same combobox rendered by each wrapper — the preview is the
+real example app from `examples/<framework>/` running in an iframe.
 
 <ClientOnly>
-  <FrameworkSwitcher
-    :frames="[
-      { label: 'React', src: '/examples/react/' },
-      { label: 'Web Components', src: '/examples/webcomponents/' },
-    ]"
-  />
-</ClientOnly>
+<FrameworkExample
+  :frameworks="[
+    { id: 'react', label: 'React', src: '/examples/react/index.html' },
+    { id: 'webcomponents', label: 'Web Components', src: '/examples/webcomponents/index.html' }
+  ]"
+>
 
-## Source
+<template #react-code>
 
-The same demo, rendered by each wrapper, lives in
-[`examples/react/`](https://github.com/) and
-[`examples/webcomponents/`](https://github.com/). The relevant files are
-shown below.
-
-### App entry
-
-::: code-group
-
-```tsx [React]
+```tsx
 import { SelectBox } from "@select-box/react";
 import { useState } from "react";
 
@@ -41,7 +30,7 @@ export function App() {
     return (
         <SelectBox
             options={fruits}
-            placeholder="Pick a fruit"
+            placeholder="Search fruits…"
             ungroupedLabel="Citrus"
             onValueChange={setCommitted}
         />
@@ -49,8 +38,12 @@ export function App() {
 }
 ```
 
-```html [Web Components]
-<select-box id="fruit" placeholder="Pick a fruit" ungrouped-label="Citrus"></select-box>
+</template>
+
+<template #webcomponents-code>
+
+```html
+<select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
 
 <script type="module">
     import "@select-box/webcomponents";
@@ -69,7 +62,10 @@ export function App() {
 </script>
 ```
 
-:::
+</template>
+
+</FrameworkExample>
+</ClientOnly>
 
 ## Props / Attributes
 

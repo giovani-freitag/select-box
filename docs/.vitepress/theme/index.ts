@@ -1,12 +1,12 @@
 import DefaultTheme from "vitepress/theme";
 import type { Theme } from "vitepress";
 
-import FrameworkSwitcher from "./FrameworkSwitcher.vue";
+import FrameworkExample from "./FrameworkExample.vue";
 
 const theme: Theme = {
     extends: DefaultTheme,
     enhanceApp({ app }) {
-        app.component("FrameworkSwitcher", FrameworkSwitcher);
+        app.component("FrameworkExample", FrameworkExample);
     },
 };
 
