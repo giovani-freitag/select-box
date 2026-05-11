@@ -1,6 +1,5 @@
-import { useSelectBox } from "@select-box/react";
-
-import { SelectBoxCombobox } from "./select-box-combobox.js";
+import { SelectBox } from "@select-box/react";
+import { useState } from "react";
 
 interface Fruit {
     readonly id: number;
@@ -20,37 +19,29 @@ const fruits = [
 ] as const;
 
 export function App() {
-    const { state, controller } = useSelectBox<Fruit>({
-        options: fruits,
-        ungroupedLabel: "Citrus",
-    });
+    const [committedValue, setCommittedValue] = useState<Fruit | null>(null);
 
     return (
         <main className="page">
             <header>
                 <h1>select-box</h1>
-                <p className="subtitle">React example · M1 single-select with option groups</p>
+                <p className="subtitle">React example · ready-to-use &lt;SelectBox /&gt;</p>
             </header>
 
             <section className="demo">
                 <label className="field-label">Pick a fruit</label>
-                <SelectBoxCombobox state={state} controller={controller} placeholder="Search fruits…" />
+                <SelectBox<Fruit>
+                    options={fruits}
+                    ungroupedLabel="Citrus"
+                    placeholder="Search fruits…"
+                    onValueChange={setCommittedValue}
+                />
 
                 <dl className="snapshot">
-                    <dt>Selected value</dt>
+                    <dt>Last committed value</dt>
                     <dd>
-                        <code>{state.value ? JSON.stringify(state.value) : "null"}</code>
+                        <code>{committedValue ? JSON.stringify(committedValue) : "null"}</code>
                     </dd>
-                    <dt>Open</dt>
-                    <dd>{state.open ? "true" : "false"}</dd>
-                    <dt>Query</dt>
-                    <dd>
-                        <code>{state.query || "—"}</code>
-                    </dd>
-                    <dt>Active index</dt>
-                    <dd>{state.activeIndex}</dd>
-                    <dt>Filtered groups</dt>
-                    <dd>{state.filteredGroups.map((group) => group.label).join(", ") || "—"}</dd>
                 </dl>
             </section>
         </main>

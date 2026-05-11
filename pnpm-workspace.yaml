@@ -2,5 +2,6 @@ packages:
   - "packages/*"
   - "examples/*"
   - "tooling/*"
+  - "docs"
 allowBuilds:
   esbuild: true

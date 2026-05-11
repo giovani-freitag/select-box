@@ -40,12 +40,12 @@ h1 {
     margin-bottom: 0.5rem;
 }
 
-.combobox {
+.select-box {
     position: relative;
     width: 100%;
 }
 
-.combobox-trigger {
+.select-box-trigger {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -59,20 +59,20 @@ h1 {
     cursor: pointer;
 }
 
-.combobox-trigger:hover {
+.select-box-trigger:hover {
     border-color: #64748b;
 }
 
-.combobox-trigger .value.placeholder {
+.select-box-placeholder {
     color: #64748b;
 }
 
-.combobox-trigger .caret {
+.select-box-caret {
     color: #94a3b8;
     margin-left: 0.5rem;
 }
 
-.combobox-popover {
+.select-box-popover {
     position: absolute;
     top: calc(100% + 0.25rem);
     left: 0;
@@ -85,7 +85,7 @@ h1 {
     z-index: 10;
 }
 
-.combobox-search {
+.select-box-search {
     width: 100%;
     padding: 0.625rem 0.875rem;
     border: none;
@@ -96,12 +96,12 @@ h1 {
     outline: none;
 }
 
-.combobox-list {
+.select-box-list {
     max-height: 280px;
     overflow-y: auto;
 }
 
-.group-label {
+.select-box-group-label {
     padding: 0.5rem 0.875rem 0.25rem;
     font-size: 0.75rem;
     font-weight: 600;
@@ -113,7 +113,7 @@ h1 {
     top: 0;
 }
 
-.option {
+.select-box-option {
     display: block;
     width: 100%;
     text-align: left;
@@ -125,21 +125,21 @@ h1 {
     cursor: pointer;
 }
 
-.option:hover:not(.disabled) {
+.select-box-option:hover:not(.select-box-option-disabled) {
     background: #1e293b;
 }
 
-.option.active {
+.select-box-option-active {
     background: #2563eb;
     color: white;
 }
 
-.option.disabled {
+.select-box-option-disabled {
     color: #475569;
     cursor: not-allowed;
 }
 
-.empty {
+.select-box-empty {
     padding: 1rem;
     text-align: center;
     color: #64748b;

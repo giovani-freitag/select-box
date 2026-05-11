@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>select-box · Web Components example</title>
+        <link rel="stylesheet" href="/src/styles.css" />
+    </head>
+    <body>
+        <main class="page">
+            <header>
+                <h1>select-box</h1>
+                <p class="subtitle">Web Components example · &lt;select-box&gt; custom element</p>
+            </header>
+
+            <section class="demo">
+                <label class="field-label" for="fruit">Pick a fruit</label>
+                <select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+
+                <dl class="snapshot">
+                    <dt>Last committed value</dt>
+                    <dd><code id="committed">null</code></dd>
+                </dl>
+            </section>
+        </main>
+
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
