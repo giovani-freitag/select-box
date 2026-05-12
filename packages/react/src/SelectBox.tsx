@@ -72,6 +72,11 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
         initialValue: defaultValue,
     });
 
+    useEffect(() => {
+        if (filter === undefined) return;
+        controller.setFilter(filter);
+    }, [controller, filter]);
+
     useNotifyOnChange(state.value, state.selectedOption, onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
