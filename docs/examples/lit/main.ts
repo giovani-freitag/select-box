@@ -1,16 +1,38 @@
+import { SelectBox } from "@select-box/lit";
+
 import { wireExampleTheme } from "./theme.js";
-import { FruitPicker } from "./fruit-picker.js";
 
 wireExampleTheme();
 
-if (!customElements.get("fruit-picker")) {
-    customElements.define("fruit-picker", FruitPicker);
+interface Fruit {
+    readonly id: number;
+    readonly name: string;
 }
 
-const element = document.getElementById("fruit") as FruitPicker;
+if (!customElements.get("select-box")) {
+    customElements.define("select-box", SelectBox);
+}
+
+const fruits = [
+    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+    { value: { id: 3, name: "quince" }, label: "Quince", group: "Pomes" },
+    { value: { id: 4, name: "peach" }, label: "Peach", group: "Stone fruits" },
+    { value: { id: 5, name: "plum" }, label: "Plum", group: "Stone fruits" },
+    { value: { id: 6, name: "cherry" }, label: "Cherry", group: "Stone fruits", disabled: true },
+    { value: { id: 7, name: "lemon" }, label: "Lemon" },
+    { value: { id: 8, name: "orange" }, label: "Orange" },
+    { value: { id: 9, name: "lime" }, label: "Lime" },
+];
+
+const element = document.getElementById("fruit") as SelectBox<Fruit>;
 const committed = document.getElementById("committed")!;
 
-element.addEventListener("change", (event) => {
-    const value = (event.target as FruitPicker).value;
+element.options = fruits;
+element.placeholder = "Search fruits…";
+element.ungroupedLabel = "Citrus";
+
+element.addEventListener("change", () => {
+    const value = element.value;
     committed.textContent = value ? JSON.stringify(value) : "null";
 });

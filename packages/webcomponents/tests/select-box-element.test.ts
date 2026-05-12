@@ -77,4 +77,23 @@ describe("<select-box>", () => {
 
         element.remove();
     });
+
+    test("declares itself form-associated", () => {
+        const SelectBoxConstructor = customElements.get("select-box");
+
+        expect((SelectBoxConstructor as unknown as { formAssociated?: boolean }).formAssociated).toBe(true);
+    });
+
+    test("exposes the ElementInternals validity surface", () => {
+        const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
+        element.options = fruits;
+        document.body.append(element);
+
+        expect(typeof element.checkValidity).toBe("function");
+        expect(typeof element.reportValidity).toBe("function");
+        expect(element.validity).toBeDefined();
+        expect(element.willValidate).toBe(true);
+
+        element.remove();
+    });
 });

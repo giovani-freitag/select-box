@@ -7,17 +7,22 @@ import {
     type SelectOption,
 } from "@select-box/core";
 
+import { encodeFormValue, parseFormState, type FormStateValue } from "./form-state.js";
 import { renderSelectBoxShadow, type SelectBoxShadowRefs } from "./render.js";
 
-const OBSERVED_ATTRIBUTES = ["placeholder", "ungrouped-label"] as const;
+const OBSERVED_ATTRIBUTES = ["placeholder", "ungrouped-label", "name", "disabled", "required", "readonly"] as const;
 
 /**
- * `<select-box>` custom element backed by `SingleSelectBoxController`, rendered into Shadow DOM.
+ * Form-associated `<select-box>` custom element backed by `SingleSelectBoxController`.
  */
 export class SelectBoxElement<TValue = unknown> extends HTMLElement {
     static get observedAttributes(): ReadonlyArray<string> {
         return OBSERVED_ATTRIBUTES;
     }
+
+    static readonly formAssociated = true;
+
+    private readonly internals: ElementInternals;
 
     private controller: SingleSelectBoxController<TValue> | null = null;
     private unsubscribeFromStore: (() => void) | null = null;
@@ -33,6 +38,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
+        this.internals = this.attachInternals();
     }
 
     connectedCallback(): void {
@@ -61,7 +67,103 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         if (!this.refs) return;
         if (name === "placeholder" || name === "ungrouped-label") {
             this.handleSnapshotChange();
+            return;
         }
+        if (name === "disabled" || name === "required" || name === "readonly") {
+            this.syncValidity();
+            this.handleSnapshotChange();
+        }
+    }
+
+    get form(): HTMLFormElement | null {
+        return this.internals.form;
+    }
+
+    get name(): string {
+        return this.getAttribute("name") ?? "";
+    }
+
+    set name(next: string) {
+        this.setAttribute("name", next);
+    }
+
+    get type(): string {
+        return "select-box";
+    }
+
+    get disabled(): boolean {
+        return this.hasAttribute("disabled");
+    }
+
+    set disabled(next: boolean) {
+        if (next) this.setAttribute("disabled", "");
+        else this.removeAttribute("disabled");
+    }
+
+    get required(): boolean {
+        return this.hasAttribute("required");
+    }
+
+    set required(next: boolean) {
+        if (next) this.setAttribute("required", "");
+        else this.removeAttribute("required");
+    }
+
+    get readOnly(): boolean {
+        return this.hasAttribute("readonly");
+    }
+
+    set readOnly(next: boolean) {
+        if (next) this.setAttribute("readonly", "");
+        else this.removeAttribute("readonly");
+    }
+
+    get validity(): ValidityState {
+        return this.internals.validity;
+    }
+
+    get validationMessage(): string {
+        return this.internals.validationMessage;
+    }
+
+    get willValidate(): boolean {
+        return this.internals.willValidate;
+    }
+
+    checkValidity(): boolean {
+        return this.internals.checkValidity();
+    }
+
+    reportValidity(): boolean {
+        return this.internals.reportValidity();
+    }
+
+    setCustomValidity(message: string): void {
+        if (message === "") {
+            this.syncValidity();
+            return;
+        }
+        this.internals.setValidity({ customError: true }, message);
+    }
+
+    get labels(): NodeList {
+        return this.internals.labels;
+    }
+
+    formResetCallback(): void {
+        this.controller?.clear();
+        this.pendingValue = null;
+    }
+
+    formDisabledCallback(disabled: boolean): void {
+        if (disabled) this.setAttribute("disabled", "");
+        else this.removeAttribute("disabled");
+    }
+
+    formStateRestoreCallback(state: FormStateValue, _mode: "restore" | "autocomplete"): void {
+        const restored = parseFormState<TValue>(state);
+        this.pendingValue = restored;
+        this.rebuildControllerIfConnected();
     }
 
     get options(): ReadonlyArray<SelectOption<TValue>> | undefined {
@@ -140,6 +242,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
     }
 
     private readonly handleTriggerClick = (): void => {
+        if (this.disabled || this.readOnly) return;
         this.controller?.toggle();
     };
 
@@ -182,14 +285,35 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         if (!this.refs || !this.controller) return;
         const snapshot = this.controller.getState();
         this.paintSnapshot(snapshot);
+        this.syncFormState(snapshot.value);
         if (!Object.is(snapshot.value, this.previousValue)) {
             this.previousValue = snapshot.value;
-            // Match the native form-element contract: plain `change` event
-            // that bubbles to parent forms. The value is read off the
-            // element via the `.value` getter, just like `<select>`.
             this.dispatchEvent(new Event("change", { bubbles: true }));
         }
     };
+
+    private syncFormState(value: TValue | null): void {
+        const formValue = encodeFormValue(value);
+        this.internals.setFormValue(formValue, formValue);
+        this.syncValidity();
+    }
+
+    private syncValidity(): void {
+        if (!this.required || this.disabled || this.readOnly) {
+            this.internals.setValidity({});
+            return;
+        }
+        const value = this.controller?.getState().value ?? null;
+        if (value === null) {
+            this.internals.setValidity(
+                { valueMissing: true },
+                "Please pick an option.",
+                this.refs?.trigger,
+            );
+            return;
+        }
+        this.internals.setValidity({});
+    }
 
     private paintSnapshot(snapshot: SelectBoxSnapshot<TValue>): void {
         if (!this.refs) return;
@@ -198,6 +322,8 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         this.refs.value.textContent = snapshot.selectedOption?.label ?? placeholder;
         this.refs.value.classList.toggle("placeholder", snapshot.selectedOption === null);
         this.refs.trigger.setAttribute("aria-expanded", String(snapshot.open));
+        this.refs.trigger.setAttribute("aria-readonly", String(this.readOnly));
+        this.refs.trigger.disabled = this.disabled;
 
         this.refs.popover.hidden = !snapshot.open;
         if (!snapshot.open) {

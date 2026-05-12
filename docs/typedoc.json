@@ -3,12 +3,12 @@
     "entryPoints": [
         "../packages/core/src/index.ts",
         "../packages/react/src/index.ts",
-        "../packages/webcomponents/src/index.ts",
-        "../packages/addon-clear-button/src/index.ts"
+        "../packages/webcomponents/src/index.ts"
     ],
     "entryPointStrategy": "resolve",
     "out": "api",
     "plugin": ["typedoc-plugin-markdown"],
+    "entryFileName": "index.md",
     "readme": "none",
     "githubPages": false,
     "hideGenerator": true,

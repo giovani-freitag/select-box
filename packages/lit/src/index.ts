@@ -1,3 +1,4 @@
+export { SelectBox } from "./SelectBox.js";
 export { SelectBoxController } from "./select-box-controller.js";
 
 export {
