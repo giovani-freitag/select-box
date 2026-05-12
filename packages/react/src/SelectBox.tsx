@@ -1,12 +1,30 @@
-import type {
-    OptionFilterStrategy,
-    SelectBoxAddon,
-    SelectGroup,
-    SelectOption,
+import {
+    findRowIndexForActiveIndex,
+    flattenGroupsForVirtualization,
+    ListVirtualizer,
+    type OptionFilterStrategy,
+    type SelectBoxAddon,
+    type SelectBoxRow,
+    type SelectGroup,
+    type SelectOption,
 } from "@select-box/core";
-import { useEffect, useRef, type JSX, type KeyboardEvent, type MouseEvent } from "react";
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useSyncExternalStore,
+    type JSX,
+    type KeyboardEvent,
+    type MouseEvent,
+} from "react";
 
 import { useSelectBox } from "./use-select-box.js";
+
+const OPTION_ROW_HEIGHT = 36;
+const HEADER_ROW_HEIGHT = 28;
+const LIST_VIEWPORT_HEIGHT = 240;
 
 export interface SelectBoxProps<TExtra extends object = object> {
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
@@ -141,58 +159,156 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
                         data-select-search
                     />
 
-                    <div className="select-box-list" data-select-list>
-                        {state.isEmpty ? (
+                    {state.isEmpty ? (
+                        <div className="select-box-list" data-select-list>
                             <p className="select-box-empty" data-select-empty>
                                 No matches
                             </p>
-                        ) : (
-                            renderGroups(state, controller, handleOptionMouseDown)
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <VirtualizedList
+                            groups={state.filteredGroups}
+                            activeIndex={state.activeIndex}
+                            controller={controller}
+                            handleOptionMouseDown={handleOptionMouseDown}
+                        />
+                    )}
                 </div>
             ) : null}
         </div>
     );
 }
 
-function renderGroups<TExtra extends object>(
-    state: ReturnType<typeof useSelectBox<TExtra>>["state"],
-    controller: ReturnType<typeof useSelectBox<TExtra>>["controller"],
-    handleOptionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void,
-): JSX.Element[] {
-    let flatIndex = -1;
-    return state.filteredGroups.map((group) => (
-        <div key={group.key} className="select-box-group" data-select-group>
-            {group.label ? <div className="select-box-group-label">{group.label}</div> : null}
-            {group.options.map((option) => {
-                const isSelectable = !option.disabled;
-                if (isSelectable) flatIndex += 1;
-                const isActive = isSelectable && flatIndex === state.activeIndex;
-                const classes = [
-                    "select-box-option",
-                    isActive ? "select-box-option-active" : null,
-                    option.disabled ? "select-box-option-disabled" : null,
-                ]
-                    .filter(Boolean)
-                    .join(" ");
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        className={classes}
-                        disabled={option.disabled}
-                        onMouseDown={handleOptionMouseDown}
-                        onClick={() => controller.commitOption(option)}
-                        data-select-option
-                        data-select-active={isActive ? "" : undefined}
-                    >
-                        {option.label}
-                    </button>
-                );
-            })}
+interface VirtualizedListProps<TExtra extends object> {
+    readonly groups: ReadonlyArray<SelectGroup<TExtra>>;
+    readonly activeIndex: number;
+    readonly controller: ReturnType<typeof useSelectBox<TExtra>>["controller"];
+    readonly handleOptionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+function VirtualizedList<TExtra extends object>({
+    groups,
+    activeIndex,
+    controller,
+    handleOptionMouseDown,
+}: VirtualizedListProps<TExtra>): JSX.Element {
+    const listRef = useRef<HTMLDivElement>(null);
+
+    const rows = useMemo(() => flattenGroupsForVirtualization(groups), [groups]);
+
+    const [virtualizer] = useState(
+        () =>
+            new ListVirtualizer({
+                rowCount: rows.length,
+                rowHeight: makeRowHeight(rows),
+                viewportHeight: LIST_VIEWPORT_HEIGHT,
+            }),
+    );
+
+    useEffect(() => {
+        virtualizer.setRowCount(rows.length);
+        virtualizer.setRowHeight(makeRowHeight(rows));
+    }, [virtualizer, rows]);
+
+    const subscribe = useCallback(
+        (listener: () => void) => virtualizer.subscribe(listener),
+        [virtualizer],
+    );
+    const getSnapshot = useCallback(() => virtualizer.getRange(), [virtualizer]);
+    const range = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+    useEffect(() => {
+        const list = listRef.current;
+        if (!list) return;
+        function handleScroll(): void {
+            virtualizer.setScrollOffset(list!.scrollTop);
+        }
+        list.addEventListener("scroll", handleScroll, { passive: true });
+        return () => {
+            list.removeEventListener("scroll", handleScroll);
+        };
+    }, [virtualizer]);
+
+    useEffect(() => {
+        const list = listRef.current;
+        if (!list) return;
+        const targetRow = findRowIndexForActiveIndex(rows, activeIndex);
+        if (targetRow < 0) return;
+        const targetOffset = virtualizer.getOffset(targetRow);
+        const targetHeight = rows[targetRow]!.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+        const viewportTop = list.scrollTop;
+        const viewportBottom = viewportTop + list.clientHeight;
+        if (targetOffset < viewportTop) {
+            list.scrollTop = targetOffset;
+        } else if (targetOffset + targetHeight > viewportBottom) {
+            list.scrollTop = targetOffset + targetHeight - list.clientHeight;
+        }
+    }, [virtualizer, rows, activeIndex]);
+
+    return (
+        <div
+            ref={listRef}
+            className="select-box-list"
+            data-select-list
+            style={{ maxHeight: LIST_VIEWPORT_HEIGHT, overflowY: "auto" }}
+        >
+            <div style={{ paddingTop: range.paddingTop, paddingBottom: range.paddingBottom }}>
+                {range.visibleRows.map((virtualRow) => {
+                    const row = rows[virtualRow.index]!;
+                    if (row.kind === "header") {
+                        return (
+                            <div
+                                key={`header-${row.groupIndex}`}
+                                className="select-box-group-label"
+                                data-select-group-label
+                                style={{ height: HEADER_ROW_HEIGHT }}
+                            >
+                                {row.group.label}
+                            </div>
+                        );
+                    }
+                    const isActive = isOptionActive(rows, virtualRow.index, activeIndex);
+                    const classes = [
+                        "select-box-option",
+                        isActive ? "select-box-option-active" : null,
+                        row.option.disabled ? "select-box-option-disabled" : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" ");
+                    return (
+                        <button
+                            key={row.option.value}
+                            type="button"
+                            className={classes}
+                            disabled={row.option.disabled}
+                            onMouseDown={handleOptionMouseDown}
+                            onClick={() => controller.commitOption(row.option)}
+                            data-select-option
+                            data-select-active={isActive ? "" : undefined}
+                            style={{ height: OPTION_ROW_HEIGHT }}
+                        >
+                            {row.option.label}
+                        </button>
+                    );
+                })}
+            </div>
         </div>
-    ));
+    );
+}
+
+function makeRowHeight<TExtra extends object>(
+    rows: ReadonlyArray<SelectBoxRow<TExtra>>,
+): (index: number) => number {
+    return (index) => (rows[index]?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT);
+}
+
+function isOptionActive<TExtra extends object>(
+    rows: ReadonlyArray<SelectBoxRow<TExtra>>,
+    rowIndex: number,
+    activeIndex: number,
+): boolean {
+    if (activeIndex < 0) return false;
+    return findRowIndexForActiveIndex(rows, activeIndex) === rowIndex;
 }
 
 function useNotifyOnChange<TExtra extends object>(
