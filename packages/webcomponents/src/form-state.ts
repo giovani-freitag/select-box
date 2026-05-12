@@ -1,23 +1,17 @@
 export type FormStateValue = File | string | FormData | null;
 
 /**
- * Encodes a controller value into the string FormData round-trips.
+ * Encodes a controller value (always a string or `null`) for FormData round-trip.
  */
-export function encodeFormValue(value: unknown): string {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "string") return value;
-    return JSON.stringify(value);
+export function encodeFormValue(value: string | null): string {
+    return value ?? "";
 }
 
 /**
- * Restores a value previously encoded by `encodeFormValue`.
+ * Restores a string value previously written via `encodeFormValue`.
  */
-export function parseFormState<TValue>(state: FormStateValue): TValue | null {
+export function parseFormState(state: FormStateValue): string | null {
     if (state === null || state === "") return null;
     if (typeof state !== "string") return null;
-    try {
-        return JSON.parse(state) as TValue;
-    } catch {
-        return state as unknown as TValue;
-    }
+    return state;
 }

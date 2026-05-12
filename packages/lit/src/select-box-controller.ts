@@ -10,14 +10,14 @@ import type { ReactiveController, ReactiveControllerHost } from "lit";
  * Lit `ReactiveController` adapter for the select-box core; requests a host
  * re-render on every snapshot change.
  */
-export class SelectBoxController<TValue> implements ReactiveController {
+export class SelectBoxController<TExtra extends object = object> implements ReactiveController {
     private readonly host: ReactiveControllerHost;
-    private readonly controller: CoreController<TValue>;
+    private readonly controller: CoreController<TExtra>;
     private unsubscribe: (() => void) | null = null;
 
-    constructor(host: ReactiveControllerHost, config: SingleSelectBoxConfig<TValue>) {
+    constructor(host: ReactiveControllerHost, config: SingleSelectBoxConfig<TExtra>) {
         this.host = host;
-        this.controller = new CoreController<TValue>(config);
+        this.controller = new CoreController<TExtra>(config);
         host.addController(this);
     }
 
@@ -33,7 +33,7 @@ export class SelectBoxController<TValue> implements ReactiveController {
         this.controller.destroy();
     }
 
-    get state(): SelectBoxSnapshot<TValue> {
+    get state(): SelectBoxSnapshot<TExtra> {
         return this.controller.getState();
     }
 
@@ -61,8 +61,12 @@ export class SelectBoxController<TValue> implements ReactiveController {
         this.controller.commitActive();
     }
 
-    commitOption(option: SelectOption<TValue>): void {
+    commitOption(option: SelectOption<TExtra>): void {
         this.controller.commitOption(option);
+    }
+
+    commitValue(value: string | number | null): void {
+        this.controller.commitValue(value);
     }
 
     clear(): void {

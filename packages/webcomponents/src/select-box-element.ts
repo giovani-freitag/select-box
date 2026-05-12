@@ -15,7 +15,7 @@ const OBSERVED_ATTRIBUTES = ["placeholder", "ungrouped-label", "name", "disabled
 /**
  * Form-associated `<select-box>` custom element backed by `SingleSelectBoxController`.
  */
-export class SelectBoxElement<TValue = unknown> extends HTMLElement {
+export class SelectBoxElement<TExtra extends object = object> extends HTMLElement {
     static get observedAttributes(): ReadonlyArray<string> {
         return OBSERVED_ATTRIBUTES;
     }
@@ -24,16 +24,16 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
 
     private readonly internals: ElementInternals;
 
-    private controller: SingleSelectBoxController<TValue> | null = null;
+    private controller: SingleSelectBoxController<TExtra> | null = null;
     private unsubscribeFromStore: (() => void) | null = null;
     private refs: SelectBoxShadowRefs | null = null;
-    private previousValue: TValue | null = null;
+    private previousValue: string | null = null;
 
-    private pendingOptions: ReadonlyArray<SelectOption<TValue>> | undefined;
-    private pendingGroups: ReadonlyArray<SelectGroup<TValue>> | undefined;
-    private pendingAddons: ReadonlyArray<SelectBoxAddon<TValue>> | undefined;
-    private pendingFilter: OptionFilterStrategy<TValue> | undefined;
-    private pendingValue: TValue | null = null;
+    private pendingOptions: ReadonlyArray<SelectOption<TExtra>> | undefined;
+    private pendingGroups: ReadonlyArray<SelectGroup<TExtra>> | undefined;
+    private pendingAddons: ReadonlyArray<SelectBoxAddon<TExtra>> | undefined;
+    private pendingFilter: OptionFilterStrategy<TExtra> | undefined;
+    private pendingValue: string | null = null;
 
     constructor() {
         super();
@@ -43,7 +43,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
 
     connectedCallback(): void {
         this.refs = renderSelectBoxShadow(this.shadowRoot!);
-        this.controller = new SingleSelectBoxController<TValue>({
+        this.controller = new SingleSelectBoxController<TExtra>({
             ...(this.pendingOptions !== undefined ? { options: this.pendingOptions } : {}),
             ...(this.pendingGroups !== undefined ? { groups: this.pendingGroups } : {}),
             ...(this.pendingAddons !== undefined ? { addons: this.pendingAddons } : {}),
@@ -161,47 +161,54 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
     }
 
     formStateRestoreCallback(state: FormStateValue, _mode: "restore" | "autocomplete"): void {
-        const restored = parseFormState<TValue>(state);
-        this.pendingValue = restored;
+        this.pendingValue = parseFormState(state);
         this.rebuildControllerIfConnected();
     }
 
-    get options(): ReadonlyArray<SelectOption<TValue>> | undefined {
+    get options(): ReadonlyArray<SelectOption<TExtra>> | undefined {
         return this.pendingOptions;
     }
-    set options(next: ReadonlyArray<SelectOption<TValue>> | undefined) {
+    set options(next: ReadonlyArray<SelectOption<TExtra>> | undefined) {
         this.pendingOptions = next;
         this.rebuildControllerIfConnected();
     }
 
-    get groups(): ReadonlyArray<SelectGroup<TValue>> | undefined {
+    get groups(): ReadonlyArray<SelectGroup<TExtra>> | undefined {
         return this.pendingGroups;
     }
-    set groups(next: ReadonlyArray<SelectGroup<TValue>> | undefined) {
+    set groups(next: ReadonlyArray<SelectGroup<TExtra>> | undefined) {
         this.pendingGroups = next;
         this.rebuildControllerIfConnected();
     }
 
-    get value(): TValue | null {
+    get value(): string | null {
         return this.controller?.getState().value ?? this.pendingValue;
     }
-    set value(next: TValue | null) {
-        this.pendingValue = next;
+    set value(next: string | number | null) {
+        this.pendingValue = next === null ? null : String(next);
         this.rebuildControllerIfConnected();
     }
 
-    get addons(): ReadonlyArray<SelectBoxAddon<TValue>> | undefined {
+    /**
+     * Full option object for the current value, including any extra payload.
+     * `null` when nothing is selected (or the value points to an unknown option).
+     */
+    get selectedOption(): SelectOption<TExtra> | null {
+        return this.controller?.getState().selectedOption ?? null;
+    }
+
+    get addons(): ReadonlyArray<SelectBoxAddon<TExtra>> | undefined {
         return this.pendingAddons;
     }
-    set addons(next: ReadonlyArray<SelectBoxAddon<TValue>> | undefined) {
+    set addons(next: ReadonlyArray<SelectBoxAddon<TExtra>> | undefined) {
         this.pendingAddons = next;
         this.rebuildControllerIfConnected();
     }
 
-    get filter(): OptionFilterStrategy<TValue> | undefined {
+    get filter(): OptionFilterStrategy<TExtra> | undefined {
         return this.pendingFilter;
     }
-    set filter(next: OptionFilterStrategy<TValue> | undefined) {
+    set filter(next: OptionFilterStrategy<TExtra> | undefined) {
         this.pendingFilter = next;
         this.rebuildControllerIfConnected();
     }
@@ -210,7 +217,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         if (!this.isConnected || !this.refs) return;
         this.unlisten();
         this.controller?.destroy();
-        this.controller = new SingleSelectBoxController<TValue>({
+        this.controller = new SingleSelectBoxController<TExtra>({
             ...(this.pendingOptions !== undefined ? { options: this.pendingOptions } : {}),
             ...(this.pendingGroups !== undefined ? { groups: this.pendingGroups } : {}),
             ...(this.pendingAddons !== undefined ? { addons: this.pendingAddons } : {}),
@@ -286,13 +293,13 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         const snapshot = this.controller.getState();
         this.paintSnapshot(snapshot);
         this.syncFormState(snapshot.value);
-        if (!Object.is(snapshot.value, this.previousValue)) {
+        if (snapshot.value !== this.previousValue) {
             this.previousValue = snapshot.value;
             this.dispatchEvent(new Event("change", { bubbles: true }));
         }
     };
 
-    private syncFormState(value: TValue | null): void {
+    private syncFormState(value: string | null): void {
         const formValue = encodeFormValue(value);
         this.internals.setFormValue(formValue, formValue);
         this.syncValidity();
@@ -315,7 +322,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         this.internals.setValidity({});
     }
 
-    private paintSnapshot(snapshot: SelectBoxSnapshot<TValue>): void {
+    private paintSnapshot(snapshot: SelectBoxSnapshot<TExtra>): void {
         if (!this.refs) return;
         const placeholder = this.getAttribute("placeholder") ?? "Select…";
 
@@ -342,7 +349,7 @@ export class SelectBoxElement<TValue = unknown> extends HTMLElement {
         }
     }
 
-    private paintList(snapshot: SelectBoxSnapshot<TValue>): void {
+    private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
         if (!this.refs) return;
         const list = this.refs.list;
         list.replaceChildren();

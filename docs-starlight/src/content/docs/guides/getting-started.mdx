@@ -1,0 +1,250 @@
+---
+title: Getting started
+description: Install a select-box wrapper and render your first picker in under five minutes.
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+`select-box` is a framework-agnostic select-box library (an ARIA-compliant
+combobox under the hood). `@select-box/core` owns state, behaviour, and
+keyboard nav; each per-framework wrapper translates the live snapshot into
+its native rendering. You install one wrapper — the one for your stack —
+and the rest of the documentation is the same component everywhere.
+
+## Install
+
+<Tabs syncKey="framework">
+  <TabItem label="React">
+
+```bash
+npm install @select-box/react
+```
+
+Requires React 18 or later.
+
+  </TabItem>
+  <TabItem label="Vue">
+
+```bash
+npm install @select-box/vue
+```
+
+Requires Vue 3.4 or later.
+
+  </TabItem>
+  <TabItem label="Lit">
+
+```bash
+npm install @select-box/lit
+```
+
+Ships as a custom element — no Lit peer install needed in your app.
+
+  </TabItem>
+  <TabItem label="Web Components">
+
+```bash
+npm install @select-box/webcomponents
+```
+
+Zero runtime dependencies.
+
+  </TabItem>
+  <TabItem label="jQuery">
+
+```bash
+npm install @select-box/jquery jquery
+```
+
+Tested against jQuery 3.x.
+
+  </TabItem>
+</Tabs>
+
+## Your first select
+
+Copy a snippet, drop it into your app, and you should see a working picker
+with grouped options, fuzzy search, and full keyboard navigation.
+
+<Tabs syncKey="framework">
+  <TabItem label="React">
+
+```tsx
+import { SelectBox } from "@select-box/react";
+import { useState } from "react";
+
+const fruits = [
+    { value: "apple", label: "Apple", group: "Pomes" },
+    { value: "pear", label: "Pear", group: "Pomes" },
+    { value: "lemon", label: "Lemon" },
+];
+
+export function FruitPicker() {
+    const [value, setValue] = useState(null);
+    return (
+        <SelectBox
+            options={fruits}
+            placeholder="Pick a fruit"
+            ungroupedLabel="Citrus"
+            onChange={setValue}
+        />
+    );
+}
+```
+
+  </TabItem>
+  <TabItem label="Vue">
+
+```vue
+<script setup lang="ts">
+import { SelectBox } from "@select-box/vue";
+import { ref } from "vue";
+
+const fruits = [
+    { value: "apple", label: "Apple", group: "Pomes" },
+    { value: "pear", label: "Pear", group: "Pomes" },
+    { value: "lemon", label: "Lemon" },
+];
+
+const value = ref(null);
+</script>
+
+<template>
+    <SelectBox
+        :options="fruits"
+        placeholder="Pick a fruit"
+        ungrouped-label="Citrus"
+        @change="(next) => (value = next)"
+    />
+</template>
+```
+
+  </TabItem>
+  <TabItem label="Lit">
+
+```html
+<select-box id="fruit" placeholder="Pick a fruit" ungrouped-label="Citrus"></select-box>
+
+<script type="module">
+    import "@select-box/lit/define";
+
+    const element = document.getElementById("fruit");
+    element.options = [
+        { value: "apple", label: "Apple", group: "Pomes" },
+        { value: "pear", label: "Pear", group: "Pomes" },
+        { value: "lemon", label: "Lemon" },
+    ];
+    element.addEventListener("change", (event) => {
+        console.log(event.target.value);
+    });
+</script>
+```
+
+  </TabItem>
+  <TabItem label="Web Components">
+
+```html
+<select-box id="fruit" placeholder="Pick a fruit" ungrouped-label="Citrus"></select-box>
+
+<script type="module">
+    import "@select-box/webcomponents/define";
+
+    const element = document.getElementById("fruit");
+    element.options = [
+        { value: "apple", label: "Apple", group: "Pomes" },
+        { value: "pear", label: "Pear", group: "Pomes" },
+        { value: "lemon", label: "Lemon" },
+    ];
+    element.addEventListener("change", (event) => {
+        console.log(event.target.value);
+    });
+</script>
+```
+
+  </TabItem>
+  <TabItem label="jQuery">
+
+```ts
+import "@select-box/jquery";
+import jQuery from "jquery";
+
+const fruits = [
+    { value: "apple", label: "Apple", group: "Pomes" },
+    { value: "pear", label: "Pear", group: "Pomes" },
+    { value: "lemon", label: "Lemon" },
+];
+
+jQuery("#fruit")
+    .selectBox({
+        options: fruits,
+        placeholder: "Pick a fruit",
+        ungroupedLabel: "Citrus",
+    })
+    .on("change", (_event, value, option) => {
+        console.log(value, option);
+    });
+```
+
+  </TabItem>
+</Tabs>
+
+## The options shape
+
+`options` is a flat array. Items that share a `group` key render under one
+heading; items without a `group` fall under whatever `ungroupedLabel` you
+pass (or stay un-headed when omitted).
+
+```ts
+interface SelectOption<TExtra extends object = object> {
+    value: string;          // unique identifier — coerced to string on input
+    label: string;          // shown in the trigger and the list
+    disabled?: boolean;     // skipped by keyboard nav, dimmed in the list
+    group?: string;         // bundles options sharing the same key
+    // + everything from TExtra rides on the same object
+}
+```
+
+Need to carry a domain payload (id, slug, icon, metadata)? Layer it on
+through the `TExtra` generic — the extra fields ride on the same option
+and come back to you intact in `onChange` / `selectedOption`:
+
+```ts
+import type { SelectOption } from "@select-box/core";
+
+type Fruit = SelectOption<{ id: number; color: string }>;
+
+const fruits: Fruit[] = [
+    { value: "apple", label: "Apple", group: "Pomes", id: 1, color: "red" },
+    { value: "pear", label: "Pear", group: "Pomes", id: 2, color: "green" },
+];
+```
+
+`value` is always a string (numeric input is silently coerced — mirrors
+`<option value>` in HTML); identity comparisons (`defaultValue`, the
+internal `value → option` index, form serialization) use plain `===`.
+
+## Styling
+
+Every wrapper ships **unstyled by default** — you decide how the trigger,
+popover, search input, and options look. The hooks are the same across
+frameworks:
+
+- **DOM-based wrappers** (React, Vue, jQuery) expose semantic class names:
+  `.select-box`, `.select-box-trigger`, `.select-box-popover`,
+  `.select-box-option`, `.select-box-option-active`, etc.
+- **Shadow-DOM wrappers** (Lit, Web Components) expose the same areas as
+  CSS `::part()` slots: `::part(trigger)`, `::part(popover)`,
+  `::part(search)`, and so on.
+
+The [demo stylesheet](https://github.com/giovani-freitag/select-box/blob/main/docs-starlight/src/styles/demo.css)
+this site uses is a reasonable starting point — copy it, then tune the
+tokens to match your design system.
+
+## Next steps
+
+- [Select Box reference](/components/select-box/) — full prop table,
+  keyboard map, and the live framework switcher.
+- [Headless vs ready](/guides/headless-vs-ready/) — when to drop from the
+  drop-in component to the `useSelectBox()` hook or the
+  `SingleSelectBoxController` class.
+- [API reference](/api/) — every exported symbol with TypeScript signatures.

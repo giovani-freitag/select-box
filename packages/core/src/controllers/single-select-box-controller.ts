@@ -1,5 +1,5 @@
 import { SubstringFilterStrategy } from "../filter.js";
-import { normalizeOptionsToGroups } from "../normalize.js";
+import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { Store } from "../store.js";
 import type {
     OptionFilterStrategy,
@@ -13,28 +13,35 @@ import type {
 
 const NO_ACTIVE_INDEX = -1;
 
+function coerceValue(input: string | number | null | undefined): string | null {
+    if (input === null || input === undefined) return null;
+    return String(input);
+}
+
 /**
  * Framework-agnostic state and mutations for a single-select box.
  */
-export class SingleSelectBoxController<TValue> {
-    private readonly store: Store<SelectBoxSnapshot<TValue>>;
-    private readonly allGroups: ReadonlyArray<SelectGroup<TValue>>;
-    private readonly filterStrategy: OptionFilterStrategy<TValue>;
-    private readonly registeredAddons: SelectBoxAddon<TValue>[] = [];
+export class SingleSelectBoxController<TExtra extends object = object> {
+    private readonly store: Store<SelectBoxSnapshot<TExtra>>;
+    private readonly allGroups: ReadonlyArray<SelectGroup<TExtra>>;
+    private readonly optionsByValue: ReadonlyMap<string, SelectOption<TExtra>>;
+    private readonly filterStrategy: OptionFilterStrategy<TExtra>;
+    private readonly registeredAddons: SelectBoxAddon<TExtra>[] = [];
 
-    private currentValue: TValue | null;
+    private currentValue: string | null;
     private currentQuery = "";
     private currentOpen = false;
     private currentActiveIndex = NO_ACTIVE_INDEX;
 
-    constructor(config: SingleSelectBoxConfig<TValue>) {
+    constructor(config: SingleSelectBoxConfig<TExtra>) {
         this.allGroups = normalizeOptionsToGroups({
             ...(config.options !== undefined ? { options: config.options } : {}),
             ...(config.groups !== undefined ? { groups: config.groups } : {}),
             ungroupedLabel: config.ungroupedLabel ?? "",
         });
-        this.filterStrategy = config.filter ?? new SubstringFilterStrategy<TValue>();
-        this.currentValue = config.initialValue ?? null;
+        this.optionsByValue = indexOptionsByValue(this.allGroups);
+        this.filterStrategy = config.filter ?? new SubstringFilterStrategy<TExtra>();
+        this.currentValue = coerceValue(config.initialValue);
         this.store = new Store(this.buildSnapshot());
         for (const addon of config.addons ?? []) {
             this.use(addon);
@@ -44,14 +51,14 @@ export class SingleSelectBoxController<TValue> {
     /**
      * Registers an addon and publishes a new snapshot reflecting its slice.
      */
-    use(addon: SelectBoxAddon<TValue>): this {
+    use(addon: SelectBoxAddon<TExtra>): this {
         this.registeredAddons.push(addon);
         addon.attach(this.store.getState());
         this.publish();
         return this;
     }
 
-    getState(): SelectBoxSnapshot<TValue> {
+    getState(): SelectBoxSnapshot<TExtra> {
         return this.store.getState();
     }
 
@@ -105,13 +112,27 @@ export class SingleSelectBoxController<TValue> {
         if (target) this.commitOption(target);
     }
 
-    commitOption(option: SelectOption<TValue>): void {
+    commitOption(option: SelectOption<TExtra>): void {
         if (option.disabled) return;
         this.currentValue = option.value;
         this.currentOpen = false;
         this.currentQuery = "";
         this.currentActiveIndex = NO_ACTIVE_INDEX;
         this.publish();
+    }
+
+    /**
+     * Selects an option by its (string-coerced) value. No-op when the value is
+     * unknown or maps to a disabled option.
+     */
+    commitValue(value: string | number | null): void {
+        const coerced = coerceValue(value);
+        if (coerced === null) {
+            this.clear();
+            return;
+        }
+        const option = this.optionsByValue.get(coerced);
+        if (option) this.commitOption(option);
     }
 
     clear(): void {
@@ -133,15 +154,17 @@ export class SingleSelectBoxController<TValue> {
         this.store.setState(this.buildSnapshot());
     }
 
-    private buildSnapshot(): SelectBoxSnapshot<TValue> {
+    private buildSnapshot(): SelectBoxSnapshot<TExtra> {
         const filteredGroups = this.computeFilteredGroups();
         const flat = this.flattenSelectable(filteredGroups);
         const activeOption = this.currentActiveIndex === NO_ACTIVE_INDEX
             ? null
             : (flat[this.currentActiveIndex] ?? null);
-        const selectedOption = this.findOptionByValue(this.currentValue);
+        const selectedOption = this.currentValue === null
+            ? null
+            : (this.optionsByValue.get(this.currentValue) ?? null);
         const isEmpty = flat.length === 0;
-        const baseSnapshot: SelectBoxSnapshot<TValue> = {
+        const baseSnapshot: SelectBoxSnapshot<TExtra> = {
             open: this.currentOpen,
             query: this.currentQuery,
             value: this.currentValue,
@@ -155,7 +178,7 @@ export class SingleSelectBoxController<TValue> {
         return this.applyAddonSnapshots(baseSnapshot);
     }
 
-    private applyAddonSnapshots(snapshot: SelectBoxSnapshot<TValue>): SelectBoxSnapshot<TValue> {
+    private applyAddonSnapshots(snapshot: SelectBoxSnapshot<TExtra>): SelectBoxSnapshot<TExtra> {
         if (this.registeredAddons.length === 0) return snapshot;
         const addonSlices: SelectBoxAddonSnapshots = {};
         for (const addon of this.registeredAddons) {
@@ -165,8 +188,8 @@ export class SingleSelectBoxController<TValue> {
         return { ...snapshot, addons: addonSlices };
     }
 
-    private computeFilteredGroups(): ReadonlyArray<SelectGroup<TValue>> {
-        const result: SelectGroup<TValue>[] = [];
+    private computeFilteredGroups(): ReadonlyArray<SelectGroup<TExtra>> {
+        const result: SelectGroup<TExtra>[] = [];
         for (const group of this.allGroups) {
             const filtered = this.filterStrategy.filter(group.options, this.currentQuery);
             if (filtered.length === 0) continue;
@@ -181,9 +204,9 @@ export class SingleSelectBoxController<TValue> {
     }
 
     private flattenSelectable(
-        groups: ReadonlyArray<SelectGroup<TValue>>,
-    ): ReadonlyArray<SelectOption<TValue>> {
-        const flat: SelectOption<TValue>[] = [];
+        groups: ReadonlyArray<SelectGroup<TExtra>>,
+    ): ReadonlyArray<SelectOption<TExtra>> {
+        const flat: SelectOption<TExtra>[] = [];
         for (const group of groups) {
             if (group.disabled) continue;
             for (const option of group.options) {
@@ -194,7 +217,7 @@ export class SingleSelectBoxController<TValue> {
         return flat;
     }
 
-    private firstSelectableIndex(groups: ReadonlyArray<SelectGroup<TValue>>): number {
+    private firstSelectableIndex(groups: ReadonlyArray<SelectGroup<TExtra>>): number {
         return this.flattenSelectable(groups).length === 0 ? NO_ACTIVE_INDEX : 0;
     }
 
@@ -202,17 +225,7 @@ export class SingleSelectBoxController<TValue> {
         const flat = this.flattenSelectable(this.computeFilteredGroups());
         if (flat.length === 0) return NO_ACTIVE_INDEX;
         if (this.currentValue === null) return 0;
-        const selectedIndex = flat.findIndex((option) => Object.is(option.value, this.currentValue));
+        const selectedIndex = flat.findIndex((option) => option.value === this.currentValue);
         return selectedIndex === -1 ? 0 : selectedIndex;
-    }
-
-    private findOptionByValue(value: TValue | null): SelectOption<TValue> | null {
-        if (value === null) return null;
-        for (const group of this.allGroups) {
-            for (const option of group.options) {
-                if (Object.is(option.value, value)) return option;
-            }
-        }
-        return null;
     }
 }

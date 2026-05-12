@@ -8,10 +8,10 @@ import {
 /**
  * Light-DOM select box view that wires a `SingleSelectBoxController` into a host element.
  */
-export class SelectBoxView<TValue> {
+export class SelectBoxView<TExtra extends object = object> {
     readonly root: HTMLDivElement;
 
-    private readonly controller: SingleSelectBoxController<TValue>;
+    private readonly controller: SingleSelectBoxController<TExtra>;
     private readonly trigger: HTMLButtonElement;
     private readonly value: HTMLSpanElement;
     private readonly popover: HTMLDivElement;
@@ -19,15 +19,17 @@ export class SelectBoxView<TValue> {
     private readonly list: HTMLDivElement;
 
     private unsubscribeFromStore: (() => void) | null = null;
-    private previousValue: TValue | null = null;
-    private readonly onValueChange: ((value: TValue | null) => void) | undefined;
+    private previousValue: string | null = null;
+    private readonly onValueChange:
+        | ((value: string | null, option: SelectOption<TExtra> | null) => void)
+        | undefined;
     private readonly placeholder: string;
 
-    constructor(config: SingleSelectBoxConfig<TValue> & {
+    constructor(config: SingleSelectBoxConfig<TExtra> & {
         readonly placeholder?: string;
-        readonly onValueChange?: (value: TValue | null) => void;
+        readonly onValueChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
     }) {
-        this.controller = new SingleSelectBoxController<TValue>(config);
+        this.controller = new SingleSelectBoxController<TExtra>(config);
         this.previousValue = this.controller.getState().value;
         this.placeholder = config.placeholder ?? "Select…";
         this.onValueChange = config.onValueChange;
@@ -53,7 +55,7 @@ export class SelectBoxView<TValue> {
         this.root.remove();
     }
 
-    getController(): SingleSelectBoxController<TValue> {
+    getController(): SingleSelectBoxController<TExtra> {
         return this.controller;
     }
 
@@ -171,13 +173,13 @@ export class SelectBoxView<TValue> {
     private readonly handleSnapshotChange = (): void => {
         const snapshot = this.controller.getState();
         this.paint(snapshot);
-        if (!Object.is(snapshot.value, this.previousValue)) {
+        if (snapshot.value !== this.previousValue) {
             this.previousValue = snapshot.value;
-            this.onValueChange?.(snapshot.value);
+            this.onValueChange?.(snapshot.value, snapshot.selectedOption);
         }
     };
 
-    private paint(snapshot: SelectBoxSnapshot<TValue>): void {
+    private paint(snapshot: SelectBoxSnapshot<TExtra>): void {
         this.value.textContent = snapshot.selectedOption?.label ?? this.placeholder;
         this.value.classList.toggle("select-box-placeholder", snapshot.selectedOption === null);
         this.trigger.setAttribute("aria-expanded", String(snapshot.open));
@@ -199,7 +201,7 @@ export class SelectBoxView<TValue> {
         }
     }
 
-    private paintList(snapshot: SelectBoxSnapshot<TValue>): void {
+    private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
         this.list.replaceChildren();
 
         if (snapshot.isEmpty) {
@@ -235,7 +237,7 @@ export class SelectBoxView<TValue> {
         }
     }
 
-    private createOptionButton(option: SelectOption<TValue>, isActive: boolean): HTMLButtonElement {
+    private createOptionButton(option: SelectOption<TExtra>, isActive: boolean): HTMLButtonElement {
         const button = document.createElement("button");
         button.type = "button";
         const classes = ["select-box-option"];

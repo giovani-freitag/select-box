@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import { packageName, SelectBoxController } from "../src/index.js";
 
 class TestHost extends LitElement {
-    selectBox = new SelectBoxController<string>(this, {
+    selectBox = new SelectBoxController(this, {
         options: [
             { value: "a", label: "Apple" },
             { value: "b", label: "Banana" },

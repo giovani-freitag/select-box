@@ -15,18 +15,20 @@ const snapshotId = `${triggerId}-snapshot`;
 <script>
     import "@select-box/webcomponents/define";
     import type { SelectBoxElement } from "@select-box/webcomponents";
-    import { fruits, type Fruit } from "./fruits.ts";
+    import { fruits, type FruitExtra } from "./fruits.ts";
 
     function initializeWebComponentsDemos(): void {
-        const elements = document.querySelectorAll<SelectBoxElement<Fruit>>("select-box[id^='wc-demo-']");
+        const elements = document.querySelectorAll<SelectBoxElement<FruitExtra>>(
+            "select-box[id^='wc-demo-']",
+        );
         for (const element of elements) {
             if (element.dataset["bootstrapped"] === "true") continue;
             element.dataset["bootstrapped"] = "true";
             element.options = fruits;
             const snapshot = document.getElementById(`${element.id}-snapshot`);
             element.addEventListener("change", (event) => {
-                const value = (event.target as SelectBoxElement<Fruit>).value;
-                if (snapshot) snapshot.textContent = value ? JSON.stringify(value) : "null";
+                const option = (event.target as SelectBoxElement<FruitExtra>).selectedOption;
+                if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
             });
         }
     }

@@ -16,9 +16,9 @@ tabs — the preview is the real wrapper running natively on this page.
         import { useState } from "react";
 
         const fruits = [
-            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "lemon", label: "Lemon" },
         ];
 
         export function App() {
@@ -42,9 +42,9 @@ tabs — the preview is the real wrapper running natively on this page.
         import { ref } from "vue";
 
         const fruits = [
-            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "lemon", label: "Lemon" },
         ];
 
         const committed = ref(null);
@@ -69,9 +69,9 @@ tabs — the preview is the real wrapper running natively on this page.
             import "@select-box/lit/define";
 
             const fruits = [
-                { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-                { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-                { value: { id: 3, name: "lemon" }, label: "Lemon" },
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "lemon", label: "Lemon" },
             ];
 
             const element = document.getElementById("fruit");
@@ -91,9 +91,9 @@ tabs — the preview is the real wrapper running natively on this page.
             import "@select-box/webcomponents/define";
 
             const fruits = [
-                { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-                { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-                { value: { id: 3, name: "lemon" }, label: "Lemon" },
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "lemon", label: "Lemon" },
             ];
 
             const element = document.getElementById("fruit");
@@ -111,9 +111,9 @@ tabs — the preview is the real wrapper running natively on this page.
         import jQuery from "jquery";
 
         const fruits = [
-            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "lemon", label: "Lemon" },
         ];
 
         jQuery("#fruit")
@@ -129,14 +129,34 @@ tabs — the preview is the real wrapper running natively on this page.
     </Fragment>
 </FrameworkDemo>
 
+## Option shape
+
+`options` is a flat array. Items that share a `group` key render under one
+heading; items without a `group` fall under whatever `ungroupedLabel` you
+pass (or stay un-headed when omitted).
+
+```ts
+interface SelectOption<TExtra extends object = object> {
+    value: string;          // unique identifier — coerced to string on input
+    label: string;          // shown in the trigger and the list
+    disabled?: boolean;
+    group?: string;
+    // + everything from TExtra rides on the same object
+}
+```
+
+`TExtra` is the optional payload generic — pass it when you want to carry
+extra domain fields (`id`, `slug`, icons, etc.) typed all the way through
+to `onChange` / `selectedOption`.
+
 ## Props / Attributes
 
 | Field | React prop | Custom-element |
 |---|---|---|
 | Options (flat) | `options` | `.options` (property) |
 | Options (grouped) | `groups` | `.groups` (property) |
-| Initial value | `defaultValue` | `.value` (property) |
-| Change callback | `onChange` | `change` event (read `event.target.value`) |
+| Initial value | `defaultValue` (`string \| number`) | `.value` (property — string) |
+| Change callback | `onChange(value, option)` | `change` event (read `event.target.value` / `event.target.selectedOption`) |
 | Placeholder | `placeholder` | `placeholder` attribute |
 | Ungrouped label | `ungroupedLabel` | `ungrouped-label` attribute |
 | Addons | `addons` | `.addons` (property) |

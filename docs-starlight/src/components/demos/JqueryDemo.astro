@@ -15,7 +15,7 @@ const snapshotId = `${triggerId}-snapshot`;
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
-    import { fruits, type Fruit } from "./fruits.ts";
+    import { fruits, type Fruit, type FruitExtra } from "./fruits.ts";
 
     function initializeJqueryDemos(): void {
         const containers = document.querySelectorAll<HTMLElement>("[id^='jq-demo-']");
@@ -25,13 +25,13 @@ const snapshotId = `${triggerId}-snapshot`;
             container.dataset["bootstrapped"] = "true";
             const snapshot = document.getElementById(`${container.id}-snapshot`);
             jQuery(container)
-                .selectBox<Fruit>({
+                .selectBox<FruitExtra>({
                     options: fruits,
                     ungroupedLabel: "Citrus",
                     placeholder: "Search fruits…",
                 })
-                .on("selectbox:valuechange", (_event, value: Fruit | null) => {
-                    if (snapshot) snapshot.textContent = value ? JSON.stringify(value) : "null";
+                .on("change", (_event, _value: string | null, option: Fruit | null) => {
+                    if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
                 });
         }
     }

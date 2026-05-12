@@ -6,8 +6,8 @@ import { fruits, type Fruit } from "./fruits";
 
 const committed = ref<Fruit | null>(null);
 
-function handleChange(value: Fruit | null): void {
-    committed.value = value;
+function handleChange(_value: string | null, option: Fruit | null): void {
+    committed.value = option;
 }
 </script>
 

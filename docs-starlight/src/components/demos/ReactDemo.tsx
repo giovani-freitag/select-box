@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { SelectBox } from "@select-box/react";
 
-import { fruits, type Fruit } from "./fruits.js";
+import { fruits, type Fruit, type FruitExtra } from "./fruits.js";
 
 export default function ReactDemo(): React.ReactElement {
-    const [committedValue, setCommittedValue] = useState<Fruit | null>(null);
+    const [committedOption, setCommittedOption] = useState<Fruit | null>(null);
 
     return (
         <div className="sb-demo-card">
             <label className="sb-demo-label">Pick a fruit</label>
-            <SelectBox<Fruit>
+            <SelectBox<FruitExtra>
                 options={fruits}
                 ungroupedLabel="Citrus"
                 placeholder="Search fruits…"
-                onChange={setCommittedValue}
+                onChange={(_value, option) => setCommittedOption(option)}
             />
             <dl className="sb-demo-snapshot">
                 <dt>Last committed value</dt>
                 <dd>
-                    <code>{committedValue ? JSON.stringify(committedValue) : "null"}</code>
+                    <code>{committedOption ? JSON.stringify(committedOption) : "null"}</code>
                 </dd>
             </dl>
         </div>

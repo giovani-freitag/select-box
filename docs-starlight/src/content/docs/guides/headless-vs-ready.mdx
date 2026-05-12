@@ -3,6 +3,8 @@ title: Headless vs ready
 description: When to use the styled drop-in component vs the headless controller / hook.
 ---
 
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
 The library ships two layers per wrapper. Pick the one that matches
 your component's needs.
 
@@ -12,8 +14,6 @@ The "ready" layer is a drop-in component with sensible defaults. It
 handles trigger, popover, search input, list rendering, keyboard
 navigation, ARIA, and addon-driven UI without you writing any
 select-box-specific markup.
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 <Tabs>
   <TabItem label="React">

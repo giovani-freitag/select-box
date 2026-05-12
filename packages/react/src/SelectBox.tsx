@@ -8,17 +8,21 @@ import { useEffect, useRef, type JSX, type KeyboardEvent, type MouseEvent } from
 
 import { useSelectBox } from "./use-select-box.js";
 
-export interface SelectBoxProps<TValue> {
-    readonly options?: ReadonlyArray<SelectOption<TValue>>;
-    readonly groups?: ReadonlyArray<SelectGroup<TValue>>;
-    /** Initial value. The component owns the selection internally; listen via `onChange`. */
-    readonly defaultValue?: TValue | null;
-    /** Fires whenever the committed value changes (including `clear()`). Matches native `<select>` semantics. */
-    readonly onChange?: (value: TValue | null) => void;
+export interface SelectBoxProps<TExtra extends object = object> {
+    readonly options?: ReadonlyArray<SelectOption<TExtra>>;
+    readonly groups?: ReadonlyArray<SelectGroup<TExtra>>;
+    /** Initial value (coerced to string). The component owns the selection internally; listen via `onChange`. */
+    readonly defaultValue?: string | number | null;
+    /**
+     * Fires whenever the committed value changes (including `clear()`).
+     * Matches native `<select>` semantics: `value` is the canonical string
+     * identifier; `option` is the full option object (with any extra payload).
+     */
+    readonly onChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
     readonly placeholder?: string;
     readonly ungroupedLabel?: string;
-    readonly addons?: ReadonlyArray<SelectBoxAddon<TValue>>;
-    readonly filter?: OptionFilterStrategy<TValue>;
+    readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+    readonly filter?: OptionFilterStrategy<TExtra>;
     /** Extra class applied to the root element. */
     readonly className?: string;
     readonly "aria-label"?: string;
@@ -28,7 +32,7 @@ export interface SelectBoxProps<TValue> {
 /**
  * Default single-select box component; use `useSelectBox()` directly for custom markup.
  */
-export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
+export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<TExtra>): JSX.Element {
     const {
         options,
         groups,
@@ -43,7 +47,7 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
         "aria-labelledby": ariaLabelledby,
     } = props;
 
-    const { state, controller } = useSelectBox<TValue>({
+    const { state, controller } = useSelectBox<TExtra>({
         ...(options !== undefined ? { options } : {}),
         ...(groups !== undefined ? { groups } : {}),
         ...(addons !== undefined ? { addons } : {}),
@@ -52,7 +56,7 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
         initialValue: defaultValue,
     });
 
-    useNotifyOnChange(state.value, onChange);
+    useNotifyOnChange(state.value, state.selectedOption, onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
@@ -152,9 +156,9 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
     );
 }
 
-function renderGroups<TValue>(
-    state: ReturnType<typeof useSelectBox<TValue>>["state"],
-    controller: ReturnType<typeof useSelectBox<TValue>>["controller"],
+function renderGroups<TExtra extends object>(
+    state: ReturnType<typeof useSelectBox<TExtra>>["state"],
+    controller: ReturnType<typeof useSelectBox<TExtra>>["controller"],
     handleOptionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void,
 ): JSX.Element[] {
     let flatIndex = -1;
@@ -174,7 +178,7 @@ function renderGroups<TValue>(
                     .join(" ");
                 return (
                     <button
-                        key={String(option.value)}
+                        key={option.value}
                         type="button"
                         className={classes}
                         disabled={option.disabled}
@@ -191,18 +195,18 @@ function renderGroups<TValue>(
     ));
 }
 
-function useNotifyOnChange<TValue>(
-    currentValue: TValue | null,
-    onChange: ((value: TValue | null) => void) | undefined,
+function useNotifyOnChange<TExtra extends object>(
+    currentValue: string | null,
+    currentOption: SelectOption<TExtra> | null,
+    onChange: ((value: string | null, option: SelectOption<TExtra> | null) => void) | undefined,
 ): void {
     const callbackRef = useRef(onChange);
     callbackRef.current = onChange;
-    const previousValueRef = useRef<TValue | null>(currentValue);
+    const previousValueRef = useRef<string | null>(currentValue);
 
     useEffect(() => {
-        if (Object.is(currentValue, previousValueRef.current)) return;
+        if (currentValue === previousValueRef.current) return;
         previousValueRef.current = currentValue;
-        callbackRef.current?.(currentValue);
-    }, [currentValue]);
+        callbackRef.current?.(currentValue, currentOption);
+    }, [currentValue, currentOption]);
 }
-

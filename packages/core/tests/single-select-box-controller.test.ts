@@ -3,22 +3,24 @@ import { describe, expect, test } from "vitest";
 import { SingleSelectBoxController } from "../src/controllers/single-select-box-controller.js";
 import type { SelectOption } from "../src/types.js";
 
-interface Fruit {
+interface FruitExtra {
     id: number;
     name: string;
 }
 
-const fruits: ReadonlyArray<SelectOption<Fruit>> = [
-    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-    { value: { id: 3, name: "peach" }, label: "Peach", group: "Stone fruits" },
-    { value: { id: 4, name: "plum" }, label: "Plum", group: "Stone fruits", disabled: true },
-    { value: { id: 5, name: "lemon" }, label: "Lemon" },
+type Fruit = SelectOption<FruitExtra>;
+
+const fruits: ReadonlyArray<Fruit> = [
+    { value: "apple", label: "Apple", group: "Pomes", id: 1, name: "apple" },
+    { value: "pear", label: "Pear", group: "Pomes", id: 2, name: "pear" },
+    { value: "peach", label: "Peach", group: "Stone fruits", id: 3, name: "peach" },
+    { value: "plum", label: "Plum", group: "Stone fruits", disabled: true, id: 4, name: "plum" },
+    { value: "lemon", label: "Lemon", id: 5, name: "lemon" },
 ];
 
 describe("SingleSelectBoxController", () => {
     test("normalises flat options into named groups plus a trailing ungrouped bucket", () => {
-        const controller = new SingleSelectBoxController<Fruit>({
+        const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
             ungroupedLabel: "Other",
         });
@@ -35,7 +37,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("opens with the selected option active when there is a current value", () => {
-        const controller = new SingleSelectBoxController<Fruit>({
+        const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
             initialValue: fruits[2]!.value,
         });
@@ -49,7 +51,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("opens with first selectable option active and skips disabled ones during keyboard nav", () => {
-        const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
 
         controller.open();
         controller.moveActive(1);
@@ -64,7 +66,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("setQuery filters across groups and drops empty ones from the snapshot", () => {
-        const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
 
         controller.setQuery("pe");
 
@@ -80,7 +82,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("commitActive selects the active option, closes, clears query, and notifies listeners", () => {
-        const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
         let notifications = 0;
         controller.subscribe(() => {
             notifications += 1;
@@ -92,7 +94,8 @@ describe("SingleSelectBoxController", () => {
 
         const snapshot = controller.getState();
 
-        expect(snapshot.value?.name).toBe("pear");
+        expect(snapshot.value).toBe("pear");
+        expect(snapshot.selectedOption?.name).toBe("pear");
         expect(snapshot.selectedOption?.label).toBe("Pear");
         expect(snapshot.open).toBe(false);
         expect(snapshot.query).toBe("");
@@ -100,7 +103,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("commitOption ignores disabled options", () => {
-        const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
         const disabledOption = fruits.find((option) => option.disabled);
 
         controller.commitOption(disabledOption!);
@@ -108,8 +111,33 @@ describe("SingleSelectBoxController", () => {
         expect(controller.getState().value).toBeNull();
     });
 
+    test("commitValue resolves the option by string value (coerced)", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+
+        controller.commitValue("pear");
+
+        expect(controller.getState().selectedOption?.label).toBe("Pear");
+        expect(controller.getState().value).toBe("pear");
+    });
+
+    test("numeric values are silently coerced to strings", () => {
+        const controller = new SingleSelectBoxController<{ tag: string }>({
+            options: [
+                { value: 1 as unknown as string, label: "One", tag: "uno" },
+                { value: 2 as unknown as string, label: "Two", tag: "dos" },
+            ],
+            initialValue: 2,
+        });
+
+        const snapshot = controller.getState();
+
+        expect(snapshot.value).toBe("2");
+        expect(snapshot.selectedOption?.value).toBe("2");
+        expect(snapshot.selectedOption?.tag).toBe("dos");
+    });
+
     test("isEmpty reflects when filter yields no matches", () => {
-        const controller = new SingleSelectBoxController<Fruit>({ options: fruits });
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
 
         controller.setQuery("xyz");
 
@@ -121,7 +149,7 @@ describe("SingleSelectBoxController", () => {
     });
 
     test("clear resets value and query", () => {
-        const controller = new SingleSelectBoxController<Fruit>({
+        const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
             initialValue: fruits[0]!.value,
         });

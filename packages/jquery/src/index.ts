@@ -23,9 +23,13 @@ export const packageName = "@select-box/jquery" as const;
 
 declare global {
     interface JQuery<TElement = HTMLElement> {
-        selectBox<TValue>(config: SelectBoxPluginConfig<TValue>): JQuery<TElement>;
+        selectBox<TExtra extends object = object>(
+            config: SelectBoxPluginConfig<TExtra>,
+        ): JQuery<TElement>;
         selectBox(method: "open" | "close" | "toggle" | "clear" | "destroy"): JQuery<TElement>;
-        selectBox<TValue>(method: "controller"): SingleSelectBoxController<TValue> | undefined;
+        selectBox<TExtra extends object = object>(
+            method: "controller",
+        ): SingleSelectBoxController<TExtra> | undefined;
     }
 }
 

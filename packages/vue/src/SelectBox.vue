@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="TValue">
+<script setup lang="ts" generic="TExtra extends object = object">
 import type {
     OptionFilterStrategy,
     SelectBoxAddon,
@@ -9,20 +9,22 @@ import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch }
 
 import { useSelectBox } from "./use-select-box.js";
 
-export interface SelectBoxProps<TValue> {
-    options?: ReadonlyArray<SelectOption<TValue>>;
-    groups?: ReadonlyArray<SelectGroup<TValue>>;
-    defaultValue?: TValue | null;
+export interface SelectBoxProps<TExtra extends object = object> {
+    options?: ReadonlyArray<SelectOption<TExtra>>;
+    groups?: ReadonlyArray<SelectGroup<TExtra>>;
+    defaultValue?: string | number | null;
     placeholder?: string;
     ungroupedLabel?: string;
-    addons?: ReadonlyArray<SelectBoxAddon<TValue>>;
-    filter?: OptionFilterStrategy<TValue>;
+    addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+    filter?: OptionFilterStrategy<TExtra>;
 }
 
-const props = withDefaults(defineProps<SelectBoxProps<TValue>>(), { defaultValue: null });
-const emit = defineEmits<{ (event: "change", value: TValue | null): void }>();
+const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), { defaultValue: null });
+const emit = defineEmits<{
+    (event: "change", value: string | null, option: SelectOption<TExtra> | null): void;
+}>();
 
-const { state, controller } = useSelectBox<TValue>({
+const { state, controller } = useSelectBox<TExtra>({
     ...(props.options !== undefined ? { options: props.options } : {}),
     ...(props.groups !== undefined ? { groups: props.groups } : {}),
     ...(props.addons !== undefined ? { addons: props.addons } : {}),
@@ -43,8 +45,8 @@ watch(
     },
 );
 
-const flatIndexByOption = computed<Map<SelectOption<TValue>, number>>(() => {
-    const map = new Map<SelectOption<TValue>, number>();
+const flatIndexByOption = computed<Map<SelectOption<TExtra>, number>>(() => {
+    const map = new Map<SelectOption<TExtra>, number>();
     let nextIndex = 0;
     for (const group of state.value.filteredGroups) {
         if (group.disabled) continue;
@@ -57,13 +59,13 @@ const flatIndexByOption = computed<Map<SelectOption<TValue>, number>>(() => {
     return map;
 });
 
-let previousValue: TValue | null = state.value.value;
+let previousValue: string | null = state.value.value;
 watch(
     () => state.value.value,
     (next) => {
-        if (Object.is(next, previousValue)) return;
+        if (next === previousValue) return;
         previousValue = next;
-        emit("change", next);
+        emit("change", next, state.value.selectedOption);
     },
 );
 
@@ -105,11 +107,11 @@ function handleKeyDown(event: KeyboardEvent): void {
     }
 }
 
-function isOptionActive(option: SelectOption<TValue>): boolean {
+function isOptionActive(option: SelectOption<TExtra>): boolean {
     return flatIndexByOption.value.get(option) === state.value.activeIndex;
 }
 
-function optionClasses(option: SelectOption<TValue>): string {
+function optionClasses(option: SelectOption<TExtra>): string {
     return [
         "select-box-option",
         isOptionActive(option) ? "select-box-option-active" : null,

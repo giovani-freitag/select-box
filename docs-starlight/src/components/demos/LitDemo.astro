@@ -14,12 +14,14 @@ const snapshotId = `${triggerId}-snapshot`;
 
 <script>
     import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
-    import { fruits, type Fruit } from "./fruits.ts";
+    import { fruits, type FruitExtra } from "./fruits.ts";
 
     defineSelectBoxElement("select-box-lit");
 
     function initializeLitDemos(): void {
-        const elements = document.querySelectorAll<SelectBox<Fruit>>("select-box-lit[id^='lit-demo-']");
+        const elements = document.querySelectorAll<SelectBox<FruitExtra>>(
+            "select-box-lit[id^='lit-demo-']",
+        );
         for (const element of elements) {
             if (element.dataset["bootstrapped"] === "true") continue;
             element.dataset["bootstrapped"] = "true";
@@ -28,7 +30,11 @@ const snapshotId = `${triggerId}-snapshot`;
             element.ungroupedLabel = "Citrus";
             const snapshot = document.getElementById(`${element.id}-snapshot`);
             element.addEventListener("change", () => {
-                if (snapshot) snapshot.textContent = element.value ? JSON.stringify(element.value) : "null";
+                if (snapshot) {
+                    snapshot.textContent = element.selectedOption
+                        ? JSON.stringify(element.selectedOption)
+                        : "null";
+                }
             });
         }
     }

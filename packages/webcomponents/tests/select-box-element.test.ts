@@ -2,15 +2,15 @@ import { beforeAll, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBoxElement } from "../src/index.js";
 
-interface Fruit {
+interface FruitExtra {
     readonly id: number;
     readonly name: string;
 }
 
 const fruits = [
-    { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
-    { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
-    { value: { id: 3, name: "lemon" }, label: "Lemon" },
+    { value: "apple", label: "Apple", group: "Pomes", id: 1, name: "apple" },
+    { value: "pear", label: "Pear", group: "Pomes", id: 2, name: "pear" },
+    { value: "lemon", label: "Lemon", id: 3, name: "lemon" },
 ];
 
 beforeAll(() => {
@@ -19,7 +19,7 @@ beforeAll(() => {
 
 describe("<select-box>", () => {
     test("renders trigger with placeholder when no value is selected", () => {
-        const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
+        const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
         element.setAttribute("placeholder", "Pick a fruit");
         element.options = fruits;
         document.body.append(element);
@@ -34,7 +34,7 @@ describe("<select-box>", () => {
     });
 
     test("opens the popover and lists grouped options when toggled", () => {
-        const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
+        const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
         element.options = fruits;
         element.setAttribute("ungrouped-label", "Other");
         document.body.append(element);
@@ -58,13 +58,13 @@ describe("<select-box>", () => {
     });
 
     test("dispatches change Event when an option is committed; value is on the element", () => {
-        const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
+        const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
         element.options = fruits;
         document.body.append(element);
 
-        const observed: Array<Fruit | null> = [];
+        const observed: Array<string | null> = [];
         element.addEventListener("change", (event) => {
-            observed.push((event.target as SelectBoxElement<Fruit>).value);
+            observed.push((event.target as SelectBoxElement<FruitExtra>).value);
         });
 
         element.shadowRoot!.querySelector<HTMLButtonElement>(".trigger")?.click();
@@ -72,8 +72,9 @@ describe("<select-box>", () => {
         firstOption?.click();
 
         expect(observed).toHaveLength(1);
-        expect(observed[0]?.name).toBe("apple");
-        expect(element.value?.name).toBe("apple");
+        expect(observed[0]).toBe("apple");
+        expect(element.value).toBe("apple");
+        expect(element.selectedOption?.name).toBe("apple");
 
         element.remove();
     });
@@ -85,7 +86,7 @@ describe("<select-box>", () => {
     });
 
     test("exposes the ElementInternals validity surface", () => {
-        const element = document.createElement("select-box") as SelectBoxElement<Fruit>;
+        const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
         element.options = fruits;
         document.body.append(element);
 

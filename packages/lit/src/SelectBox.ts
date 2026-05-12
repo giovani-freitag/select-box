@@ -11,7 +11,7 @@ import { SelectBoxController } from "./select-box-controller.js";
 /**
  * Form-associated Lit select box; consumers register it under a tag of their choice.
  */
-export class SelectBox<TValue = unknown> extends LitElement {
+export class SelectBox<TExtra extends object = object> extends LitElement {
     static readonly formAssociated = true;
 
     static override readonly properties = {
@@ -27,10 +27,10 @@ export class SelectBox<TValue = unknown> extends LitElement {
         readOnly: { type: Boolean, reflect: true, attribute: "readonly" },
     } as const;
 
-    options?: ReadonlyArray<SelectOption<TValue>>;
-    groups?: ReadonlyArray<SelectGroup<TValue>>;
-    addons?: ReadonlyArray<SelectBoxAddon<TValue>>;
-    filter?: OptionFilterStrategy<TValue>;
+    options?: ReadonlyArray<SelectOption<TExtra>>;
+    groups?: ReadonlyArray<SelectGroup<TExtra>>;
+    addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+    filter?: OptionFilterStrategy<TExtra>;
     placeholder = "";
     ungroupedLabel = "";
     name = "";
@@ -39,11 +39,19 @@ export class SelectBox<TValue = unknown> extends LitElement {
     readOnly = false;
 
     private readonly internals = this.attachInternals();
-    private controller: SelectBoxController<TValue> | null = null;
-    private previousValue: TValue | null = null;
+    private controller: SelectBoxController<TExtra> | null = null;
+    private previousValue: string | null = null;
 
-    get value(): TValue | null {
+    get value(): string | null {
         return this.controller?.state.value ?? null;
+    }
+
+    /**
+     * Full option object for the current value, including any extra payload.
+     * `null` when nothing is selected.
+     */
+    get selectedOption(): SelectOption<TExtra> | null {
+        return this.controller?.state.selectedOption ?? null;
     }
 
     get form(): HTMLFormElement | null {
@@ -108,16 +116,16 @@ export class SelectBox<TValue = unknown> extends LitElement {
     protected override updated(): void {
         if (!this.controller) return;
         const snapshot = this.controller.state;
-        this.internals.setFormValue(encodeFormValue(snapshot.value));
+        this.internals.setFormValue(snapshot.value ?? "");
         this.syncValidity();
-        if (!Object.is(snapshot.value, this.previousValue)) {
+        if (snapshot.value !== this.previousValue) {
             this.previousValue = snapshot.value;
             this.dispatchEvent(new Event("change", { bubbles: true }));
         }
     }
 
     private rebuildController(): void {
-        this.controller = new SelectBoxController<TValue>(this, {
+        this.controller = new SelectBoxController<TExtra>(this, {
             ...(this.options !== undefined ? { options: this.options } : {}),
             ...(this.groups !== undefined ? { groups: this.groups } : {}),
             ...(this.addons !== undefined ? { addons: this.addons } : {}),
@@ -219,7 +227,7 @@ export class SelectBox<TValue = unknown> extends LitElement {
         `;
     }
 
-    private renderPopover(state: NonNullable<SelectBoxController<TValue>["state"]>): TemplateResult {
+    private renderPopover(state: NonNullable<SelectBoxController<TExtra>["state"]>): TemplateResult {
         return html`
             <div class="select-box-popover" part="popover" role="listbox" data-select-popover>
                 <input
@@ -242,7 +250,7 @@ export class SelectBox<TValue = unknown> extends LitElement {
     }
 
     private renderGroups(
-        groups: ReadonlyArray<SelectGroup<TValue>>,
+        groups: ReadonlyArray<SelectGroup<TExtra>>,
         activeIndex: number,
     ): TemplateResult[] {
         let flatIndex = -1;
@@ -274,10 +282,4 @@ export class SelectBox<TValue = unknown> extends LitElement {
             `,
         );
     }
-}
-
-function encodeFormValue(value: unknown): string {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "string") return value;
-    return JSON.stringify(value);
 }

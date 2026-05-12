@@ -1,15 +1,16 @@
-import type { SingleSelectBoxConfig, SingleSelectBoxController } from "@select-box/core";
+import type { SelectOption, SingleSelectBoxConfig, SingleSelectBoxController } from "@select-box/core";
 import type JQueryStatic from "jquery";
 
 import { SelectBoxView } from "./select-box-view.js";
 
-export interface SelectBoxPluginConfig<TValue> extends SingleSelectBoxConfig<TValue> {
+export interface SelectBoxPluginConfig<TExtra extends object = object>
+    extends SingleSelectBoxConfig<TExtra> {
     readonly placeholder?: string;
 }
 
 type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller";
 
-const VIEWS = new WeakMap<HTMLElement, SelectBoxView<unknown>>();
+const VIEWS = new WeakMap<HTMLElement, SelectBoxView>();
 
 /**
  * Registers `$.fn.selectBox` on the supplied jQuery instance; idempotent.
@@ -17,47 +18,46 @@ const VIEWS = new WeakMap<HTMLElement, SelectBoxView<unknown>>();
 export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
     if (typeof (jq.fn as { selectBox?: unknown }).selectBox === "function") return;
 
-    function selectBoxPlugin<TValue>(
+    function selectBoxPlugin<TExtra extends object = object>(
         this: JQuery,
-        configOrMethod: SelectBoxPluginConfig<TValue> | Method,
-    ): JQuery | SingleSelectBoxController<TValue> | undefined {
+        configOrMethod: SelectBoxPluginConfig<TExtra> | Method,
+    ): JQuery | SingleSelectBoxController<TExtra> | undefined {
         if (typeof configOrMethod === "string") {
-            return invokeMethod<TValue>(this, configOrMethod, jq);
+            return invokeMethod<TExtra>(this, configOrMethod);
         }
-        return initialize<TValue>(this, configOrMethod, jq);
+        return initialize<TExtra>(this, configOrMethod, jq);
     }
 
     (jq.fn as unknown as { selectBox: typeof selectBoxPlugin }).selectBox = selectBoxPlugin;
 }
 
-function initialize<TValue>(
+function initialize<TExtra extends object>(
     collection: JQuery,
-    config: SelectBoxPluginConfig<TValue>,
+    config: SelectBoxPluginConfig<TExtra>,
     jq: typeof JQueryStatic,
 ): JQuery {
     collection.each((_index, host) => {
         destroyExistingView(host);
-        const view = new SelectBoxView<TValue>({
+        const view = new SelectBoxView<TExtra>({
             ...config,
-            onValueChange: (value) => {
-                jq(host).trigger("change", [value]);
+            onValueChange: (value: string | null, option: SelectOption<TExtra> | null) => {
+                jq(host).trigger("change", [value, option]);
             },
         });
         host.replaceChildren(view.root);
-        VIEWS.set(host, view as SelectBoxView<unknown>);
+        VIEWS.set(host, view as unknown as SelectBoxView);
     });
     return collection;
 }
 
-function invokeMethod<TValue>(
+function invokeMethod<TExtra extends object>(
     collection: JQuery,
     method: Method,
-    _jq: typeof JQueryStatic,
-): JQuery | SingleSelectBoxController<TValue> | undefined {
+): JQuery | SingleSelectBoxController<TExtra> | undefined {
     if (method === "controller") {
         const first = collection.get(0);
         if (!first) return undefined;
-        const view = VIEWS.get(first) as SelectBoxView<TValue> | undefined;
+        const view = VIEWS.get(first) as SelectBoxView<TExtra> | undefined;
         return view?.getController();
     }
 
