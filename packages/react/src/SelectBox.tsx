@@ -1,10 +1,8 @@
 import {
-    findRowIndexForActiveIndex,
-    flattenGroupsForVirtualization,
     ListVirtualizer,
+    SelectBoxRowModel,
     type OptionFilterStrategy,
     type SelectBoxAddon,
-    type SelectBoxRow,
     type SelectGroup,
     type SelectOption,
 } from "@select-box/core";
@@ -194,21 +192,21 @@ function VirtualizedList<TExtra extends object>({
 }: VirtualizedListProps<TExtra>): JSX.Element {
     const listRef = useRef<HTMLDivElement>(null);
 
-    const rows = useMemo(() => flattenGroupsForVirtualization(groups), [groups]);
+    const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>(groups), [groups]);
 
     const [virtualizer] = useState(
         () =>
             new ListVirtualizer({
-                rowCount: rows.length,
-                rowHeight: makeRowHeight(rows),
+                rowCount: rowModel.length,
+                rowHeight: (index) => rowHeightAt(rowModel, index),
                 viewportHeight: LIST_VIEWPORT_HEIGHT,
             }),
     );
 
     useEffect(() => {
-        virtualizer.setRowCount(rows.length);
-        virtualizer.setRowHeight(makeRowHeight(rows));
-    }, [virtualizer, rows]);
+        virtualizer.setRowCount(rowModel.length);
+        virtualizer.setRowHeight((index) => rowHeightAt(rowModel, index));
+    }, [virtualizer, rowModel]);
 
     const subscribe = useCallback(
         (listener: () => void) => virtualizer.subscribe(listener),
@@ -229,13 +227,13 @@ function VirtualizedList<TExtra extends object>({
         };
     }, [virtualizer]);
 
+    const activeRowIndex = rowModel.findRowIndexForActiveIndex(activeIndex);
+
     useEffect(() => {
         const list = listRef.current;
-        if (!list) return;
-        const targetRow = findRowIndexForActiveIndex(rows, activeIndex);
-        if (targetRow < 0) return;
-        const targetOffset = virtualizer.getOffset(targetRow);
-        const targetHeight = rows[targetRow]!.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+        if (!list || activeRowIndex < 0) return;
+        const targetOffset = virtualizer.getOffset(activeRowIndex);
+        const targetHeight = rowHeightAt(rowModel, activeRowIndex);
         const viewportTop = list.scrollTop;
         const viewportBottom = viewportTop + list.clientHeight;
         if (targetOffset < viewportTop) {
@@ -243,7 +241,7 @@ function VirtualizedList<TExtra extends object>({
         } else if (targetOffset + targetHeight > viewportBottom) {
             list.scrollTop = targetOffset + targetHeight - list.clientHeight;
         }
-    }, [virtualizer, rows, activeIndex]);
+    }, [virtualizer, rowModel, activeRowIndex]);
 
     return (
         <div
@@ -254,7 +252,8 @@ function VirtualizedList<TExtra extends object>({
         >
             <div style={{ paddingTop: range.paddingTop, paddingBottom: range.paddingBottom }}>
                 {range.visibleRows.map((virtualRow) => {
-                    const row = rows[virtualRow.index]!;
+                    const row = rowModel.getRowAt(virtualRow.index);
+                    if (!row) return null;
                     if (row.kind === "header") {
                         return (
                             <div
@@ -267,7 +266,7 @@ function VirtualizedList<TExtra extends object>({
                             </div>
                         );
                     }
-                    const isActive = isOptionActive(rows, virtualRow.index, activeIndex);
+                    const isActive = virtualRow.index === activeRowIndex;
                     const classes = [
                         "select-box-option",
                         isActive ? "select-box-option-active" : null,
@@ -296,19 +295,11 @@ function VirtualizedList<TExtra extends object>({
     );
 }
 
-function makeRowHeight<TExtra extends object>(
-    rows: ReadonlyArray<SelectBoxRow<TExtra>>,
-): (index: number) => number {
-    return (index) => (rows[index]?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT);
-}
-
-function isOptionActive<TExtra extends object>(
-    rows: ReadonlyArray<SelectBoxRow<TExtra>>,
-    rowIndex: number,
-    activeIndex: number,
-): boolean {
-    if (activeIndex < 0) return false;
-    return findRowIndexForActiveIndex(rows, activeIndex) === rowIndex;
+function rowHeightAt<TExtra extends object>(
+    rowModel: SelectBoxRowModel<TExtra>,
+    index: number,
+): number {
+    return rowModel.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
 }
 
 function useNotifyOnChange<TExtra extends object>(

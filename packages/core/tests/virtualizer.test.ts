@@ -1,10 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import {
-    flattenGroupsForVirtualization,
-    ListVirtualizer,
-} from "../src/virtualizer/index.js";
-import type { SelectGroup } from "../src/types.js";
+import { ListVirtualizer } from "../src/virtualizer/index.js";
 
 describe("ListVirtualizer (fixed row height)", () => {
     test("reports the empty range when rowCount is 0", () => {
@@ -138,41 +134,3 @@ describe("ListVirtualizer (variable row height)", () => {
     });
 });
 
-describe("flattenGroupsForVirtualization", () => {
-    const groups: ReadonlyArray<SelectGroup> = [
-        {
-            key: "pomes",
-            label: "Pomes",
-            options: [
-                { value: "apple", label: "Apple" },
-                { value: "pear", label: "Pear" },
-            ],
-        },
-        {
-            key: "__ungrouped__",
-            label: "",
-            options: [{ value: "lemon", label: "Lemon" }],
-        },
-    ];
-
-    test("emits a header row followed by each option in order", () => {
-        const rows = flattenGroupsForVirtualization(groups);
-
-        const summary = rows.map((row) => (row.kind === "header" ? `H:${row.group.label}` : `O:${row.option.label}`));
-        expect(summary).toEqual(["H:Pomes", "O:Apple", "O:Pear", "O:Lemon"]);
-    });
-
-    test("skips headers when includeHeaders is false", () => {
-        const rows = flattenGroupsForVirtualization(groups, { includeHeaders: false });
-
-        expect(rows.every((row) => row.kind === "option")).toBe(true);
-        expect(rows).toHaveLength(3);
-    });
-
-    test("emits empty-label headers when skipEmptyHeaders is false", () => {
-        const rows = flattenGroupsForVirtualization(groups, { skipEmptyHeaders: false });
-
-        const headers = rows.filter((row) => row.kind === "header");
-        expect(headers).toHaveLength(2);
-    });
-});

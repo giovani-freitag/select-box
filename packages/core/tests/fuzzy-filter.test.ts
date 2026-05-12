@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { FuzzyFilterStrategy, fuzzyScore } from "../src/filter.js";
+import { FuzzyFilterStrategy } from "../src/filter.js";
 import type { SelectOption } from "../src/types.js";
 
 const options: ReadonlyArray<SelectOption> = [
@@ -66,18 +66,20 @@ describe("FuzzyFilterStrategy", () => {
     });
 });
 
-describe("fuzzyScore", () => {
+describe("FuzzyFilterStrategy.score", () => {
+    const strategy = new FuzzyFilterStrategy();
+
     test("returns null when the query has unmatched characters", () => {
-        expect(fuzzyScore("xyz", "apple")).toBeNull();
+        expect(strategy.score("apple", "xyz")).toBeNull();
     });
 
     test("returns 0 for an empty query", () => {
-        expect(fuzzyScore("", "apple")).toBe(0);
+        expect(strategy.score("apple", "")).toBe(0);
     });
 
     test("scores a prefix match higher than the same query deep in the string", () => {
-        const prefix = fuzzyScore("app", "apple");
-        const suffix = fuzzyScore("app", "pineapple");
+        const prefix = strategy.score("apple", "app");
+        const suffix = strategy.score("pineapple", "app");
 
         expect(prefix).not.toBeNull();
         expect(suffix).not.toBeNull();
@@ -85,8 +87,8 @@ describe("fuzzyScore", () => {
     });
 
     test("rewards consecutive matches over scattered ones", () => {
-        const consecutive = fuzzyScore("abc", "abcdef");
-        const scattered = fuzzyScore("abc", "a_b_c_d");
+        const consecutive = strategy.score("abcdef", "abc");
+        const scattered = strategy.score("a_b_c_d", "abc");
 
         expect(consecutive).not.toBeNull();
         expect(scattered).not.toBeNull();
@@ -94,12 +96,12 @@ describe("fuzzyScore", () => {
     });
 
     test("treats space, hyphen, underscore, slash, and dot as word boundaries", () => {
-        const boundaries = ["red apple", "red-apple", "red_apple", "red/apple", "red.apple"];
+        const labels = ["red apple", "red-apple", "red_apple", "red/apple", "red.apple"];
 
-        for (const haystack of boundaries) {
-            expect(fuzzyScore("a", haystack)).not.toBeNull();
-            const wordStart = fuzzyScore("a", haystack)!;
-            const continuation = fuzzyScore("e", haystack)!;
+        for (const label of labels) {
+            expect(strategy.score(label, "a")).not.toBeNull();
+            const wordStart = strategy.score(label, "a")!;
+            const continuation = strategy.score(label, "e")!;
             expect(wordStart).toBeGreaterThan(continuation);
         }
     });

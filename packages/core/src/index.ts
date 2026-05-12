@@ -1,17 +1,12 @@
 export { SingleSelectBoxController } from "./controllers/single-select-box-controller.js";
-export { FuzzyFilterStrategy, SubstringFilterStrategy, fuzzyScore } from "./filter.js";
-export { indexOptionsByValue, normalizeOptionsToGroups, UNGROUPED_KEY } from "./normalize.js";
+export { FuzzyFilterStrategy, SubstringFilterStrategy } from "./filter.js";
+export { SelectBoxRowModel } from "./row-model.js";
+export type { SelectBoxRow, SelectBoxRowModelOptions } from "./row-model.js";
 export { Store } from "./store.js";
 export type { StoreListener } from "./store.js";
-export {
-    findRowIndexForActiveIndex,
-    flattenGroupsForVirtualization,
-    ListVirtualizer,
-} from "./virtualizer/index.js";
+export { ListVirtualizer } from "./virtualizer/index.js";
 export type {
-    FlattenGroupsOptions,
     ListVirtualizerConfig,
-    SelectBoxRow,
     VirtualRange,
     VirtualRow,
 } from "./virtualizer/index.js";

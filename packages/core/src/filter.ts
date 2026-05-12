@@ -17,6 +17,11 @@ export class SubstringFilterStrategy<TExtra extends object = object>
     }
 }
 
+const WORD_BOUNDARY_PATTERN = /[\s\-_./]/;
+const CONSECUTIVE_BONUS = 8;
+const WORD_START_BONUS = 10;
+const PREFIX_PENALTY_PER_CHAR = 0.5;
+
 /**
  * Fuzzy subsequence filter: every query character must appear in `label`
  * in order (gaps allowed). Surviving options are scored and returned
@@ -45,7 +50,7 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
         const scored: Array<{ option: SelectOption<TExtra>; score: number; index: number }> = [];
         for (let index = 0; index < options.length; index += 1) {
             const option = options[index]!;
-            const score = fuzzyScore(needle, option.label.toLowerCase());
+            const score = this.scoreNeedleAgainstHaystack(needle, option.label.toLowerCase());
             if (score === null) continue;
             scored.push({ option, score, index });
         }
@@ -57,48 +62,51 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
 
         return scored.map((entry) => entry.option);
     }
-}
 
-const WORD_BOUNDARY_PATTERN = /[\s\-_./]/;
-const CONSECUTIVE_BONUS = 8;
-const WORD_START_BONUS = 10;
-const PREFIX_PENALTY_PER_CHAR = 0.5;
-
-/**
- * Returns a relative match score for `needle` against `haystack`, or
- * `null` when `needle` is not a subsequence of `haystack`. Both inputs
- * are expected lower-cased.
- */
-function fuzzyScore(needle: string, haystack: string): number | null {
-    if (needle.length === 0) return 0;
-    if (needle.length > haystack.length) return null;
-
-    let queryIndex = 0;
-    let score = 0;
-    let consecutive = 0;
-    let firstMatchIndex = -1;
-
-    for (let position = 0; position < haystack.length; position += 1) {
-        if (haystack[position] !== needle[queryIndex]) {
-            consecutive = 0;
-            continue;
-        }
-        if (firstMatchIndex === -1) firstMatchIndex = position;
-
-        const previous = haystack[position - 1];
-        const isWordStart = position === 0 || (previous !== undefined && WORD_BOUNDARY_PATTERN.test(previous));
-        if (isWordStart) score += WORD_START_BONUS;
-
-        consecutive += 1;
-        if (consecutive > 1) score += CONSECUTIVE_BONUS * (consecutive - 1);
-
-        queryIndex += 1;
-        if (queryIndex === needle.length) break;
+    /**
+     * Returns the relative match score for `query` against `label`, or
+     * `null` when `query` is not a subsequence of `label`. Public surface
+     * so consumers building custom UI (highlighted labels, popover sort
+     * indicators) can inspect the same ranking the filter applies.
+     *
+     * Lower-cases both inputs internally to mirror `filter`'s behaviour.
+     */
+    score(label: string, query: string): number | null {
+        const trimmed = query.trim();
+        if (trimmed === "") return 0;
+        return this.scoreNeedleAgainstHaystack(trimmed.toLowerCase(), label.toLowerCase());
     }
 
-    if (queryIndex < needle.length) return null;
-    score -= firstMatchIndex * PREFIX_PENALTY_PER_CHAR;
-    return score;
-}
+    private scoreNeedleAgainstHaystack(needle: string, haystack: string): number | null {
+        if (needle.length === 0) return 0;
+        if (needle.length > haystack.length) return null;
 
-export { fuzzyScore };
+        let queryIndex = 0;
+        let score = 0;
+        let consecutive = 0;
+        let firstMatchIndex = -1;
+
+        for (let position = 0; position < haystack.length; position += 1) {
+            if (haystack[position] !== needle[queryIndex]) {
+                consecutive = 0;
+                continue;
+            }
+            if (firstMatchIndex === -1) firstMatchIndex = position;
+
+            const previous = haystack[position - 1];
+            const isWordStart =
+                position === 0 || (previous !== undefined && WORD_BOUNDARY_PATTERN.test(previous));
+            if (isWordStart) score += WORD_START_BONUS;
+
+            consecutive += 1;
+            if (consecutive > 1) score += CONSECUTIVE_BONUS * (consecutive - 1);
+
+            queryIndex += 1;
+            if (queryIndex === needle.length) break;
+        }
+
+        if (queryIndex < needle.length) return null;
+        score -= firstMatchIndex * PREFIX_PENALTY_PER_CHAR;
+        return score;
+    }
+}
