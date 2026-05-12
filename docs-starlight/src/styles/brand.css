@@ -1,8 +1,9 @@
 /* ---------- Brand identity — overrides on top of Starlight tokens ---------- */
 
 :root {
-    /* Vite-tuned dimensions: 272px sidebar, 688px content, 256px aside,
-     * everything centered inside a 1440px shell. */
+    /* Boxed shell: 1440px outer, 272px sidebar, 1152px content max (matches VitePress feel). */
+    --sb-shell-max-width: 90rem;
+    --sb-landing-max-width: 72rem; /* 1152px */
     --sl-sidebar-width: 272px;
 
     --sb-brand-1: #3b82f6;
@@ -57,6 +58,7 @@
     --sl-color-bg-sidebar: #f8fafc;
     --sl-color-hairline: rgba(15, 23, 42, 0.08);
     --sl-color-hairline-light: rgba(15, 23, 42, 0.04);
+    --sl-color-hairline-shade: rgba(15, 23, 42, 0.12);
 
     --sl-color-text: #0f172a;
     --sl-color-text-accent: #2563eb;
@@ -84,23 +86,37 @@ header.header {
     border-bottom: 1px solid var(--sl-color-hairline);
 }
 
-/* Center the search button inside its header column. */
-.header > .sl-flex:nth-child(2) {
-    justify-content: center;
+/* ---------- Splash template: full-bleed landing ---------- */
+
+.sb-layout.is-splash .sb-doc {
+    padding: 0;
 }
 
-/* ---------- Splash template tweaks ---------- */
-
-.page.splash > .main-frame > .main-pane {
+.sb-layout.is-splash .sb-doc-container,
+.sb-layout.is-splash .sb-doc-content-inner,
+.sb-layout.is-splash .content-panel,
+.sb-layout.is-splash .content-panel .sl-container {
     max-width: none;
-}
-
-.page.splash > .main-frame .content-panel {
+    margin-inline: 0;
     padding-inline: 0;
 }
 
-.page.splash main {
-    padding-top: 0;
+.sb-layout.is-splash .content-panel {
+    padding-block: 0;
+    border: 0;
+}
+
+.sb-layout.is-splash .content-panel .sl-container > * + * {
+    margin-top: 0;
+}
+
+/* The PageTitle override returns null on splash, leaving an empty ContentPanel
+ * before the hero. Hide it (and drop the border-top on the next sibling). */
+.sb-layout.is-splash .content-panel:has(> .sl-container:not(:has(*))) {
+    display: none;
+}
+.sb-layout.is-splash .content-panel:has(> .sl-container:not(:has(*))) + .content-panel {
+    border-top: 0;
 }
 
 /* ---------- Inline brand utilities ---------- */
@@ -162,35 +178,61 @@ header.header {
 
 /* ---------- Landing layout ---------- */
 
-.sb-landing-demo,
-.sb-landing-features {
-    max-width: 1180px;
-    margin: 2rem auto;
-    padding: 0 1.25rem;
+.sb-landing {
+    display: flex;
+    flex-direction: column;
 }
 
-.sb-landing-features {
-    margin-top: 4rem;
-    margin-bottom: 4rem;
+.sb-landing-section {
+    width: 100%;
+    max-width: var(--sb-landing-max-width);
+    margin: 0 auto;
+    padding: clamp(3rem, 8vw, 5.5rem) 1.5rem;
+    box-sizing: border-box;
+}
+
+.sb-landing-section + .sb-landing-section {
+    border-top: 1px dashed var(--sl-color-hairline-light, var(--sl-color-hairline));
+}
+
+.sb-landing-section--demo {
+    padding-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+.sb-landing-section--features {
+    padding-bottom: clamp(4rem, 10vw, 7rem);
 }
 
 .sb-section-head {
     text-align: center;
     max-width: 720px;
-    margin: 0 auto 2rem;
+    margin: 0 auto 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.sb-section-eyebrow {
+    align-self: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sl-color-text-accent);
 }
 
 .sb-section-head h2 {
-    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-size: clamp(1.65rem, 3.2vw, 2.25rem);
     line-height: 1.2;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     font-weight: 700;
-    margin: 0 0 0.5rem;
+    margin: 0;
+    color: var(--sl-color-white);
 }
 
 .sb-section-head p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.02rem;
     color: var(--sl-color-gray-2);
-    line-height: 1.55;
+    line-height: 1.6;
 }

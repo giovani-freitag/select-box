@@ -1,0 +1,148 @@
+---
+import config from "virtual:starlight/user-config";
+
+import LanguageSelect from "virtual:starlight/components/LanguageSelect";
+import Search from "virtual:starlight/components/Search";
+import SiteTitle from "virtual:starlight/components/SiteTitle";
+import SocialIcons from "virtual:starlight/components/SocialIcons";
+import ThemeSelect from "virtual:starlight/components/ThemeSelect";
+
+const shouldRenderSearch =
+    config.pagefind || config.components.Search !== "@astrojs/starlight/components/Search.astro";
+
+const topNav = [
+    { label: "Guide", href: "/guides/getting-started/", match: ["/guides/"] },
+    { label: "Components", href: "/components/select-box/", match: ["/components/"] },
+    { label: "API", href: "/api/", match: ["/api/"] },
+] as const;
+
+const currentPath = Astro.url.pathname;
+const isCurrent = (matches: ReadonlyArray<string>): boolean =>
+    matches.some((prefix) => currentPath.startsWith(prefix));
+---
+
+<div class="header sl-flex">
+    <div class="title-wrapper sl-flex">
+        <SiteTitle />
+    </div>
+
+    <nav class="sb-topnav" aria-label="Primary">
+        <ul class="sb-topnav-list">
+            {
+                topNav.map((item) => (
+                    <li>
+                        <a
+                            href={item.href}
+                            class:list={["sb-topnav-link", { current: isCurrent(item.match) }]}
+                            aria-current={isCurrent(item.match) ? "page" : undefined}
+                        >
+                            {item.label}
+                        </a>
+                    </li>
+                ))
+            }
+        </ul>
+    </nav>
+
+    <div class="sl-flex print:hidden sb-search-slot">
+        {shouldRenderSearch && <Search />}
+    </div>
+
+    <div class="sl-hidden md:sl-flex print:hidden right-group">
+        <div class="sl-flex social-icons">
+            <SocialIcons />
+        </div>
+        <ThemeSelect />
+        <LanguageSelect />
+    </div>
+</div>
+
+<style>
+    .header {
+        gap: var(--sl-nav-gap);
+        justify-content: space-between;
+        align-items: center;
+        height: 100%;
+    }
+
+    .title-wrapper {
+        overflow: clip;
+        padding: 0.25rem;
+        margin: -0.25rem;
+        min-width: 0;
+        flex-shrink: 0;
+    }
+
+    /* ---------- Top nav links (VitePress-style) ---------- */
+
+    .sb-topnav {
+        display: none;
+    }
+
+    .sb-topnav-list {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sb-topnav-link {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sl-color-gray-2);
+        text-decoration: none;
+        line-height: var(--sl-nav-height);
+        height: 100%;
+        transition: color 0.15s ease;
+    }
+
+    .sb-topnav-link:hover {
+        color: var(--sl-color-text);
+    }
+
+    .sb-topnav-link.current {
+        color: var(--sl-color-text-accent);
+        font-weight: 600;
+    }
+
+    .right-group,
+    .social-icons {
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .social-icons:not(:empty)::after {
+        content: "";
+        height: 1.5rem;
+        margin-inline: 0.25rem;
+        border-inline-end: 1px solid var(--sl-color-hairline);
+    }
+
+    /* Search box: full-width on mobile, fixed width on desktop. */
+    .sb-search-slot {
+        justify-content: flex-end;
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (min-width: 50rem) {
+        .sb-topnav {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .sb-search-slot {
+            flex: 0 0 auto;
+        }
+
+        .sb-search-slot :global(site-search) {
+            width: clamp(160px, 22vw, 240px);
+        }
+    }
+</style>

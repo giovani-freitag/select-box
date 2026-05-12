@@ -10,40 +10,64 @@ const chips = [
 
 <div class="sb-chips not-content" aria-label="Supported frameworks">
     <span class="sb-chips-label">Runs on</span>
-    {
-        chips.map((chip) => (
-            <span class="sb-chip" data-framework={chip.id}>
-                {chip.label}
-            </span>
-        ))
-    }
+    <div class="sb-chips-row">
+        {
+            chips.map((chip) => (
+                <span class="sb-chip" data-framework={chip.id}>
+                    {chip.label}
+                </span>
+            ))
+        }
+    </div>
 </div>
 
 <style>
     .sb-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
+        gap: 0.5rem 0.75rem;
         align-items: center;
-        margin-top: 1.5rem;
+        justify-content: center;
+        margin-top: 1.25rem;
+    }
+
+    .sb-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        justify-content: center;
     }
 
     .sb-chips-label {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
         color: var(--sl-color-gray-3);
-        margin-right: 0.25rem;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
+        font-weight: 600;
     }
 
     .sb-chip {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 500;
-        padding: 0.3rem 0.7rem;
+        padding: 0.25rem 0.65rem;
         border-radius: 999px;
         border: 1px solid var(--sl-color-hairline);
         background: var(--sl-color-bg-sidebar);
         color: var(--sl-color-gray-2);
+        transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sb-chip:hover {
+        border-color: color-mix(in srgb, var(--sl-color-accent) 40%, var(--sl-color-hairline));
+        color: var(--sl-color-text);
+    }
+
+    @media (min-width: 60rem) {
+        .sb-chips {
+            justify-content: flex-start;
+        }
+        .sb-chips-row {
+            justify-content: flex-start;
+        }
     }
 </style>

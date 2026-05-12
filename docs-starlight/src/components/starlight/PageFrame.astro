@@ -1,10 +1,11 @@
 ---
 import MobileMenuToggle from "virtual:starlight/components/MobileMenuToggle";
 
-const { hasSidebar } = Astro.locals.starlightRoute;
+const { hasSidebar, entry } = Astro.locals.starlightRoute;
+const isSplash = entry.data.template === "splash";
 ---
 
-<div class="sb-layout">
+<div class:list={["sb-layout", { "is-splash": isSplash }]}>
     <header class="sb-header"><slot name="header" /></header>
 
     <div class:list={["sb-content-wrapper", { "has-sidebar": hasSidebar }]}>

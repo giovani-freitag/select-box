@@ -20,8 +20,10 @@ export default defineConfig({
                 github: "https://github.com/giovani-freitag/select-box",
             },
             components: {
+                Header: "./src/components/starlight/Header.astro",
                 ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
                 PageFrame: "./src/components/starlight/PageFrame.astro",
+                PageTitle: "./src/components/starlight/PageTitle.astro",
                 TwoColumnContent: "./src/components/starlight/TwoColumnContent.astro",
             },
             sidebar: [

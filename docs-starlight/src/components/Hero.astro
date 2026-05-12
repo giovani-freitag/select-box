@@ -11,7 +11,7 @@ interface Props {
 }
 
 const {
-    eyebrow = "v0.1 — pilot",
+    eyebrow,
     title,
     titleHighlight,
     tagline,
@@ -24,49 +24,109 @@ const {
 
 <section class="sb-hero not-content">
     <div class="sb-hero-bg" aria-hidden="true"></div>
+
     <div class="sb-hero-inner">
-        {eyebrow ? <span class="sb-hero-eyebrow">{eyebrow}</span> : null}
-        <h1 class="sb-hero-title">
-            {title}
-            {titleHighlight ? <span class="sb-grad-text">{titleHighlight}</span> : null}
-        </h1>
-        <p class="sb-hero-tagline">{tagline}</p>
-        <div class="sb-hero-actions">
-            <a class="sb-grad-btn" href={primaryHref}>
-                {primaryLabel}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                </svg>
-            </a>
-            {
-                secondaryHref && secondaryLabel ? (
-                    <a class="sb-ghost-btn" href={secondaryHref}>
-                        {secondaryLabel}
-                    </a>
-                ) : null
-            }
+        <div class="sb-hero-text">
+            {eyebrow ? <span class="sb-hero-eyebrow">{eyebrow}</span> : null}
+            <h1 class="sb-hero-title">
+                <span class="sb-hero-name">{title}</span>
+                {
+                    titleHighlight ? (
+                        <span class="sb-hero-tagheadline sb-grad-text">{titleHighlight}</span>
+                    ) : null
+                }
+            </h1>
+            <p class="sb-hero-tagline">{tagline}</p>
+            <div class="sb-hero-actions">
+                <a class="sb-grad-btn" href={primaryHref}>
+                    {primaryLabel}
+                    <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                </a>
+                {
+                    secondaryHref && secondaryLabel ? (
+                        <a class="sb-ghost-btn" href={secondaryHref}>
+                            {secondaryLabel}
+                        </a>
+                    ) : null
+                }
+            </div>
+            <slot name="footer" />
         </div>
-        <slot name="footer" />
+
+        <div class="sb-hero-art" aria-hidden="true">
+            <div class="sb-hero-glow"></div>
+            <div class="sb-hero-logo-stack">
+                <svg
+                    class="sb-hero-logo"
+                    width="240"
+                    height="240"
+                    viewBox="0 0 32 32"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <defs>
+                        <linearGradient
+                            id="sb-hero-grad"
+                            x1="0"
+                            y1="0"
+                            x2="32"
+                            y2="32"
+                            gradientUnits="userSpaceOnUse"
+                        >
+                            <stop offset="0" stop-color="#3b82f6"></stop>
+                            <stop offset=".55" stop-color="#06b6d4"></stop>
+                            <stop offset="1" stop-color="#a855f7"></stop>
+                        </linearGradient>
+                    </defs>
+                    <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="url(#sb-hero-grad)"></rect>
+                    <path
+                        d="M10 17l6 6 6-6"
+                        fill="none"
+                        stroke="#0b1020"
+                        stroke-width="2.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"></path>
+                    <rect
+                        x="9"
+                        y="9"
+                        width="14"
+                        height="2.4"
+                        rx="1.2"
+                        fill="#0b1020"
+                        opacity="0.85"></rect>
+                </svg>
+            </div>
+        </div>
     </div>
 </section>
 
 <style>
     .sb-hero {
         position: relative;
-        padding: clamp(3.5rem, 9vw, 7rem) 1.25rem clamp(2rem, 5vw, 4rem);
-        text-align: center;
+        padding: clamp(3.5rem, 8vw, 6rem) 1.5rem clamp(2rem, 5vw, 4rem);
         overflow: hidden;
     }
 
     .sb-hero-bg {
         position: absolute;
-        inset: -10% -10% 0 -10%;
+        inset: -20% -10% 0 -10%;
         z-index: 0;
         background:
-            radial-gradient(ellipse 50% 60% at 50% 0%, rgba(59, 130, 246, 0.18), transparent 70%),
-            radial-gradient(ellipse 30% 40% at 80% 20%, rgba(168, 85, 247, 0.16), transparent 70%),
-            radial-gradient(ellipse 30% 40% at 20% 30%, rgba(6, 182, 212, 0.14), transparent 70%);
+            radial-gradient(ellipse 50% 60% at 70% 0%, rgba(59, 130, 246, 0.18), transparent 70%),
+            radial-gradient(ellipse 35% 45% at 85% 25%, rgba(168, 85, 247, 0.16), transparent 70%),
+            radial-gradient(ellipse 35% 45% at 15% 30%, rgba(6, 182, 212, 0.14), transparent 70%);
         filter: blur(8px);
         pointer-events: none;
     }
@@ -86,45 +146,60 @@ const {
     .sb-hero-inner {
         position: relative;
         z-index: 1;
-        max-width: 880px;
+        max-width: 1152px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 2.5rem;
+    }
+
+    .sb-hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
         gap: 1.25rem;
+        max-width: 720px;
     }
 
     .sb-hero-eyebrow {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--sl-color-text-accent);
-        padding: 0.35rem 0.75rem;
+        padding: 0.3rem 0.7rem;
         border-radius: 999px;
         border: 1px solid var(--sl-color-accent-low);
         background: color-mix(in srgb, var(--sl-color-accent) 8%, transparent);
     }
 
     .sb-hero-title {
-        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: clamp(2.5rem, 6vw, 4.25rem);
         line-height: 1.05;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.035em;
         font-weight: 800;
         margin: 0;
-        max-width: 14ch;
     }
 
-    .sb-hero-title .sb-grad-text {
-        display: inline;
+    .sb-hero-name {
+        color: var(--sl-color-white);
+    }
+
+    .sb-hero-tagheadline {
+        display: inline-block;
     }
 
     .sb-hero-tagline {
         margin: 0;
-        font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+        font-size: clamp(1.05rem, 1.6vw, 1.2rem);
         line-height: 1.55;
         color: var(--sl-color-gray-2);
-        max-width: 56ch;
+        max-width: 60ch;
     }
 
     .sb-hero-actions {
@@ -133,5 +208,86 @@ const {
         gap: 0.75rem;
         justify-content: center;
         margin-top: 0.5rem;
+    }
+
+    /* ---------- Hero art (logo + glow) ---------- */
+
+    .sb-hero-art {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: clamp(180px, 28vw, 280px);
+        height: clamp(180px, 28vw, 280px);
+    }
+
+    .sb-hero-glow {
+        position: absolute;
+        inset: -25%;
+        background: radial-gradient(
+            circle at center,
+            color-mix(in srgb, var(--sb-brand-1) 35%, transparent),
+            color-mix(in srgb, var(--sb-brand-3) 18%, transparent) 40%,
+            transparent 65%
+        );
+        filter: blur(40px);
+        animation: sb-hero-glow-pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes sb-hero-glow-pulse {
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 0.9;
+        }
+        50% {
+            transform: scale(1.08);
+            opacity: 1;
+        }
+    }
+
+    .sb-hero-logo-stack {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+    }
+
+    .sb-hero-logo {
+        width: clamp(140px, 22vw, 220px);
+        height: auto;
+        filter: drop-shadow(0 24px 48px rgba(59, 130, 246, 0.35));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sb-hero-glow {
+            animation: none;
+        }
+    }
+
+    /* ---------- Desktop: side-by-side hero ---------- */
+
+    @media (min-width: 60rem) {
+        .sb-hero {
+            padding-top: clamp(4rem, 8vw, 6.5rem);
+        }
+
+        .sb-hero-inner {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4rem;
+        }
+
+        .sb-hero-text {
+            align-items: flex-start;
+            text-align: left;
+            flex: 1 1 0;
+        }
+
+        .sb-hero-actions {
+            justify-content: flex-start;
+        }
     }
 </style>
