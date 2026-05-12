@@ -26,7 +26,7 @@ export interface SelectBoxProps<TValue> {
 }
 
 /**
- * Default single-select combobox component; use `useSelectBox()` directly for custom markup.
+ * Default single-select box component; use `useSelectBox()` directly for custom markup.
  */
 export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
     const {
@@ -71,9 +71,7 @@ export function SelectBox<TValue>(props: SelectBoxProps<TValue>): JSX.Element {
 
     useEffect(() => {
         if (!state.open) return;
-        // Browsers honour HTMLInputElement.focus() reliably across iframe
-        // contexts, while the `autoFocus` attribute is a one-time hint
-        // that often misfires when the iframe lacks OS focus on mount.
+        // autoFocus misfires inside iframes without OS focus; programmatic focus is reliable.
         searchRef.current?.focus({ preventScroll: true });
     }, [state.open]);
 

@@ -1,8 +1,9 @@
 # Getting started
 
-`select-box` is a framework-agnostic combobox library. The
-`@select-box/core` package owns state and behaviour; each per-framework
-wrapper translates the snapshot into the framework's native rendering.
+`select-box` is a framework-agnostic select-box library (an ARIA-compliant
+combobox under the hood). The `@select-box/core` package owns state and
+behaviour; each per-framework wrapper translates the snapshot into the
+framework's native rendering.
 
 ## Install
 
@@ -20,8 +21,8 @@ pnpm add @select-box/webcomponents
 
 ## Pick a fruit
 
-See the [combobox component](/components/combobox) page for a working
-demo and side-by-side code for every wrapper.
+See the [select box](/components/select-box) page for a working demo
+and side-by-side code for every wrapper.
 
 ## Two API tiers
 

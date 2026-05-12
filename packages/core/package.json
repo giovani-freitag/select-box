@@ -2,7 +2,7 @@
     "name": "@select-box/core",
     "version": "0.0.0",
     "private": true,
-    "description": "Framework-agnostic core for the select-box combobox library.",
+    "description": "Framework-agnostic core for the select-box library.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",

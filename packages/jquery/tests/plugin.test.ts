@@ -62,7 +62,7 @@ describe("$.fn.selectBox", () => {
         expect(events[0]?.name).toBe("apple");
     });
 
-    test("destroy() tears the rendered combobox down", () => {
+    test("destroy() tears the rendered select box down", () => {
         jQuery("#fruit").selectBox<Fruit>({ options: fruits });
         jQuery("#fruit").selectBox("destroy");
 

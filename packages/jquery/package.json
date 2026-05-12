@@ -2,7 +2,7 @@
     "name": "@select-box/jquery",
     "version": "0.0.0",
     "private": true,
-    "description": "jQuery wrapper for the select-box combobox library — registers $.fn.selectBox plugin.",
+    "description": "jQuery wrapper for the select-box library — registers $.fn.selectBox plugin.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",

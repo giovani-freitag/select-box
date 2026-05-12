@@ -14,7 +14,7 @@ import type {
 const NO_ACTIVE_INDEX = -1;
 
 /**
- * Framework-agnostic state and mutations for a single-select combobox.
+ * Framework-agnostic state and mutations for a single-select box.
  */
 export class SingleSelectBoxController<TValue> {
     private readonly store: Store<SelectBoxSnapshot<TValue>>;

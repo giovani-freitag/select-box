@@ -9,7 +9,7 @@ const docsRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export default defineConfig({
     title: "select-box",
-    description: "Framework-agnostic combobox/select-box library — core + per-framework wrappers.",
+    description: "Framework-agnostic select-box library — core + per-framework wrappers.",
     cleanUrls: true,
     vue: {
         template: {
@@ -38,7 +38,7 @@ export default defineConfig({
     themeConfig: {
         nav: [
             { text: "Guide", link: "/guide/getting-started" },
-            { text: "Components", link: "/components/combobox" },
+            { text: "Components", link: "/components/select-box" },
             { text: "API", link: "/api/" },
         ],
         sidebar: {
@@ -54,7 +54,7 @@ export default defineConfig({
             "/components/": [
                 {
                     text: "Components",
-                    items: [{ text: "Combobox", link: "/components/combobox" }],
+                    items: [{ text: "Select Box", link: "/components/select-box" }],
                 },
             ],
             "/api/": [

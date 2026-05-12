@@ -3,15 +3,15 @@ layout: home
 
 hero:
   name: select-box
-  text: Headless combobox, every framework
+  text: Headless select box, every framework
   tagline: Framework-agnostic core, ready-to-use wrappers for React, Web Components, Vue, Lit, jQuery. Same snapshot fields, same behaviour, same E2E suite.
   actions:
     - theme: brand
       text: Get started
       link: /guide/getting-started
     - theme: alt
-      text: Try the combobox
-      link: /components/combobox
+      text: Try it live
+      link: /components/select-box
 
 features:
   - title: One core, many wrappers

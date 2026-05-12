@@ -6,7 +6,7 @@ import {
 } from "@select-box/core";
 
 /**
- * Light-DOM combobox view that wires a `SingleSelectBoxController` into a host element.
+ * Light-DOM select box view that wires a `SingleSelectBoxController` into a host element.
  */
 export class SelectBoxView<TValue> {
     readonly root: HTMLDivElement;

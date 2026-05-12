@@ -1,10 +1,10 @@
-# select-box — multi-framework Combobox library
+# select-box — multi-framework select-box library
 
 Pilot project to validate a TanStack-style framework architecture:
 **framework-agnostic core** plus thin wrappers for every popular UI
-framework. The combobox extracted from `the-origin-app` is the first
-component; the conventions and tooling established here become the
-template for future components.
+framework. The select box extracted from `the-origin-app` is the
+first component; the conventions and tooling established here become
+the template for future components.
 
 ## 1. Goals
 
@@ -258,13 +258,11 @@ and it makes reentrancy structurally impossible.
 key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
 `[plan]` planned, no design yet.
 
-- `[wip]` `@select-box/addon-clear-button` — clear-selection affordance. The
-  default wrappers (`<SelectBox />`, `<select-box>`) render an `×` next
-  to the trigger value when the addon is installed and there is a
-  selection. Config: `{ label?: string; ariaLabel?: string }`. Exposes
+- `[plan]` `@select-box/addon-clear-button` — clear-selection affordance.
+  Default wrappers render an `×` next to the trigger value when the addon
+  is installed and there is a selection. Config:
+  `{ label?: string; ariaLabel?: string }`. Exposes
   `snapshot.addons["clear-button"]: { visible, label, ariaLabel }`.
-  Implementation lives at [packages/addon-clear-button/](packages/addon-clear-button/);
-  re-wire the example once the ready `<SelectBox />` component lands.
 - `[plan]` `@select-box/addon-inline-search` — Selectize-style "search input
   *is* the trigger". When installed, the trigger renders a text input
   in place of the static label; focusing it puts the controller into
@@ -363,10 +361,11 @@ spec/keyboard ───┼─ vue ───── ✔ 42/42
 - Source for each example lives in `examples/*/` (same code the E2E
   runs against), so the docs preview and the test fixture never drift.
 
-## 8. Pilot: combobox feature scope
+## 8. Pilot: select-box feature scope
 
 Full parity with `src/renderer/src/components/ui/selector/combobox.tsx`
-from `the-origin-app`. Concretely:
+from `the-origin-app` (legacy file name kept inside the consumer
+project). Concretely:
 
 - Single + Multi mode (discriminated by config).
 - Popover trigger UI (search input + virtualized list).
@@ -383,9 +382,11 @@ from `the-origin-app`. Concretely:
   day one. Hoist-selected ships as the reference first-party addon
   exercised by the matrix E2E.
 
-The internal split mirrors the existing controllers (`SingleComboboxController`,
-`MultiComboboxController`) but lifts every DOM reference out — the
-controllers now operate purely on snapshots and options.
+The internal split mirrors the existing legacy controllers
+(`SingleComboboxController`, `MultiComboboxController` in the consumer
+project) but lifts every DOM reference out — the controllers now operate
+purely on snapshots and options. They are renamed `SingleSelectBoxController`
+and `MultiSelectBoxController` here.
 
 ## 9. Milestones
 
@@ -415,7 +416,7 @@ controllers now operate purely on snapshots and options.
   hooked up for every example.
 - Framework switcher works.
 
-**M4 — Replace the combobox in `the-origin-app`**
+**M4 — Replace the legacy combobox in `the-origin-app`**
 - Pilot consumer migrates to `@select-box/react`.
 - Validates that the public API is comfortable in real usage.
 

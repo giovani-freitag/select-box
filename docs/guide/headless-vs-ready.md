@@ -8,7 +8,7 @@ your component's needs.
 The "ready" layer is a drop-in component with sensible defaults. It
 handles trigger, popover, search input, list rendering, keyboard
 navigation, ARIA, and addon-driven UI without you writing any
-combobox-specific markup.
+select-box-specific markup.
 
 ::: code-group
 
@@ -49,7 +49,7 @@ you want, the state and keyboard nav still work.
 ```tsx [React]
 import { useSelectBox } from "@select-box/react";
 
-function MyCombobox() {
+function MySelectBox() {
     const { state, controller } = useSelectBox({ options: fruits });
     return (
         <div>

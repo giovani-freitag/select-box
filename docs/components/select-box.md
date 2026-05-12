@@ -1,8 +1,8 @@
-# Combobox
+# Select Box
 
-A single-select combobox with grouped options, fuzzy filter, keyboard
+A single-select box with grouped options, fuzzy filter, keyboard
 navigation, and an opt-in addon system. Switch the framework tab below
-to see the same combobox rendered by each wrapper — the preview is the
+to see the same select box rendered by each wrapper — the preview is the
 real example app from `examples/<framework>/` running in an iframe.
 
 <ClientOnly>
@@ -44,8 +44,9 @@ jQuery("#fruit")
 <template #lit-code>
 
 ```ts
-import { SelectBoxController } from "@select-box/lit";
-import { html, LitElement } from "lit";
+import { SelectBox } from "@select-box/lit";
+
+customElements.define("select-box", SelectBox);
 
 const fruits = [
     { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
@@ -53,34 +54,11 @@ const fruits = [
     { value: { id: 3, name: "lemon" }, label: "Lemon" },
 ];
 
-class FruitPicker extends LitElement {
-    private readonly selectBox = new SelectBoxController(this, {
-        options: fruits,
-        ungroupedLabel: "Citrus",
-    });
+const element = document.querySelector("select-box");
+element.options = fruits;
+element.placeholder = "Search fruits…";
 
-    /** Native form-element contract: read the committed value via `.value`. */
-    get value() {
-        return this.selectBox.state.value;
-    }
-
-    render() {
-        const state = this.selectBox.state;
-        return html`
-            <button @click=${() => this.selectBox.toggle()}>
-                ${state.selectedOption?.label ?? "Search fruits…"}
-            </button>
-            ${state.open
-                ? html`<!-- popover markup using state.filteredGroups -->`
-                : null}
-        `;
-    }
-}
-
-customElements.define("fruit-picker", FruitPicker);
-
-// Consumer side:
-document.querySelector("fruit-picker").addEventListener("change", (event) => {
+element.addEventListener("change", (event) => {
     console.log(event.target.value);
 });
 ```
