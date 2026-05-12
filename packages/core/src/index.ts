@@ -1,5 +1,5 @@
 export { SingleSelectBoxController } from "./controllers/single-select-box-controller.js";
-export { SubstringFilterStrategy } from "./filter.js";
+export { FuzzyFilterStrategy, SubstringFilterStrategy, fuzzyScore } from "./filter.js";
 export { indexOptionsByValue, normalizeOptionsToGroups, UNGROUPED_KEY } from "./normalize.js";
 export { Store } from "./store.js";
 export type { StoreListener } from "./store.js";

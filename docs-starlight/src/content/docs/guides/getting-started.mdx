@@ -240,6 +240,38 @@ The [demo stylesheet](https://github.com/giovani-freitag/select-box/blob/main/do
 this site uses is a reasonable starting point — copy it, then tune the
 tokens to match your design system.
 
+## Filtering
+
+The default filter is `SubstringFilterStrategy` — case-insensitive
+substring match on `label`. Swap it for fuzzy subsequence matching (every
+query character must appear in `label` in order, with consecutive and
+word-start bonuses) by passing the strategy explicitly:
+
+```ts
+import { FuzzyFilterStrategy } from "@select-box/core";
+
+<SelectBox
+    options={fruits}
+    filter={new FuzzyFilterStrategy()}
+    placeholder="Pick a fruit"
+/>;
+```
+
+Or implement your own — `OptionFilterStrategy<TExtra>` is a single-method
+contract:
+
+```ts
+interface OptionFilterStrategy<TExtra extends object = object> {
+    filter(
+        options: ReadonlyArray<SelectOption<TExtra>>,
+        query: string,
+    ): ReadonlyArray<SelectOption<TExtra>>;
+}
+```
+
+The controller calls your `filter()` on every keystroke; if you sort the
+result, that order shows up in the popover.
+
 ## Next steps
 
 - [Select Box reference](/components/select-box/) — full prop table,
