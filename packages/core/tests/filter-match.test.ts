@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { FuzzyFilterStrategy, SubstringFilterStrategy } from "../src/filter.js";
+import { SubstringFilterStrategy } from "../src/filters/index.js";
 import { SingleSelectBoxController } from "../src/controllers/single-select-box-controller.js";
 
 describe("SubstringFilterStrategy.match", () => {
@@ -29,37 +29,35 @@ describe("SubstringFilterStrategy.match", () => {
     test("returns an empty array when the query does not appear", () => {
         expect(strategy.match("Apple", "xyz")).toEqual([]);
     });
-});
 
-describe("FuzzyFilterStrategy.match", () => {
-    const strategy = new FuzzyFilterStrategy();
+    test("matches across diacritics: query without accent finds accented chars", () => {
+        const ranges = strategy.match("São Paulo", "sao");
 
-    test("collapses consecutive matched characters into a single range", () => {
-        const ranges = strategy.match("Pineapple", "app");
-
-        expect(ranges).toEqual([{ start: 4, end: 7 }]);
+        expect(ranges).toEqual([{ start: 0, end: 3 }]);
     });
 
-    test("returns one range per scattered match", () => {
-        const ranges = strategy.match("a_b_c_d", "abc");
+    test("matches across diacritics: accented query against plain label", () => {
+        const ranges = strategy.match("Sao Paulo", "são");
 
-        expect(ranges).toEqual([
-            { start: 0, end: 1 },
-            { start: 2, end: 3 },
-            { start: 4, end: 5 },
-        ]);
+        expect(ranges).toEqual([{ start: 0, end: 3 }]);
     });
 
-    test("returns an empty array when the subsequence does not match", () => {
-        expect(strategy.match("Apple", "xyz")).toEqual([]);
-    });
+    test("filter() is also diacritic-insensitive", () => {
+        const surviving = strategy
+            .filter(
+                [
+                    { value: "sp", label: "São Paulo" },
+                    { value: "rj", label: "Rio de Janeiro" },
+                ],
+                "sao",
+            )
+            .map((option) => option.label);
 
-    test("returns an empty array for an empty query", () => {
-        expect(strategy.match("Apple", "")).toEqual([]);
+        expect(surviving).toEqual(["São Paulo"]);
     });
 });
 
-describe("snapshot.highlightRanges", () => {
+describe("snapshot.highlightRanges (default strategy)", () => {
     test("reflects the active filter strategy and the current query", () => {
         const controller = new SingleSelectBoxController({
             options: [
@@ -83,21 +81,5 @@ describe("snapshot.highlightRanges", () => {
         const snapshot = controller.getState();
 
         expect(snapshot.highlightRanges("Apple")).toEqual([]);
-    });
-
-    test("delegates to the configured strategy (fuzzy finds matches substring would miss)", () => {
-        const controller = new SingleSelectBoxController({
-            options: [{ value: "application", label: "Application" }],
-            filter: new FuzzyFilterStrategy(),
-        });
-
-        controller.setQuery("atn");
-        const snapshot = controller.getState();
-
-        expect(snapshot.highlightRanges("Application")).toEqual([
-            { start: 0, end: 1 },
-            { start: 7, end: 8 },
-            { start: 10, end: 11 },
-        ]);
     });
 });
