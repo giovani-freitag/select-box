@@ -3,6 +3,7 @@ import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { Store } from "../store.js";
 import type {
     OptionFilterStrategy,
+    SearchMatchRange,
     SelectBoxAddon,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,
@@ -10,6 +11,7 @@ import type {
     SelectOption,
     SingleSelectBoxConfig,
 } from "../types.js";
+
 
 const NO_ACTIVE_INDEX = -1;
 
@@ -32,6 +34,8 @@ export class SingleSelectBoxController<TExtra extends object = object> {
     private currentQuery = "";
     private currentOpen = false;
     private currentActiveIndex = NO_ACTIVE_INDEX;
+    private readonly boundHighlightRanges = (label: string): ReadonlyArray<SearchMatchRange> =>
+        this.getHighlightRanges(label);
 
     constructor(config: SingleSelectBoxConfig<TExtra>) {
         this.allGroups = normalizeOptionsToGroups({
@@ -46,6 +50,20 @@ export class SingleSelectBoxController<TExtra extends object = object> {
         for (const addon of config.addons ?? []) {
             this.use(addon);
         }
+    }
+
+    /**
+     * Returns the highlight ranges the active filter strategy would draw
+     * for `label` under the current query. Empty when the query is empty
+     * or the strategy doesn't implement `match`. Mirrored on every
+     * snapshot as `highlightRanges` so addons and wrappers can consume it
+     * without holding a controller reference.
+     */
+    getHighlightRanges(label: string): ReadonlyArray<SearchMatchRange> {
+        if (this.currentQuery.trim() === "") return [];
+        const matcher = this.filterStrategy.match;
+        if (!matcher) return [];
+        return matcher.call(this.filterStrategy, label, this.currentQuery);
     }
 
     /**
@@ -169,6 +187,7 @@ export class SingleSelectBoxController<TExtra extends object = object> {
             query: this.currentQuery,
             value: this.currentValue,
             selectedOption,
+            highlightRanges: this.boundHighlightRanges,
             filteredGroups,
             activeIndex: this.currentActiveIndex,
             activeOption,

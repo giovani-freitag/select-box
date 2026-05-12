@@ -26,13 +26,26 @@ export interface SelectGroup<TExtra extends object = object> {
 }
 
 /**
- * Strategy that filters options against the current query.
+ * Half-open char range against an option's `label`. Inclusive on `start`,
+ * exclusive on `end` (matches `String.prototype.slice` semantics).
+ */
+export interface SearchMatchRange {
+    readonly start: number;
+    readonly end: number;
+}
+
+/**
+ * Strategy that filters options against the current query. Implementations
+ * may optionally expose `match` to feed UI highlighters: given a label and
+ * a query, return the char ranges to mark up. When omitted, consumers
+ * receive an empty range list (no highlight).
  */
 export interface OptionFilterStrategy<TExtra extends object = object> {
     filter(
         options: ReadonlyArray<SelectOption<TExtra>>,
         query: string,
     ): ReadonlyArray<SelectOption<TExtra>>;
+    match?(label: string, query: string): ReadonlyArray<SearchMatchRange>;
 }
 
 /**
@@ -50,6 +63,13 @@ export interface SelectBoxSnapshot<TExtra extends object = object> {
     readonly activeIndex: number;
     readonly activeOption: SelectOption<TExtra> | null;
     readonly isEmpty: boolean;
+    /**
+     * Returns the highlight ranges the active filter strategy would draw for
+     * `label` under the current query. Returns an empty array when the query
+     * is empty or the strategy doesn't implement `match`. Wrappers and addons
+     * call this to draw `<mark>`-style highlights on any rendered label.
+     */
+    readonly highlightRanges: (label: string) => ReadonlyArray<SearchMatchRange>;
     readonly addons: Readonly<SelectBoxAddonSnapshots>;
 }
 

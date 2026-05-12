@@ -4,6 +4,8 @@ export { SelectBoxRowModel } from "./row-model.js";
 export type { SelectBoxRow, SelectBoxRowModelOptions } from "./row-model.js";
 export { Store } from "./store.js";
 export type { StoreListener } from "./store.js";
+export { TextHighlighter } from "./text-highlighter.js";
+export type { HighlightChunk } from "./text-highlighter.js";
 export { ListVirtualizer } from "./virtualizer/index.js";
 export type {
     ListVirtualizerConfig,
@@ -13,6 +15,7 @@ export type {
 export type {
     AddonHookContext,
     OptionFilterStrategy,
+    SearchMatchRange,
     SelectBoxAddon,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,

@@ -1,4 +1,4 @@
-import type { OptionFilterStrategy, SelectOption } from "./types.js";
+import type { OptionFilterStrategy, SearchMatchRange, SelectOption } from "./types.js";
 
 /**
  * Default filter: case-insensitive substring match against `label`; empty query keeps every option.
@@ -14,6 +14,27 @@ export class SubstringFilterStrategy<TExtra extends object = object>
         if (trimmed === "") return options;
         const needle = trimmed.toLowerCase();
         return options.filter((option) => option.label.toLowerCase().includes(needle));
+    }
+
+    /**
+     * Returns every occurrence of `query` (case-insensitive) inside `label`
+     * as a half-open range. UI consumers feed the result through
+     * {@link TextHighlighter.split} to render `<mark>` spans.
+     */
+    match(label: string, query: string): ReadonlyArray<SearchMatchRange> {
+        const trimmed = query.trim();
+        if (trimmed === "") return [];
+        const needle = trimmed.toLowerCase();
+        const haystack = label.toLowerCase();
+        const ranges: SearchMatchRange[] = [];
+        let cursor = 0;
+        while (cursor < haystack.length) {
+            const found = haystack.indexOf(needle, cursor);
+            if (found === -1) break;
+            ranges.push({ start: found, end: found + needle.length });
+            cursor = found + needle.length;
+        }
+        return ranges;
     }
 }
 
@@ -75,6 +96,33 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
         const trimmed = query.trim();
         if (trimmed === "") return 0;
         return this.scoreNeedleAgainstHaystack(trimmed.toLowerCase(), label.toLowerCase());
+    }
+
+    /**
+     * Returns the positions of every query character that matched `label`,
+     * collapsed into contiguous ranges. Empty when `query` is empty or no
+     * subsequence match exists.
+     */
+    match(label: string, query: string): ReadonlyArray<SearchMatchRange> {
+        const trimmed = query.trim();
+        if (trimmed === "") return [];
+        const needle = trimmed.toLowerCase();
+        const haystack = label.toLowerCase();
+        const ranges: SearchMatchRange[] = [];
+        let queryIndex = 0;
+
+        for (let position = 0; position < haystack.length && queryIndex < needle.length; position += 1) {
+            if (haystack[position] !== needle[queryIndex]) continue;
+            const last = ranges[ranges.length - 1];
+            if (last && last.end === position) {
+                ranges[ranges.length - 1] = { start: last.start, end: position + 1 };
+            } else {
+                ranges.push({ start: position, end: position + 1 });
+            }
+            queryIndex += 1;
+        }
+        if (queryIndex < needle.length) return [];
+        return ranges;
     }
 
     private scoreNeedleAgainstHaystack(needle: string, haystack: string): number | null {
