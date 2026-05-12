@@ -71,6 +71,7 @@ export class ListVirtualizer {
     }
 
     setRowHeight(rowHeight: number | ((index: number) => number)): void {
+        if (rowHeight === this.rowHeight) return;
         this.rowHeight = rowHeight;
         this.offsetsCache = null;
         this.publish();

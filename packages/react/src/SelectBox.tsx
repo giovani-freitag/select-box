@@ -199,18 +199,24 @@ function VirtualizedList<TExtra extends object>({
 
     const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>(groups), [groups]);
 
+    const rowModelRef = useRef(rowModel);
+    rowModelRef.current = rowModel;
+    const rowHeightFn = useCallback(
+        (index: number) => rowHeightAt(rowModelRef.current, index),
+        [],
+    );
+
     const [virtualizer] = useState(
         () =>
             new ListVirtualizer({
                 rowCount: rowModel.length,
-                rowHeight: (index) => rowHeightAt(rowModel, index),
+                rowHeight: rowHeightFn,
                 viewportHeight: LIST_VIEWPORT_HEIGHT,
             }),
     );
 
     useEffect(() => {
         virtualizer.setRowCount(rowModel.length);
-        virtualizer.setRowHeight((index) => rowHeightAt(rowModel, index));
     }, [virtualizer, rowModel]);
 
     const subscribe = useCallback(
