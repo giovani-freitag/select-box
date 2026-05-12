@@ -11,6 +11,7 @@ export default defineConfig({
     title: "select-box",
     description: "Framework-agnostic select-box library — core + per-framework wrappers.",
     cleanUrls: true,
+    head: [["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]],
     vue: {
         template: {
             compilerOptions: {
@@ -36,6 +37,7 @@ export default defineConfig({
         },
     },
     themeConfig: {
+        logo: { src: "/logo.svg", alt: "select-box" },
         nav: [
             { text: "Guide", link: "/guide/getting-started" },
             { text: "Components", link: "/components/select-box" },
