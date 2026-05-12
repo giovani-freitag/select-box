@@ -21,12 +21,7 @@ export interface SelectBoxRowModelOptions {
     readonly skipEmptyHeaders?: boolean;
 }
 
-/**
- * Walks `filteredGroups` once on construction and exposes a flat,
- * positionally-indexed row sequence — group header followed by its options —
- * that wrappers feed into {@link ListVirtualizer.setRowCount} and use to
- * resolve the underlying option/group while rendering a visible row.
- */
+/** Flat positional view of `filteredGroups` — headers and options as numbered rows. */
 export class SelectBoxRowModel<TExtra extends object = object> {
     private readonly rows: ReadonlyArray<SelectBoxRow<TExtra>>;
 
@@ -69,11 +64,9 @@ export class SelectBoxRowModel<TExtra extends object = object> {
     }
 
     /**
-     * Translates the snapshot's `activeIndex` (counted across selectable
-     * options only) into the corresponding row index inside this model.
-     * Useful for scrolling the active option into the visible window.
-     *
-     * Returns `-1` when there is no match (no active option or out of range).
+     * Row index of the selectable option at position `activeIndex`, or `-1`
+     * when nothing matches. The snapshot's `activeIndex` counts across
+     * selectable options only, while row indices count headers too.
      */
     findRowIndexForActiveIndex(activeIndex: number): number {
         if (activeIndex < 0) return -1;

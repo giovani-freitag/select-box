@@ -2,12 +2,7 @@ import { Store } from "../store.js";
 
 export interface ListVirtualizerConfig {
     readonly rowCount: number;
-    /**
-     * Either a fixed pixel height applied to every row, or a function that
-     * returns the height for a given row index. Variable heights are sampled
-     * lazily; the cumulative offset table is rebuilt when row count or the
-     * height function changes.
-     */
+    /** Fixed pixel height for every row, or a per-row function (sampled lazily). */
     readonly rowHeight: number | ((index: number) => number);
     readonly viewportHeight: number;
     /** Rows kept rendered above and below the viewport. Defaults to 3. */
@@ -41,12 +36,7 @@ const EMPTY_RANGE: VirtualRange = {
 
 const DEFAULT_OVERSCAN = 3;
 
-/**
- * Framework-agnostic windowed list. Computes which row indices intersect
- * the visible viewport (plus an overscan margin) given a scroll offset.
- * Subscribers receive a notification whenever the visible range or layout
- * inputs change; pull the next range via {@link getRange}.
- */
+/** Windowed list: returns which row indices fall inside the viewport for the current scroll offset. */
 export class ListVirtualizer {
     private readonly store: Store<VirtualRange>;
     private rowCount: number;
@@ -105,11 +95,7 @@ export class ListVirtualizer {
         this.publish();
     }
 
-    /**
-     * Returns the pixel offset of `index` relative to the top of the list,
-     * regardless of whether the row currently sits inside the visible range.
-     * Useful for scroll-to-index helpers in wrappers.
-     */
+    /** Pixel offset of `index` from the top of the list, regardless of the visible range. */
     getOffset(index: number): number {
         if (this.rowCount === 0 || index <= 0) return 0;
         const clamped = Math.min(index, this.rowCount);

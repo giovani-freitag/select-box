@@ -5,14 +5,13 @@ export interface HighlightChunk {
     readonly matched: boolean;
 }
 
-/**
- * Framework-agnostic helper that splits a label into alternating "plain"
- * and "matched" chunks, ready for any framework's render layer to wrap
- * matched chunks in `<mark>` (or a brand-styled equivalent). Discards
- * zero-length ranges, ignores overlaps by collapsing them into a single
- * span, and clips ranges that extend past the label.
- */
+/** Splits a label into plain and matched chunks for any framework to render. */
 export class TextHighlighter {
+    /**
+     * Returns alternating plain/matched chunks covering the full text.
+     * Out-of-bounds and zero-length ranges are dropped; overlapping or
+     * adjacent ranges merge into one chunk.
+     */
     static split(text: string, ranges: ReadonlyArray<SearchMatchRange>): ReadonlyArray<HighlightChunk> {
         if (text === "") return [];
         if (ranges.length === 0) return [{ text, matched: false }];
@@ -35,11 +34,6 @@ export class TextHighlighter {
         return chunks;
     }
 
-    /**
-     * Returns ranges sorted by `start` and merged so overlapping or
-     * adjacent intervals collapse into one. Empty and out-of-bounds ranges
-     * are dropped.
-     */
     private static normalizeRanges(
         length: number,
         ranges: ReadonlyArray<SearchMatchRange>,

@@ -1,5 +1,6 @@
+export { AbstractAddon } from "./addons/index.js";
 export { SingleSelectBoxController } from "./controllers/single-select-box-controller.js";
-export { FuzzyFilterStrategy, SubstringFilterStrategy } from "./filter.js";
+export { AbstractFilterStrategy, SubstringFilterStrategy } from "./filters/index.js";
 export { SelectBoxRowModel } from "./row-model.js";
 export type { SelectBoxRow, SelectBoxRowModelOptions } from "./row-model.js";
 export { Store } from "./store.js";
@@ -17,6 +18,7 @@ export type {
     OptionFilterStrategy,
     SearchMatchRange,
     SelectBoxAddon,
+    SelectBoxAddonHost,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,
     SelectGroup,

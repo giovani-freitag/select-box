@@ -1,10 +1,11 @@
-import { SubstringFilterStrategy } from "../filter.js";
+import { SubstringFilterStrategy } from "../filters/index.js";
 import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { Store } from "../store.js";
 import type {
     OptionFilterStrategy,
     SearchMatchRange,
     SelectBoxAddon,
+    SelectBoxAddonHost,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,
     SelectGroup,
@@ -23,11 +24,13 @@ function coerceValue(input: string | number | null | undefined): string | null {
 /**
  * Framework-agnostic state and mutations for a single-select box.
  */
-export class SingleSelectBoxController<TExtra extends object = object> {
+export class SingleSelectBoxController<TExtra extends object = object>
+    implements SelectBoxAddonHost<TExtra>
+{
     private readonly store: Store<SelectBoxSnapshot<TExtra>>;
     private readonly allGroups: ReadonlyArray<SelectGroup<TExtra>>;
     private readonly optionsByValue: ReadonlyMap<string, SelectOption<TExtra>>;
-    private readonly filterStrategy: OptionFilterStrategy<TExtra>;
+    private filterStrategy: OptionFilterStrategy<TExtra>;
     private readonly registeredAddons: SelectBoxAddon<TExtra>[] = [];
 
     private currentValue: string | null;
@@ -52,32 +55,34 @@ export class SingleSelectBoxController<TExtra extends object = object> {
         }
     }
 
-    /**
-     * Returns the highlight ranges the active filter strategy would draw
-     * for `label` under the current query. Empty when the query is empty
-     * or the strategy doesn't implement `match`. Mirrored on every
-     * snapshot as `highlightRanges` so addons and wrappers can consume it
-     * without holding a controller reference.
-     */
+    /** Highlight ranges the active strategy draws for `label` under the current query. */
     getHighlightRanges(label: string): ReadonlyArray<SearchMatchRange> {
         if (this.currentQuery.trim() === "") return [];
-        const matcher = this.filterStrategy.match;
-        if (!matcher) return [];
-        return matcher.call(this.filterStrategy, label, this.currentQuery);
+        return this.filterStrategy.match(label, this.currentQuery);
     }
 
-    /**
-     * Registers an addon and publishes a new snapshot reflecting its slice.
-     */
+    /** Registers an addon, runs its `attach`, and republishes the snapshot. */
     use(addon: SelectBoxAddon<TExtra>): this {
         this.registeredAddons.push(addon);
-        addon.attach(this.store.getState());
+        addon.attach(this);
         this.publish();
         return this;
     }
 
     getState(): SelectBoxSnapshot<TExtra> {
         return this.store.getState();
+    }
+
+    getFilter(): OptionFilterStrategy<TExtra> {
+        return this.filterStrategy;
+    }
+
+    /** Swaps the filter strategy at runtime and republishes the snapshot. */
+    setFilter(strategy: OptionFilterStrategy<TExtra>): void {
+        if (strategy === this.filterStrategy) return;
+        this.filterStrategy = strategy;
+        this.currentActiveIndex = this.firstSelectableIndex(this.computeFilteredGroups());
+        this.publish();
     }
 
     subscribe(listener: () => void): () => void {
@@ -139,10 +144,7 @@ export class SingleSelectBoxController<TExtra extends object = object> {
         this.publish();
     }
 
-    /**
-     * Selects an option by its (string-coerced) value. No-op when the value is
-     * unknown or maps to a disabled option.
-     */
+    /** Selects an option by value (coerced to string); no-op when unknown or disabled. */
     commitValue(value: string | number | null): void {
         const coerced = coerceValue(value);
         if (coerced === null) {
