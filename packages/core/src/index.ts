@@ -4,6 +4,7 @@ export { indexOptionsByValue, normalizeOptionsToGroups, UNGROUPED_KEY } from "./
 export { Store } from "./store.js";
 export type { StoreListener } from "./store.js";
 export {
+    findRowIndexForActiveIndex,
     flattenGroupsForVirtualization,
     ListVirtualizer,
 } from "./virtualizer/index.js";

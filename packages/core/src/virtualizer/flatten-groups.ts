@@ -52,3 +52,28 @@ export function flattenGroupsForVirtualization<TExtra extends object>(
     }
     return rows;
 }
+
+/**
+ * Translates the snapshot's `activeIndex` (counted across selectable
+ * options only) into the corresponding row index inside the array
+ * returned by {@link flattenGroupsForVirtualization}. Useful for scrolling
+ * the active option into the visible window.
+ *
+ * Returns `-1` when there is no match (no active option or the index is
+ * out of range).
+ */
+export function findRowIndexForActiveIndex<TExtra extends object>(
+    rows: ReadonlyArray<SelectBoxRow<TExtra>>,
+    activeIndex: number,
+): number {
+    if (activeIndex < 0) return -1;
+    let selectableSeen = -1;
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        const row = rows[rowIndex]!;
+        if (row.kind !== "option") continue;
+        if (row.group.disabled || row.option.disabled) continue;
+        selectableSeen += 1;
+        if (selectableSeen === activeIndex) return rowIndex;
+    }
+    return -1;
+}
