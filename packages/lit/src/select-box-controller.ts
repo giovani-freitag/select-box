@@ -1,5 +1,6 @@
 import {
     SingleSelectBoxController as CoreController,
+    type OptionFilterStrategy,
     type SelectBoxSnapshot,
     type SelectOption,
     type SingleSelectBoxConfig,
@@ -67,6 +68,10 @@ export class SelectBoxController<TExtra extends object = object> implements Reac
 
     commitValue(value: string | number | null): void {
         this.controller.commitValue(value);
+    }
+
+    setFilter(strategy: OptionFilterStrategy<TExtra>): void {
+        this.controller.setFilter(strategy);
     }
 
     clear(): void {

@@ -37,6 +37,13 @@ const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
 const searchRef = useTemplateRef<HTMLInputElement>("searchEl");
 
 watch(
+    () => props.filter,
+    (filter) => {
+        if (filter !== undefined) controller.setFilter(filter);
+    },
+);
+
+watch(
     () => state.value.open,
     async (isOpen) => {
         if (!isOpen) return;

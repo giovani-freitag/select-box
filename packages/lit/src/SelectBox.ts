@@ -102,14 +102,17 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     protected override willUpdate(changed: PropertyValues<this>): void {
-        const configChanged =
+        const rebuildOnlyChanges =
             changed.has("options") ||
             changed.has("groups") ||
             changed.has("addons") ||
-            changed.has("filter") ||
             changed.has("ungroupedLabel");
-        if (!this.controller || configChanged) {
+        if (!this.controller || rebuildOnlyChanges) {
             this.rebuildController();
+            return;
+        }
+        if (changed.has("filter") && this.filter !== undefined) {
+            this.controller.setFilter(this.filter);
         }
     }
 

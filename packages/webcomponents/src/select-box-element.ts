@@ -210,6 +210,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
     set filter(next: OptionFilterStrategy<TExtra> | undefined) {
         this.pendingFilter = next;
+        if (this.controller !== null && next !== undefined) {
+            this.controller.setFilter(next);
+            return;
+        }
         this.rebuildControllerIfConnected();
     }
 
