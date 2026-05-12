@@ -1,0 +1,234 @@
+/* ---------- Shared select-box demo styles ----------
+ * Light-DOM class selectors (.select-box-trigger, etc.) cover React, Vue,
+ * and jQuery wrappers. The ::part() rules below project the same look into
+ * the Lit and Web Components shadow roots so every tab renders identically. */
+
+/* Host elements need block layout to fill the demo card width */
+select-box,
+select-box-lit {
+    display: block;
+    width: 100%;
+}
+
+select-box::part(trigger),
+select-box-lit::part(trigger) {
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+select-box::part(trigger):hover,
+select-box-lit::part(trigger):hover {
+    border-color: var(--sl-color-text-accent);
+}
+
+select-box::part(value),
+select-box-lit::part(value) {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+select-box::part(caret),
+select-box-lit::part(caret) {
+    color: var(--sl-color-gray-3);
+    margin-left: 0.5rem;
+}
+
+select-box::part(popover),
+select-box-lit::part(popover) {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+    border-radius: 8px;
+    box-shadow: 0 18px 40px -16px rgba(2, 6, 23, 0.65);
+    overflow: hidden;
+    z-index: 30;
+}
+
+select-box::part(search),
+select-box-lit::part(search) {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.625rem 0.875rem;
+    border: none;
+    border-bottom: 1px solid var(--sl-color-hairline);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    outline: none;
+}
+
+.sb-demo-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--sl-color-bg-sidebar);
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 12px;
+}
+
+.sb-demo-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--sl-color-gray-3);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.01em;
+}
+
+.sb-demo-snapshot {
+    margin: 1.25rem 0 0;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.sb-demo-snapshot dt {
+    color: var(--sl-color-gray-3);
+}
+
+.sb-demo-snapshot dd {
+    margin: 0;
+}
+
+.sb-demo-snapshot code {
+    background: var(--sl-color-bg-inline-code, rgba(148, 163, 184, 0.12));
+    padding: 0.125rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: var(--sl-font-system-mono);
+}
+
+/* ---------- The select-box itself (used by React, Vue, jQuery wrappers) ---------- */
+
+.select-box {
+    position: relative;
+    width: 100%;
+}
+
+.select-box-trigger {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.select-box-trigger:hover {
+    border-color: var(--sl-color-text-accent);
+}
+
+.select-box-value {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.select-box-placeholder {
+    color: var(--sl-color-gray-3);
+}
+
+.select-box-caret {
+    color: var(--sl-color-gray-3);
+    margin-left: 0.5rem;
+}
+
+.select-box-popover {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+    border-radius: 8px;
+    box-shadow: 0 18px 40px -16px rgba(2, 6, 23, 0.65);
+    overflow: hidden;
+    z-index: 30;
+}
+
+.select-box-search {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: none;
+    border-bottom: 1px solid var(--sl-color-hairline);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    outline: none;
+}
+
+.select-box-list {
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.select-box-group-label {
+    padding: 0.5rem 0.875rem 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--sl-color-gray-3);
+    background: var(--sl-color-bg-sidebar, var(--sl-color-bg));
+    position: sticky;
+    top: 0;
+}
+
+.select-box-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.875rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.select-box-option:hover:not(.select-box-option-disabled) {
+    background: var(--sl-color-accent-low);
+}
+
+.select-box-option-active {
+    background: var(--sb-brand-gradient);
+    color: #ffffff;
+}
+
+.select-box-option-disabled {
+    color: var(--sl-color-gray-4);
+    cursor: not-allowed;
+}
+
+.select-box-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--sl-color-gray-3);
+}

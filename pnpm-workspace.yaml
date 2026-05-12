@@ -1,6 +1,8 @@
 packages:
   - "packages/*"
   - "tooling/*"
-  - "docs"
+  - "docs-starlight"
+  - "docs-vitepress"
 allowBuilds:
   esbuild: true
+  sharp: true

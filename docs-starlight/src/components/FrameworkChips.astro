@@ -1,0 +1,49 @@
+---
+const chips = [
+    { id: "react", label: "React" },
+    { id: "vue", label: "Vue" },
+    { id: "lit", label: "Lit" },
+    { id: "wc", label: "Web Components" },
+    { id: "jquery", label: "jQuery" },
+];
+---
+
+<div class="sb-chips not-content" aria-label="Supported frameworks">
+    <span class="sb-chips-label">Runs on</span>
+    {
+        chips.map((chip) => (
+            <span class="sb-chip" data-framework={chip.id}>
+                {chip.label}
+            </span>
+        ))
+    }
+</div>
+
+<style>
+    .sb-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        align-items: center;
+        margin-top: 1.5rem;
+    }
+
+    .sb-chips-label {
+        font-size: 0.8rem;
+        color: var(--sl-color-gray-3);
+        margin-right: 0.25rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .sb-chip {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid var(--sl-color-hairline);
+        background: var(--sl-color-bg-sidebar);
+        color: var(--sl-color-gray-2);
+    }
+</style>

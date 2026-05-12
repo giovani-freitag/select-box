@@ -1,0 +1,41 @@
+---
+const triggerId = `jq-demo-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <div id={triggerId}></div>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed value</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+    import { fruits, type Fruit } from "./fruits.ts";
+
+    function initializeJqueryDemos(): void {
+        const containers = document.querySelectorAll<HTMLElement>("[id^='jq-demo-']");
+        for (const container of containers) {
+            if (container.dataset["bootstrapped"] === "true") continue;
+            if (container.tagName !== "DIV") continue;
+            container.dataset["bootstrapped"] = "true";
+            const snapshot = document.getElementById(`${container.id}-snapshot`);
+            jQuery(container)
+                .selectBox<Fruit>({
+                    options: fruits,
+                    ungroupedLabel: "Citrus",
+                    placeholder: "Search fruits…",
+                })
+                .on("selectbox:valuechange", (_event, value: Fruit | null) => {
+                    if (snapshot) snapshot.textContent = value ? JSON.stringify(value) : "null";
+                });
+        }
+    }
+
+    initializeJqueryDemos();
+    document.addEventListener("astro:page-load", initializeJqueryDemos);
+</script>

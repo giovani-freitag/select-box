@@ -1,0 +1,228 @@
+---
+import ReactDemo from "./demos/ReactDemo.tsx";
+import VueDemo from "./demos/VueDemo.vue";
+import LitDemo from "./demos/LitDemo.astro";
+import WebComponentsDemo from "./demos/WebComponentsDemo.astro";
+import JqueryDemo from "./demos/JqueryDemo.astro";
+
+interface Props {
+    initial?: "react" | "vue" | "lit" | "webcomponents" | "jquery";
+}
+
+const { initial = "react" } = Astro.props;
+const groupId = `sb-fwdemo-${Math.random().toString(36).slice(2, 9)}`;
+
+const frameworks = [
+    { id: "jquery", label: "jQuery" },
+    { id: "lit", label: "Lit" },
+    { id: "react", label: "React" },
+    { id: "vue", label: "Vue" },
+    { id: "webcomponents", label: "Web Components" },
+] as const;
+---
+
+<div class="sb-fwdemo not-content" data-group-id={groupId}>
+    <div class="sb-fwdemo-tabs" role="tablist" aria-label="Choose a framework">
+        {
+            frameworks.map((framework) => (
+                <button
+                    type="button"
+                    role="tab"
+                    id={`${groupId}-tab-${framework.id}`}
+                    class:list={["sb-fwdemo-tab", { active: framework.id === initial }]}
+                    aria-selected={framework.id === initial}
+                    aria-controls={`${groupId}-panel-${framework.id}`}
+                    data-target={framework.id}
+                >
+                    {framework.label}
+                </button>
+            ))
+        }
+    </div>
+
+    <div class="sb-fwdemo-panels">
+        <div
+            class="sb-fwdemo-panel"
+            id={`${groupId}-panel-jquery`}
+            role="tabpanel"
+            aria-labelledby={`${groupId}-tab-jquery`}
+            hidden={initial !== "jquery"}
+        >
+            <div class="sb-fwdemo-preview">
+                <JqueryDemo />
+            </div>
+            <div class="sb-fwdemo-code"><slot name="jquery-code" /></div>
+        </div>
+
+        <div
+            class="sb-fwdemo-panel"
+            id={`${groupId}-panel-lit`}
+            role="tabpanel"
+            aria-labelledby={`${groupId}-tab-lit`}
+            hidden={initial !== "lit"}
+        >
+            <div class="sb-fwdemo-preview">
+                <LitDemo />
+            </div>
+            <div class="sb-fwdemo-code"><slot name="lit-code" /></div>
+        </div>
+
+        <div
+            class="sb-fwdemo-panel"
+            id={`${groupId}-panel-react`}
+            role="tabpanel"
+            aria-labelledby={`${groupId}-tab-react`}
+            hidden={initial !== "react"}
+        >
+            <div class="sb-fwdemo-preview">
+                <ReactDemo client:only="react" />
+            </div>
+            <div class="sb-fwdemo-code"><slot name="react-code" /></div>
+        </div>
+
+        <div
+            class="sb-fwdemo-panel"
+            id={`${groupId}-panel-vue`}
+            role="tabpanel"
+            aria-labelledby={`${groupId}-tab-vue`}
+            hidden={initial !== "vue"}
+        >
+            <div class="sb-fwdemo-preview">
+                <VueDemo client:only="vue" />
+            </div>
+            <div class="sb-fwdemo-code"><slot name="vue-code" /></div>
+        </div>
+
+        <div
+            class="sb-fwdemo-panel"
+            id={`${groupId}-panel-webcomponents`}
+            role="tabpanel"
+            aria-labelledby={`${groupId}-tab-webcomponents`}
+            hidden={initial !== "webcomponents"}
+        >
+            <div class="sb-fwdemo-preview">
+                <WebComponentsDemo />
+            </div>
+            <div class="sb-fwdemo-code"><slot name="webcomponents-code" /></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function wireFrameworkDemos(): void {
+        const groups = document.querySelectorAll<HTMLElement>(".sb-fwdemo");
+        for (const group of groups) {
+            if (group.dataset["wired"] === "true") continue;
+            group.dataset["wired"] = "true";
+            const tabs = group.querySelectorAll<HTMLButtonElement>(".sb-fwdemo-tab");
+            tabs.forEach((tab) => {
+                tab.addEventListener("click", () => activateTab(group, tab.dataset["target"] ?? ""));
+            });
+        }
+    }
+
+    function activateTab(group: HTMLElement, target: string): void {
+        const tabs = group.querySelectorAll<HTMLButtonElement>(".sb-fwdemo-tab");
+        const panels = group.querySelectorAll<HTMLElement>(".sb-fwdemo-panel");
+        tabs.forEach((tab) => {
+            const isActive = tab.dataset["target"] === target;
+            tab.classList.toggle("active", isActive);
+            tab.setAttribute("aria-selected", String(isActive));
+        });
+        panels.forEach((panel) => {
+            const isActive = panel.id.endsWith(`-panel-${target}`);
+            panel.hidden = !isActive;
+        });
+    }
+
+    wireFrameworkDemos();
+    document.addEventListener("astro:page-load", wireFrameworkDemos);
+</script>
+
+<style>
+    .sb-fwdemo {
+        margin: 2rem 0;
+        border-radius: 12px;
+        border: 1px solid var(--sl-color-hairline);
+        overflow: hidden;
+        background: transparent;
+    }
+
+    .sb-fwdemo-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        padding: 0 1.25rem;
+        border-bottom: 1px solid var(--sl-color-hairline);
+    }
+
+    .sb-fwdemo-tab {
+        appearance: none;
+        position: relative;
+        font: inherit;
+        font-weight: 500;
+        font-size: 0.875rem;
+        line-height: 1.25;
+        padding: 0.85rem 0;
+        margin-bottom: -1px;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--sl-color-gray-3);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sb-fwdemo-tab:hover {
+        color: var(--sl-color-text);
+    }
+
+    .sb-fwdemo-tab.active {
+        color: var(--sl-color-text);
+        border-bottom-color: var(--sb-brand-2);
+    }
+
+    .sb-fwdemo-tab:focus-visible {
+        outline: 2px solid var(--sl-color-text-accent);
+        outline-offset: 4px;
+        border-radius: 4px;
+    }
+
+    .sb-fwdemo-panel {
+        display: block;
+    }
+
+    .sb-fwdemo-panel[hidden] {
+        display: none;
+    }
+
+    .sb-fwdemo-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1.5rem;
+        border-bottom: 1px solid var(--sl-color-hairline);
+        min-height: 320px;
+        background: var(--sl-color-bg);
+    }
+
+    .sb-fwdemo-code {
+        padding: 0;
+        min-width: 0;
+    }
+
+    .sb-fwdemo-code :global(.expressive-code) {
+        margin: 0 !important;
+    }
+
+    .sb-fwdemo-code :global(figure.frame) {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .sb-fwdemo-code :global(figure.frame pre) {
+        border-radius: 0;
+        border: none;
+    }
+</style>

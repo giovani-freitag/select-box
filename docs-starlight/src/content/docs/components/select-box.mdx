@@ -1,0 +1,152 @@
+---
+title: Select Box
+description: A single-select box with grouped options, fuzzy filter, keyboard navigation, and an opt-in addon system.
+---
+
+import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+
+A single-select box with grouped options, fuzzy filter, keyboard
+navigation, and an opt-in addon system. Switch between the framework
+tabs — the preview is the real wrapper running natively on this page.
+
+<FrameworkDemo>
+    <Fragment slot="react-code">
+        ```tsx
+        import { SelectBox } from "@select-box/react";
+        import { useState } from "react";
+
+        const fruits = [
+            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+        ];
+
+        export function App() {
+            const [committed, setCommitted] = useState(null);
+            return (
+                <SelectBox
+                    options={fruits}
+                    placeholder="Search fruits…"
+                    ungroupedLabel="Citrus"
+                    onChange={setCommitted}
+                />
+            );
+        }
+        ```
+    </Fragment>
+
+    <Fragment slot="vue-code">
+        ```vue
+        <script setup lang="ts">
+        import { SelectBox } from "@select-box/vue";
+        import { ref } from "vue";
+
+        const fruits = [
+            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+        ];
+
+        const committed = ref(null);
+        </script>
+
+        <template>
+            <SelectBox
+                :options="fruits"
+                placeholder="Search fruits…"
+                ungrouped-label="Citrus"
+                @change="(value) => (committed = value)"
+            />
+        </template>
+        ```
+    </Fragment>
+
+    <Fragment slot="lit-code">
+        ```html
+        <select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+
+        <script type="module">
+            import "@select-box/lit/define";
+
+            const fruits = [
+                { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+                { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+                { value: { id: 3, name: "lemon" }, label: "Lemon" },
+            ];
+
+            const element = document.getElementById("fruit");
+            element.options = fruits;
+            element.addEventListener("change", (event) => {
+                console.log(event.target.value);
+            });
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="webcomponents-code">
+        ```html
+        <select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+
+        <script type="module">
+            import "@select-box/webcomponents/define";
+
+            const fruits = [
+                { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+                { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+                { value: { id: 3, name: "lemon" }, label: "Lemon" },
+            ];
+
+            const element = document.getElementById("fruit");
+            element.options = fruits;
+            element.addEventListener("change", (event) => {
+                console.log(event.target.value);
+            });
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="jquery-code">
+        ```ts
+        import "@select-box/jquery";
+        import jQuery from "jquery";
+
+        const fruits = [
+            { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
+            { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
+            { value: { id: 3, name: "lemon" }, label: "Lemon" },
+        ];
+
+        jQuery("#fruit")
+            .selectBox({
+                options: fruits,
+                placeholder: "Search fruits…",
+                ungroupedLabel: "Citrus",
+            })
+            .on("selectbox:valuechange", (_event, value) => {
+                console.log(value);
+            });
+        ```
+    </Fragment>
+</FrameworkDemo>
+
+## Props / Attributes
+
+| Field | React prop | Custom-element |
+|---|---|---|
+| Options (flat) | `options` | `.options` (property) |
+| Options (grouped) | `groups` | `.groups` (property) |
+| Initial value | `defaultValue` | `.value` (property) |
+| Change callback | `onChange` | `change` event (read `event.target.value`) |
+| Placeholder | `placeholder` | `placeholder` attribute |
+| Ungrouped label | `ungroupedLabel` | `ungrouped-label` attribute |
+| Addons | `addons` | `.addons` (property) |
+| Custom filter | `filter` | `.filter` (property) |
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| `↓` / `↑` | Move active option (skips disabled). When closed, `↓` also opens the popover. |
+| `Enter` | Commit the active option. |
+| `Escape` | Close the popover. |
+| Click outside | Close the popover. |

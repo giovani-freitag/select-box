@@ -11,7 +11,9 @@ coverage/
 .env.local
 
 # Generated docs artifacts
-docs/api/
-docs/public/examples/
-docs/.vitepress/cache/
-docs/.vitepress/dist/
+docs-starlight/.astro/
+docs-starlight/dist/
+docs-starlight/src/content/docs/api/
+docs-vitepress/.vitepress/cache/
+docs-vitepress/.vitepress/dist/
+docs-vitepress/api/

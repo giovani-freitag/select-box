@@ -1,0 +1,177 @@
+---
+// Single-button cycling theme toggle: auto → light → dark → auto.
+// Pre-renders with the "auto" icon; the client script swaps it to whichever
+// preference is stored in localStorage on mount.
+---
+
+<starlight-theme-toggle class="sb-theme-toggle">
+    <button
+        type="button"
+        class="sb-theme-toggle-button"
+        title="Toggle theme"
+        aria-label="Toggle theme"
+        data-preference="auto"
+    >
+        <svg
+            class="sb-theme-icon sb-theme-icon-light"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+        >
+            <circle cx="12" cy="12" r="4"></circle>
+            <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            ></path>
+        </svg>
+        <svg
+            class="sb-theme-icon sb-theme-icon-dark"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg
+            class="sb-theme-icon sb-theme-icon-auto"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+        >
+            <rect x="2" y="4" width="20" height="14" rx="2"></rect>
+            <path d="M8 22h8M12 18v4"></path>
+        </svg>
+    </button>
+</starlight-theme-toggle>
+
+<script>
+    type Preference = "auto" | "light" | "dark";
+
+    const STORAGE_KEY = "starlight-theme";
+    const CYCLE: ReadonlyArray<Preference> = ["auto", "light", "dark"];
+
+    function parsePreference(value: unknown): Preference {
+        return value === "auto" || value === "light" || value === "dark" ? value : "auto";
+    }
+
+    function loadPreference(): Preference {
+        if (typeof localStorage === "undefined") return "auto";
+        return parsePreference(localStorage.getItem(STORAGE_KEY));
+    }
+
+    function storePreference(preference: Preference): void {
+        if (typeof localStorage === "undefined") return;
+        if (preference === "auto") {
+            localStorage.removeItem(STORAGE_KEY);
+        } else {
+            localStorage.setItem(STORAGE_KEY, preference);
+        }
+    }
+
+    function getSystemTheme(): "light" | "dark" {
+        return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    }
+
+    function resolveTheme(preference: Preference): "light" | "dark" {
+        return preference === "auto" ? getSystemTheme() : preference;
+    }
+
+    function applyPreference(preference: Preference): void {
+        document.documentElement.dataset["theme"] = resolveTheme(preference);
+        for (const toggle of document.querySelectorAll<StarlightThemeToggle>("starlight-theme-toggle")) {
+            toggle.reflect(preference);
+        }
+    }
+
+    function commitPreference(preference: Preference): void {
+        applyPreference(preference);
+        storePreference(preference);
+    }
+
+    function nextPreference(current: Preference): Preference {
+        const currentIndex = CYCLE.indexOf(current);
+        const nextIndex = (currentIndex + 1) % CYCLE.length;
+        return CYCLE[nextIndex]!;
+    }
+
+    class StarlightThemeToggle extends HTMLElement {
+        connectedCallback(): void {
+            const button = this.querySelector<HTMLButtonElement>("button");
+            if (!button) return;
+            button.addEventListener("click", () => commitPreference(nextPreference(loadPreference())));
+            this.reflect(loadPreference());
+        }
+
+        reflect(preference: Preference): void {
+            const button = this.querySelector<HTMLButtonElement>("button");
+            if (!button) return;
+            button.dataset["preference"] = preference;
+            button.setAttribute("title", `Theme: ${preference}`);
+        }
+    }
+
+    if (!customElements.get("starlight-theme-toggle")) {
+        customElements.define("starlight-theme-toggle", StarlightThemeToggle);
+    }
+
+    matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => {
+        if (loadPreference() === "auto") applyPreference("auto");
+    });
+
+    applyPreference(loadPreference());
+</script>
+
+<style>
+    .sb-theme-toggle-button {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 1px solid var(--sl-color-hairline);
+        background: var(--sl-color-bg-sidebar);
+        color: var(--sl-color-gray-2);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .sb-theme-toggle-button:hover {
+        color: var(--sl-color-text);
+        border-color: var(--sl-color-hairline-shade, var(--sl-color-text-accent));
+    }
+
+    .sb-theme-toggle-button:focus-visible {
+        outline: 2px solid var(--sl-color-text-accent);
+        outline-offset: 2px;
+    }
+
+    .sb-theme-icon {
+        display: none;
+    }
+
+    .sb-theme-toggle-button[data-preference="light"] .sb-theme-icon-light,
+    .sb-theme-toggle-button[data-preference="dark"] .sb-theme-icon-dark,
+    .sb-theme-toggle-button[data-preference="auto"] .sb-theme-icon-auto {
+        display: inline-block;
+    }
+</style>

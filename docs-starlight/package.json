@@ -1,0 +1,42 @@
+{
+    "name": "@select-box/docs-starlight",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "pnpm run typedoc && astro dev",
+        "start": "astro dev",
+        "build": "pnpm run typedoc && astro build",
+        "preview": "astro preview",
+        "astro": "astro",
+        "typedoc": "typedoc --options typedoc.json && node scripts/typedoc-frontmatter.mjs"
+    },
+    "dependencies": {
+        "@astrojs/check": "^0.9.4",
+        "@astrojs/mdx": "^4.0.0",
+        "@astrojs/react": "^4.2.0",
+        "@astrojs/starlight": "^0.32.0",
+        "@astrojs/vue": "^5.0.0",
+        "@select-box/core": "workspace:*",
+        "@select-box/jquery": "workspace:*",
+        "@select-box/lit": "workspace:*",
+        "@select-box/react": "workspace:*",
+        "@select-box/vue": "workspace:*",
+        "@select-box/webcomponents": "workspace:*",
+        "astro": "^5.1.0",
+        "jquery": "^3.7.1",
+        "lit": "^3.2.1",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "sharp": "^0.33.5",
+        "vue": "^3.5.13"
+    },
+    "devDependencies": {
+        "@types/jquery": "^3.5.32",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "typedoc": "^0.28.4",
+        "typedoc-plugin-markdown": "^4.4.0",
+        "typescript": "^5.7.2"
+    }
+}

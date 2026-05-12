@@ -1,16 +1,9 @@
-import "@select-box/webcomponents";
-import type { SelectBoxElement } from "@select-box/webcomponents";
-
-import { wireExampleTheme } from "./theme.js";
-
-wireExampleTheme();
-
-interface Fruit {
+export interface Fruit {
     readonly id: number;
     readonly name: string;
 }
 
-const fruits = [
+export const fruits = [
     { value: { id: 1, name: "apple" }, label: "Apple", group: "Pomes" },
     { value: { id: 2, name: "pear" }, label: "Pear", group: "Pomes" },
     { value: { id: 3, name: "quince" }, label: "Quince", group: "Pomes" },
@@ -20,13 +13,4 @@ const fruits = [
     { value: { id: 7, name: "lemon" }, label: "Lemon" },
     { value: { id: 8, name: "orange" }, label: "Orange" },
     { value: { id: 9, name: "lime" }, label: "Lime" },
-];
-
-const element = document.getElementById("fruit") as SelectBoxElement<Fruit>;
-const committed = document.getElementById("committed")!;
-
-element.options = fruits;
-element.addEventListener("change", (event) => {
-    const value = (event.target as SelectBoxElement<Fruit>).value;
-    committed.textContent = value ? JSON.stringify(value) : "null";
-});
+] as const;

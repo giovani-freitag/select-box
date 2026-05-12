@@ -1,0 +1,127 @@
+---
+title: select-box
+description: Framework-agnostic select-box. One core, every framework — React, Vue, Lit, Web Components, jQuery.
+template: splash
+hero:
+    tagline: One core, every framework
+pagefind: false
+next: false
+prev: false
+---
+
+import Hero from "../../components/Hero.astro";
+import FrameworkChips from "../../components/FrameworkChips.astro";
+import FeatureGrid from "../../components/FeatureGrid.astro";
+import FrameworkDemo from "../../components/FrameworkDemo.astro";
+
+<Hero
+    eyebrow="v0.1 — pilot"
+    title="One select box."
+    titleHighlight="Every framework."
+    tagline="Framework-agnostic core, ready-to-use wrappers, identical snapshot fields across React, Vue, Lit, Web Components, and jQuery. The same Playwright suite proves them all."
+    primaryHref="/guides/getting-started/"
+    primaryLabel="Get started"
+    secondaryHref="/components/select-box/"
+    secondaryLabel="Try it live"
+>
+    <FrameworkChips slot="footer" />
+</Hero>
+
+<section class="sb-landing-demo">
+    <div class="sb-section-head">
+        <h2>The same component, rendered five ways.</h2>
+        <p>Click between tabs — every preview is the real wrapper running natively on this page. No iframe, no sandbox.</p>
+    </div>
+
+    <FrameworkDemo>
+        <Fragment slot="react-code">
+            ```tsx
+            import { SelectBox } from "@select-box/react";
+
+            <SelectBox
+                options={fruits}
+                placeholder="Search fruits…"
+                ungroupedLabel="Citrus"
+                onChange={setCommitted}
+            />
+            ```
+        </Fragment>
+
+        <Fragment slot="vue-code">
+            ```vue
+            <script setup lang="ts">
+            import { SelectBox } from "@select-box/vue";
+            import { ref } from "vue";
+            const committed = ref(null);
+            </script>
+
+            <template>
+                <SelectBox
+                    :options="fruits"
+                    placeholder="Search fruits…"
+                    ungrouped-label="Citrus"
+                    @change="(v) => (committed = v)"
+                />
+            </template>
+            ```
+        </Fragment>
+
+        <Fragment slot="lit-code">
+            ```html
+            <select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+
+            <script type="module">
+                import "@select-box/lit/define";
+
+                const element = document.getElementById("fruit");
+                element.options = fruits;
+                element.addEventListener("change", (event) => {
+                    console.log(event.target.value);
+                });
+            </script>
+            ```
+        </Fragment>
+
+        <Fragment slot="webcomponents-code">
+            ```html
+            <select-box id="fruit" placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+
+            <script type="module">
+                import "@select-box/webcomponents/define";
+
+                const element = document.getElementById("fruit");
+                element.options = fruits;
+                element.addEventListener("change", (event) => {
+                    console.log(event.target.value);
+                });
+            </script>
+            ```
+        </Fragment>
+
+        <Fragment slot="jquery-code">
+            ```ts
+            import "@select-box/jquery";
+            import jQuery from "jquery";
+
+            jQuery("#fruit")
+                .selectBox({
+                    options: fruits,
+                    placeholder: "Search fruits…",
+                    ungroupedLabel: "Citrus",
+                })
+                .on("selectbox:valuechange", (_event, value) => {
+                    console.log(value);
+                });
+            ```
+        </Fragment>
+    </FrameworkDemo>
+</section>
+
+<section class="sb-landing-features">
+    <div class="sb-section-head">
+        <h2>Built for parity, not for the lowest common denominator.</h2>
+        <p>Headless when you need it. Drop-in when you don't. Same behaviour in every cell of the matrix.</p>
+    </div>
+    <FeatureGrid />
+</section>
+

@@ -1,0 +1,129 @@
+---
+const hasToc = Astro.locals.starlightRoute.toc !== undefined;
+---
+
+<div class:list={["sb-doc", { "has-aside": hasToc }]}>
+    <div class="sb-doc-container">
+        {
+            hasToc && (
+                <aside class="sb-doc-aside print:hidden" aria-label="On this page">
+                    <div class="sb-doc-aside-container">
+                        <slot name="right-sidebar" />
+                    </div>
+                </aside>
+            )
+        }
+        <div class="sb-doc-content">
+            <article class="sb-doc-content-inner">
+                <slot />
+            </article>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ---------- Vite-style doc layout: content (688px) + aside TOC (256px) ----------
+     * Mobile: stacked, content centered with its max-width.
+     * Desktop: container is a flex with justify-content: center,
+     * aside on the right (order: 2), both glued to the center. */
+
+    .sb-doc {
+        width: 100%;
+        padding: 2rem 1.5rem 6rem;
+    }
+
+    .sb-doc-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .sb-doc-content {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .sb-doc.has-aside .sb-doc-content-inner {
+        max-width: var(--sb-content-max-width, 688px);
+        min-width: 0;
+        margin: 0 auto;
+    }
+
+    .sb-doc:not(.has-aside) .sb-doc-content-inner {
+        max-width: var(--sb-content-max-width-no-aside, 784px);
+        min-width: 0;
+        margin: 0 auto;
+    }
+
+    /* Defensive: wide elements (code blocks, tables) inside the content
+     * column scroll horizontally inside themselves instead of pushing the
+     * whole column wider. */
+    .sb-doc-content-inner :global(figure.frame),
+    .sb-doc-content-inner :global(figure.frame pre),
+    .sb-doc-content-inner :global(table) {
+        max-width: 100%;
+    }
+
+    .sb-doc-content-inner :global(figure.frame pre),
+    .sb-doc-content-inner :global(.expressive-code) {
+        overflow-x: auto;
+    }
+
+    /* Wrapper is transparent to flex on mobile so the mobile-toc dropdown
+     * (position: fixed, rendered as child) still appears. */
+    .sb-doc-aside {
+        display: contents;
+    }
+
+    @media (min-width: 50rem) {
+        .sb-doc {
+            padding: 3rem 2rem 8rem;
+        }
+
+        .sb-doc:not(.has-aside) .sb-doc-container {
+            max-width: var(--sb-doc-max-width-no-aside, 1104px);
+        }
+    }
+
+    @media (min-width: 72rem) {
+        .sb-doc-aside {
+            display: block;
+            order: 2;
+            flex-grow: 1;
+            width: 100%;
+            max-width: var(--sb-aside-max-width, 256px);
+            padding-inline-start: 2rem;
+            position: relative;
+        }
+
+        /* Sticky AND explicitly tall — matches Vite's pattern so the border
+         * extends the full viewport height instead of just the TOC content. */
+        .sb-doc-aside-container {
+            position: sticky;
+            top: var(--sl-nav-height);
+            width: var(--sb-aside-inner-width, 224px);
+            height: calc(100vh - var(--sl-nav-height));
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            padding-block-start: 1.5rem;
+            padding-inline-start: 2rem;
+            border-inline-start: 1px solid var(--sl-color-hairline);
+        }
+
+        /* Neutralize Starlight's PageSidebar internal widths (the "MAGIC
+         * NUMBER 🥲" calc that assumes its own layout, not ours). */
+        .sb-doc-aside-container :global(.right-sidebar-panel) {
+            padding: 0;
+        }
+
+        .sb-doc-aside-container :global(.right-sidebar-panel .sl-container) {
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+</style>

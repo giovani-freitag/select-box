@@ -1,0 +1,144 @@
+---
+import MobileMenuToggle from "virtual:starlight/components/MobileMenuToggle";
+
+const { hasSidebar } = Astro.locals.starlightRoute;
+---
+
+<div class="sb-layout">
+    <header class="sb-header"><slot name="header" /></header>
+
+    <div class:list={["sb-content-wrapper", { "has-sidebar": hasSidebar }]}>
+        {
+            hasSidebar && (
+                <nav class="sb-sidebar" aria-label={Astro.locals.t("sidebarNav.accessibleLabel")}>
+                    <MobileMenuToggle />
+                    <div id="starlight__sidebar" class="sb-sidebar-pane">
+                        <div class="sb-sidebar-content">
+                            <slot name="sidebar" />
+                        </div>
+                    </div>
+                </nav>
+            )
+        }
+
+        <div class="sb-vp-content">
+            <slot />
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ---------- Vite-style layout — 3-column grid centered in a 1440px shell ---------- */
+
+    .sb-layout {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Fixed header — full-width backdrop + bottom border, inner content
+     * capped to the same shell max-width so the vertical hairlines align
+     * with the content wrapper below (boxed look). */
+    .sb-header {
+        position: fixed;
+        inset-inline: 0;
+        inset-block-start: 0;
+        z-index: var(--sl-z-index-navbar);
+        height: var(--sl-nav-height);
+        background: var(--sl-color-bg-nav);
+        border-bottom: 1px solid var(--sl-color-hairline);
+        backdrop-filter: saturate(180%) blur(14px);
+        -webkit-backdrop-filter: saturate(180%) blur(14px);
+    }
+
+    .sb-header > :global(.header) {
+        max-width: var(--sb-shell-max-width, 90rem);
+        height: 100%;
+        margin: 0 auto;
+        padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+        box-sizing: border-box;
+    }
+
+    @media (min-width: 90rem) {
+        .sb-header > :global(.header) {
+            border-inline: 1px solid var(--sl-color-hairline);
+        }
+    }
+
+    /* Centered wrapper — caps everything at the shell max-width */
+    .sb-content-wrapper {
+        width: 100%;
+        max-width: var(--sb-shell-max-width, 90rem);
+        margin: 0 auto;
+        padding-top: var(--sl-nav-height);
+        position: relative;
+        flex: 1;
+    }
+
+    /* ---------- Mobile sidebar: overlay drawer ---------- */
+
+    .sb-sidebar-pane {
+        visibility: var(--sl-sidebar-visibility, hidden);
+        position: fixed;
+        z-index: var(--sl-z-index-menu);
+        inset-block: var(--sl-nav-height) 0;
+        inset-inline-start: 0;
+        width: 100%;
+        background: var(--sl-color-black);
+        overflow-y: auto;
+    }
+
+    :global([aria-expanded="true"]) ~ .sb-sidebar-pane {
+        --sl-sidebar-visibility: visible;
+    }
+
+    .sb-sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem var(--sl-sidebar-pad-x, 1.5rem);
+        min-height: 100%;
+    }
+
+    .sb-vp-content {
+        width: 100%;
+        min-width: 0;
+        /* Clip horizontal overflow from descendants (wide code blocks, tables)
+         * without creating a new scroll container — inner pre/table elements
+         * can still scroll horizontally inside themselves. */
+        overflow-x: clip;
+    }
+
+    /* ---------- Desktop ≥ 50rem: 2-column grid (sidebar | content) ---------- */
+
+    @media (min-width: 50rem) {
+        .sb-content-wrapper.has-sidebar {
+            display: grid;
+            grid-template-columns: var(--sl-sidebar-width, 272px) minmax(0, 1fr);
+            border-inline: 1px solid var(--sl-color-hairline);
+            min-height: calc(100vh - var(--sl-nav-height));
+        }
+
+        .sb-sidebar {
+            grid-area: 1 / 1;
+            min-width: 0;
+        }
+
+        .sb-sidebar-pane {
+            visibility: visible;
+            position: sticky;
+            top: var(--sl-nav-height);
+            inset-inline-start: auto;
+            inset-block-end: auto;
+            width: 100%;
+            height: calc(100vh - var(--sl-nav-height));
+            background: var(--sl-color-bg);
+            border-inline-end: 1px solid var(--sl-color-hairline);
+        }
+
+        .sb-vp-content {
+            grid-area: 1 / 2;
+            min-width: 0;
+        }
+    }
+</style>
