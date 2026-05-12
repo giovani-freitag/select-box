@@ -192,10 +192,11 @@ export class SelectBox<TValue = unknown> extends LitElement {
         const state = this.controller?.state;
         if (!state) return html``;
         return html`
-            <div class="select-box" data-select-root>
+            <div class="select-box" part="root" data-select-root>
                 <button
                     type="button"
                     class="select-box-trigger"
+                    part="trigger"
                     aria-haspopup="listbox"
                     aria-expanded=${state.open}
                     aria-readonly=${this.readOnly}
@@ -204,13 +205,14 @@ export class SelectBox<TValue = unknown> extends LitElement {
                     @click=${this.handleTriggerClick}
                 >
                     <span
+                        part="value"
                         class=${state.selectedOption
                             ? "select-box-value"
                             : "select-box-value select-box-placeholder"}
                     >
                         ${state.selectedOption?.label ?? this.placeholder ?? "Select…"}
                     </span>
-                    <span class="select-box-caret" aria-hidden="true">▾</span>
+                    <span class="select-box-caret" part="caret" aria-hidden="true">▾</span>
                 </button>
                 ${state.open ? this.renderPopover(state) : nothing}
             </div>
@@ -219,9 +221,10 @@ export class SelectBox<TValue = unknown> extends LitElement {
 
     private renderPopover(state: NonNullable<SelectBoxController<TValue>["state"]>): TemplateResult {
         return html`
-            <div class="select-box-popover" role="listbox" data-select-popover>
+            <div class="select-box-popover" part="popover" role="listbox" data-select-popover>
                 <input
                     class="select-box-search"
+                    part="search"
                     type="text"
                     placeholder=${this.placeholder || "Search…"}
                     .value=${state.query}
@@ -229,9 +232,9 @@ export class SelectBox<TValue = unknown> extends LitElement {
                     @input=${this.handleSearchInput}
                     @keydown=${this.handleSearchKeyDown}
                 />
-                <div class="select-box-list" data-select-list>
+                <div class="select-box-list" part="list" data-select-list>
                     ${state.isEmpty
-                        ? html`<p class="select-box-empty" data-select-empty>No matches</p>`
+                        ? html`<p class="select-box-empty" part="empty" data-select-empty>No matches</p>`
                         : this.renderGroups(state.filteredGroups, state.activeIndex)}
                 </div>
             </div>

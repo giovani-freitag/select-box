@@ -32,5 +32,3 @@ declare global {
         "select-box": SelectBoxElement;
     }
 }
-
-defineSelectBoxElement();
