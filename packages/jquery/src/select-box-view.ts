@@ -1,9 +1,15 @@
 import {
+    ListVirtualizer,
+    SelectBoxRowModel,
     SingleSelectBoxController,
     type SelectBoxSnapshot,
     type SelectOption,
     type SingleSelectBoxConfig,
 } from "@select-box/core";
+
+const OPTION_ROW_HEIGHT = 36;
+const HEADER_ROW_HEIGHT = 28;
+const LIST_VIEWPORT_HEIGHT = 240;
 
 /**
  * Light-DOM select box view that wires a `SingleSelectBoxController` into a host element.
@@ -25,6 +31,12 @@ export class SelectBoxView<TExtra extends object = object> {
         | undefined;
     private readonly placeholder: string;
 
+    private readonly listVirtualizer: ListVirtualizer;
+    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private unsubscribeFromVirtualizer: (() => void) | null = null;
+    private readonly rowHeightFn = (index: number): number =>
+        this.rowHeightAt(this.rowModel, index);
+
     constructor(config: SingleSelectBoxConfig<TExtra> & {
         readonly placeholder?: string;
         readonly onValueChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
@@ -45,12 +57,22 @@ export class SelectBoxView<TExtra extends object = object> {
         this.list = this.popover.querySelector<HTMLDivElement>(".select-box-list")!;
 
         this.root.append(this.trigger, this.popover);
+        this.list.style.maxHeight = `${LIST_VIEWPORT_HEIGHT}px`;
+        this.list.style.overflowY = "auto";
+        this.listVirtualizer = new ListVirtualizer({
+            rowCount: 0,
+            rowHeight: this.rowHeightFn,
+            viewportHeight: LIST_VIEWPORT_HEIGHT,
+        });
+        this.unsubscribeFromVirtualizer = this.listVirtualizer.subscribe(this.handleSnapshotChange);
         this.listen();
         this.paint(this.controller.getState());
     }
 
     destroy(): void {
         this.unlisten();
+        this.unsubscribeFromVirtualizer?.();
+        this.unsubscribeFromVirtualizer = null;
         this.controller.destroy();
         this.root.remove();
     }
@@ -120,6 +142,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.trigger.addEventListener("click", this.handleTriggerClick);
         this.search.addEventListener("input", this.handleSearchInput);
         this.search.addEventListener("keydown", this.handleSearchKeyDown);
+        this.list.addEventListener("scroll", this.handleListScroll, { passive: true });
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
@@ -129,8 +152,14 @@ export class SelectBoxView<TExtra extends object = object> {
         this.trigger.removeEventListener("click", this.handleTriggerClick);
         this.search.removeEventListener("input", this.handleSearchInput);
         this.search.removeEventListener("keydown", this.handleSearchKeyDown);
+        this.list.removeEventListener("scroll", this.handleListScroll);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
+
+    private readonly handleListScroll = (event: Event): void => {
+        const list = event.currentTarget as HTMLDivElement;
+        this.listVirtualizer.setScrollOffset(list.scrollTop);
+    };
 
     private readonly handleTriggerClick = (): void => {
         this.controller.toggle();
@@ -202,6 +231,13 @@ export class SelectBoxView<TExtra extends object = object> {
     }
 
     private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
+        // Sync virtualizer BEFORE touching the DOM — see WC's paintList for the
+        // same reasoning. setRowCount publishes synchronously and re-enters
+        // through the virtualizer subscription; doing the sync first keeps the
+        // outer call's replaceChildren idempotent.
+        this.rowModel = new SelectBoxRowModel<TExtra>(snapshot.filteredGroups);
+        this.listVirtualizer.setRowCount(this.rowModel.length);
+
         this.list.replaceChildren();
 
         if (snapshot.isEmpty) {
@@ -213,28 +249,33 @@ export class SelectBoxView<TExtra extends object = object> {
             return;
         }
 
-        let flatIndex = -1;
-        for (const group of snapshot.filteredGroups) {
-            const groupElement = document.createElement("div");
-            groupElement.className = "select-box-group";
-            groupElement.dataset["selectGroup"] = "";
+        const range = this.listVirtualizer.getRange();
+        const activeRowIndex = this.rowModel.findRowIndexForActiveIndex(snapshot.activeIndex);
 
-            if (group.label) {
-                const label = document.createElement("div");
-                label.className = "select-box-group-label";
-                label.textContent = group.label;
-                groupElement.append(label);
+        const wrapper = document.createElement("div");
+        wrapper.style.paddingTop = `${range.paddingTop}px`;
+        wrapper.style.paddingBottom = `${range.paddingBottom}px`;
+
+        for (const virtualRow of range.visibleRows) {
+            const row = this.rowModel.getRowAt(virtualRow.index);
+            if (row === undefined) continue;
+            if (row.kind === "header") {
+                wrapper.append(this.createHeaderElement(row.group.label));
+                continue;
             }
-
-            for (const option of group.options) {
-                const isSelectable = !option.disabled;
-                if (isSelectable) flatIndex += 1;
-                const isActive = isSelectable && flatIndex === snapshot.activeIndex;
-                groupElement.append(this.createOptionButton(option, isActive));
-            }
-
-            this.list.append(groupElement);
+            wrapper.append(this.createOptionButton(row.option, virtualRow.index === activeRowIndex));
         }
+
+        this.list.append(wrapper);
+        this.scrollActiveOptionIntoView(activeRowIndex);
+    }
+
+    private createHeaderElement(label: string): HTMLDivElement {
+        const header = document.createElement("div");
+        header.className = "select-box-group-label";
+        header.style.height = `${HEADER_ROW_HEIGHT}px`;
+        header.textContent = label;
+        return header;
     }
 
     private createOptionButton(option: SelectOption<TExtra>, isActive: boolean): HTMLButtonElement {
@@ -244,6 +285,7 @@ export class SelectBoxView<TExtra extends object = object> {
         if (isActive) classes.push("select-box-option-active");
         if (option.disabled) classes.push("select-box-option-disabled");
         button.className = classes.join(" ");
+        button.style.height = `${OPTION_ROW_HEIGHT}px`;
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
         if (option.disabled) button.disabled = true;
@@ -251,5 +293,24 @@ export class SelectBoxView<TExtra extends object = object> {
         button.addEventListener("mousedown", (event) => event.preventDefault());
         button.addEventListener("click", () => this.controller.commitOption(option));
         return button;
+    }
+
+    private scrollActiveOptionIntoView(activeRowIndex: number): void {
+        if (activeRowIndex < 0) return;
+        const targetOffset = this.listVirtualizer.getOffset(activeRowIndex);
+        const targetHeight = this.rowHeightAt(this.rowModel, activeRowIndex);
+        const viewportTop = this.list.scrollTop;
+        const viewportBottom = viewportTop + this.list.clientHeight;
+        if (targetOffset < viewportTop) {
+            this.list.scrollTop = targetOffset;
+            return;
+        }
+        if (targetOffset + targetHeight > viewportBottom) {
+            this.list.scrollTop = targetOffset + targetHeight - this.list.clientHeight;
+        }
+    }
+
+    private rowHeightAt(model: SelectBoxRowModel<TExtra>, index: number): number {
+        return model.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
     }
 }

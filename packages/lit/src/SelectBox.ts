@@ -1,12 +1,19 @@
-import type {
-    OptionFilterStrategy,
-    SelectBoxAddon,
-    SelectGroup,
-    SelectOption,
+import {
+    ListVirtualizer,
+    SelectBoxRowModel,
+    type OptionFilterStrategy,
+    type SelectBoxAddon,
+    type SelectGroup,
+    type SelectOption,
 } from "@select-box/core";
 import { html, LitElement, nothing, type PropertyValues, type TemplateResult } from "lit";
+import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
 import { SelectBoxController } from "./select-box-controller.js";
+
+const OPTION_ROW_HEIGHT = 36;
+const HEADER_ROW_HEIGHT = 28;
+const LIST_VIEWPORT_HEIGHT = 240;
 
 /**
  * Form-associated Lit select box; consumers register it under a tag of their choice.
@@ -41,6 +48,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private readonly internals = this.attachInternals();
     private controller: SelectBoxController<TExtra> | null = null;
     private previousValue: string | null = null;
+
+    private readonly listRef: Ref<HTMLDivElement> = createRef();
+    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private virtualizer: ListVirtualizer | null = null;
+    private unsubscribeFromVirtualizer: (() => void) | null = null;
+    private readonly rowHeightFn = (index: number): number =>
+        this.rowHeightAt(this.rowModel, index);
 
     get value(): string | null {
         return this.controller?.state.value ?? null;
@@ -94,11 +108,20 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     override connectedCallback(): void {
         super.connectedCallback();
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
+        this.virtualizer = new ListVirtualizer({
+            rowCount: 0,
+            rowHeight: this.rowHeightFn,
+            viewportHeight: LIST_VIEWPORT_HEIGHT,
+        });
+        this.unsubscribeFromVirtualizer = this.virtualizer.subscribe(() => this.requestUpdate());
     }
 
     override disconnectedCallback(): void {
         super.disconnectedCallback();
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
+        this.unsubscribeFromVirtualizer?.();
+        this.unsubscribeFromVirtualizer = null;
+        this.virtualizer = null;
     }
 
     protected override willUpdate(changed: PropertyValues<this>): void {
@@ -109,10 +132,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             changed.has("ungroupedLabel");
         if (!this.controller || rebuildOnlyChanges) {
             this.rebuildController();
-            return;
-        }
-        if (changed.has("filter") && this.filter !== undefined) {
+        } else if (changed.has("filter") && this.filter !== undefined) {
             this.controller.setFilter(this.filter);
+        }
+
+        if (this.controller !== null && this.virtualizer !== null) {
+            this.rowModel = new SelectBoxRowModel<TExtra>(this.controller.state.filteredGroups);
+            this.virtualizer.setRowCount(this.rowModel.length);
         }
     }
 
@@ -125,6 +151,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.previousValue = snapshot.value;
             this.dispatchEvent(new Event("change", { bubbles: true }));
         }
+        this.scrollActiveOptionIntoView(snapshot.activeIndex);
     }
 
     private rebuildController(): void {
@@ -135,6 +162,24 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             ...(this.filter !== undefined ? { filter: this.filter } : {}),
             ungroupedLabel: this.ungroupedLabel,
         });
+    }
+
+    private scrollActiveOptionIntoView(activeIndex: number): void {
+        const list = this.listRef.value;
+        if (list === undefined || this.virtualizer === null) return;
+        const targetRow = this.rowModel.findRowIndexForActiveIndex(activeIndex);
+        if (targetRow < 0) return;
+        const targetOffset = this.virtualizer.getOffset(targetRow);
+        const targetHeight = this.rowHeightAt(this.rowModel, targetRow);
+        const viewportTop = list.scrollTop;
+        const viewportBottom = viewportTop + list.clientHeight;
+        if (targetOffset < viewportTop) {
+            list.scrollTop = targetOffset;
+            return;
+        }
+        if (targetOffset + targetHeight > viewportBottom) {
+            list.scrollTop = targetOffset + targetHeight - list.clientHeight;
+        }
     }
 
     private syncValidity(): void {
@@ -188,6 +233,16 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.controller.close();
         }
     };
+
+    private readonly handleListScroll = (event: Event): void => {
+        if (this.virtualizer === null) return;
+        const list = event.currentTarget as HTMLDivElement;
+        this.virtualizer.setScrollOffset(list.scrollTop);
+    };
+
+    private rowHeightAt(model: SelectBoxRowModel<TExtra>, index: number): number {
+        return model.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+    }
 
     private optionClasses(isActive: boolean, isDisabled: boolean | undefined): string {
         return [
@@ -243,46 +298,61 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     @input=${this.handleSearchInput}
                     @keydown=${this.handleSearchKeyDown}
                 />
-                <div class="select-box-list" part="list" data-select-list>
+                <div
+                    ${ref(this.listRef)}
+                    class="select-box-list"
+                    part="list"
+                    data-select-list
+                    style="max-height: ${LIST_VIEWPORT_HEIGHT}px; overflow-y: auto;"
+                    @scroll=${this.handleListScroll}
+                >
                     ${state.isEmpty
                         ? html`<p class="select-box-empty" part="empty" data-select-empty>No matches</p>`
-                        : this.renderGroups(state.filteredGroups, state.activeIndex)}
+                        : this.renderVirtualRows(state.activeIndex)}
                 </div>
             </div>
         `;
     }
 
-    private renderGroups(
-        groups: ReadonlyArray<SelectGroup<TExtra>>,
-        activeIndex: number,
-    ): TemplateResult[] {
-        let flatIndex = -1;
-        return groups.map(
-            (group) => html`
-                <div class="select-box-group" data-select-group>
-                    ${group.label
-                        ? html`<div class="select-box-group-label">${group.label}</div>`
-                        : nothing}
-                    ${group.options.map((option) => {
-                        const isSelectable = !option.disabled;
-                        if (isSelectable) flatIndex += 1;
-                        const isActive = isSelectable && flatIndex === activeIndex;
-                        return html`
-                            <button
-                                type="button"
-                                class=${this.optionClasses(isActive, option.disabled)}
-                                ?disabled=${option.disabled}
-                                data-select-option
-                                data-select-active=${isActive ? "" : nothing}
-                                @mousedown=${(event: Event) => event.preventDefault()}
-                                @click=${() => this.controller?.commitOption(option)}
-                            >
-                                ${option.label}
-                            </button>
-                        `;
-                    })}
+    private renderVirtualRows(activeIndex: number): TemplateResult {
+        const range = this.virtualizer?.getRange();
+        if (range === undefined) return html``;
+        const activeRowIndex = this.rowModel.findRowIndexForActiveIndex(activeIndex);
+        return html`
+            <div style="padding-top: ${range.paddingTop}px; padding-bottom: ${range.paddingBottom}px;">
+                ${range.visibleRows.map((virtualRow) => this.renderRow(virtualRow.index, activeRowIndex))}
+            </div>
+        `;
+    }
+
+    private renderRow(rowIndex: number, activeRowIndex: number): TemplateResult | typeof nothing {
+        const row = this.rowModel.getRowAt(rowIndex);
+        if (row === undefined) return nothing;
+        if (row.kind === "header") {
+            return html`
+                <div
+                    class="select-box-group-label"
+                    data-select-group-label
+                    style="height: ${HEADER_ROW_HEIGHT}px;"
+                >
+                    ${row.group.label}
                 </div>
-            `,
-        );
+            `;
+        }
+        const isActive = rowIndex === activeRowIndex;
+        return html`
+            <button
+                type="button"
+                class=${this.optionClasses(isActive, row.option.disabled)}
+                ?disabled=${row.option.disabled}
+                data-select-option
+                data-select-active=${isActive ? "" : nothing}
+                style="height: ${OPTION_ROW_HEIGHT}px;"
+                @mousedown=${(event: Event) => event.preventDefault()}
+                @click=${() => this.controller?.commitOption(row.option)}
+            >
+                ${row.option.label}
+            </button>
+        `;
     }
 }
