@@ -39,6 +39,7 @@ export default defineConfig({
                     items: [
                         { label: "Simple", link: "/examples/simple/" },
                         { label: "Option groups", link: "/examples/optgroup/" },
+                        { label: "Search", link: "/examples/search/" },
                         { label: "Reference", link: "/examples/select-box/" },
                     ],
                 },
