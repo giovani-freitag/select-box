@@ -35,8 +35,8 @@ export default defineConfig({
                     ],
                 },
                 {
-                    label: "Components",
-                    items: [{ label: "Select Box", link: "/components/select-box/" }],
+                    label: "Examples",
+                    items: [{ label: "Select Box", link: "/examples/select-box/" }],
                 },
                 {
                     label: "API reference",
