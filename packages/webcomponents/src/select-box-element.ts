@@ -34,7 +34,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private previousValue: string | null = null;
 
     private listVirtualizer: SelectBoxListVirtualizer | null = null;
-    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
     private lastRowModelSource: ReadonlyArray<unknown> | null = null;
     private unsubscribeFromVirtualizer: (() => void) | null = null;
     private lastScrolledActiveIndex = -1;
@@ -373,7 +373,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         // Sync the virtualizer with the new row count BEFORE rendering — TanStack
         // recomputes virtual items from the count + estimateSize the moment we ask.
         if (snapshot.filteredGroups !== this.lastRowModelSource) {
-            this.rowModel = new SelectBoxRowModel<TExtra>(snapshot.filteredGroups);
+            this.rowModel = new SelectBoxRowModel<TExtra>({ groups: snapshot.filteredGroups });
             this.lastRowModelSource = snapshot.filteredGroups;
         }
         this.listVirtualizer.sync();

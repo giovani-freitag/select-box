@@ -1,4 +1,4 @@
-import { SingleSelectBoxController, type SelectBoxSnapshot, type SingleSelectBoxConfig } from "@select-box/core";
+import { SingleSelectBoxController, type SelectBoxSnapshot, type SingleSelectBoxControllerConfig } from "@select-box/core";
 import { onScopeDispose, shallowRef, type ShallowRef } from "vue";
 
 export interface UseSelectBoxResult<TExtra extends object = object> {
@@ -12,7 +12,7 @@ export interface UseSelectBoxResult<TExtra extends object = object> {
  * as a `ShallowRef`.
  */
 export function useSelectBox<TExtra extends object = object>(
-    config: SingleSelectBoxConfig<TExtra>,
+    config: SingleSelectBoxControllerConfig<TExtra>,
 ): UseSelectBoxResult<TExtra> {
     const controller = new SingleSelectBoxController<TExtra>(config);
     const state = shallowRef<SelectBoxSnapshot<TExtra>>(controller.getState());

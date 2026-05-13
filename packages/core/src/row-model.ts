@@ -14,7 +14,8 @@ export type SelectBoxRow<TExtra extends object = object> =
           readonly option: SelectOption<TExtra>;
       };
 
-export interface SelectBoxRowModelOptions {
+export interface SelectBoxRowModelConfig<TExtra extends object = object> {
+    readonly groups: ReadonlyArray<SelectGroup<TExtra>>;
     /** When `false`, group headers are omitted from the row sequence. Defaults to `true`. */
     readonly includeHeaders?: boolean;
     /** When `true`, headers without a non-empty `label` are skipped. Defaults to `true`. */
@@ -25,12 +26,10 @@ export interface SelectBoxRowModelOptions {
 export class SelectBoxRowModel<TExtra extends object = object> {
     private readonly rows: ReadonlyArray<SelectBoxRow<TExtra>>;
 
-    constructor(
-        groups: ReadonlyArray<SelectGroup<TExtra>>,
-        options: SelectBoxRowModelOptions = {},
-    ) {
-        const includeHeaders = options.includeHeaders ?? true;
-        const skipEmptyHeaders = options.skipEmptyHeaders ?? true;
+    constructor(config: SelectBoxRowModelConfig<TExtra>) {
+        const includeHeaders = config.includeHeaders ?? true;
+        const skipEmptyHeaders = config.skipEmptyHeaders ?? true;
+        const groups = config.groups;
         const rows: SelectBoxRow<TExtra>[] = [];
 
         for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {

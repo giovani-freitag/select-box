@@ -1,10 +1,10 @@
-import type { SelectOption, SingleSelectBoxConfig, SingleSelectBoxController } from "@select-box/core";
+import type { SelectOption, SingleSelectBoxControllerConfig, SingleSelectBoxController } from "@select-box/core";
 import type JQueryStatic from "jquery";
 
 import { SelectBoxView } from "./select-box-view.js";
 
 export interface SelectBoxPluginConfig<TExtra extends object = object>
-    extends SingleSelectBoxConfig<TExtra> {
+    extends SingleSelectBoxControllerConfig<TExtra> {
     readonly placeholder?: string;
 }
 

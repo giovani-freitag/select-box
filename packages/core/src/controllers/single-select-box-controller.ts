@@ -10,7 +10,7 @@ import type {
     SelectBoxSnapshot,
     SelectGroup,
     SelectOption,
-    SingleSelectBoxConfig,
+    SingleSelectBoxControllerConfig,
 } from "../types.js";
 
 
@@ -40,7 +40,7 @@ export class SingleSelectBoxController<TExtra extends object = object>
     private readonly boundHighlightRanges = (label: string): ReadonlyArray<SearchMatchRange> =>
         this.getHighlightRanges(label);
 
-    constructor(config: SingleSelectBoxConfig<TExtra>) {
+    constructor(config: SingleSelectBoxControllerConfig<TExtra>) {
         this.allGroups = normalizeOptionsToGroups({
             options: config.options ?? [],
             ungroupedLabel: config.ungroupedLabel ?? "",
@@ -48,7 +48,7 @@ export class SingleSelectBoxController<TExtra extends object = object>
         this.optionsByValue = indexOptionsByValue(this.allGroups);
         this.filterStrategy = config.filter ?? new SubstringFilterStrategy<TExtra>();
         this.currentValue = coerceValue(config.initialValue);
-        this.store = new Store(this.buildSnapshot());
+        this.store = new Store({ initialState: this.buildSnapshot() });
         for (const addon of config.addons ?? []) {
             this.use(addon);
         }

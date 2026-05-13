@@ -27,7 +27,7 @@ function createObserveElementRect(fallbackHeight: number) {
         })) satisfies VirtualizerOptions<HTMLElement, HTMLElement>["observeElementRect"];
 }
 
-export interface SelectBoxListVirtualizerOptions {
+export interface SelectBoxListVirtualizerConfig {
     readonly getScrollElement: () => HTMLElement | null;
     readonly getCount: () => number;
     readonly estimateSize: (index: number) => number;
@@ -55,13 +55,13 @@ export class SelectBoxListVirtualizer {
     private deferredNotifyScheduled = false;
     private notifying = false;
 
-    constructor(private readonly options: SelectBoxListVirtualizerOptions) {
-        const fallbackViewport = options.initialViewportHeight;
+    constructor(private readonly config: SelectBoxListVirtualizerConfig) {
+        const fallbackViewport = config.initialViewportHeight;
         this.virtualizer = new Virtualizer<HTMLElement, HTMLElement>({
-            count: options.getCount(),
-            estimateSize: options.estimateSize,
-            getScrollElement: options.getScrollElement,
-            overscan: options.overscan ?? DEFAULT_OVERSCAN,
+            count: config.getCount(),
+            estimateSize: config.estimateSize,
+            getScrollElement: config.getScrollElement,
+            overscan: config.overscan ?? DEFAULT_OVERSCAN,
             observeElementRect:
                 fallbackViewport !== undefined
                     ? createObserveElementRect(fallbackViewport)
@@ -102,7 +102,7 @@ export class SelectBoxListVirtualizer {
      * post-commit (in `updated`) to bring the observers along.
      */
     syncCount(): void {
-        const nextCount = this.options.getCount();
+        const nextCount = this.config.getCount();
         if (this.virtualizer.options.count !== nextCount) {
             this.virtualizer.setOptions({
                 ...this.virtualizer.options,

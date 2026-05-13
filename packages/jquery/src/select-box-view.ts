@@ -4,7 +4,7 @@ import {
     SingleSelectBoxController,
     type SelectBoxSnapshot,
     type SelectOption,
-    type SingleSelectBoxConfig,
+    type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
 
 const ESTIMATED_OPTION_HEIGHT = 36;
@@ -32,13 +32,13 @@ export class SelectBoxView<TExtra extends object = object> {
     private readonly placeholder: string;
 
     private readonly listVirtualizer: SelectBoxListVirtualizer;
-    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
     private lastRowModelSource: ReadonlyArray<unknown> | null = null;
     private unsubscribeFromVirtualizer: (() => void) | null = null;
     private lastScrolledActiveIndex = -1;
     private listInnerWrapper: HTMLDivElement | null = null;
 
-    constructor(config: SingleSelectBoxConfig<TExtra> & {
+    constructor(config: SingleSelectBoxControllerConfig<TExtra> & {
         readonly placeholder?: string;
         readonly onValueChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
     }) {
@@ -229,7 +229,7 @@ export class SelectBoxView<TExtra extends object = object> {
 
     private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
         if (snapshot.filteredGroups !== this.lastRowModelSource) {
-            this.rowModel = new SelectBoxRowModel<TExtra>(snapshot.filteredGroups);
+            this.rowModel = new SelectBoxRowModel<TExtra>({ groups: snapshot.filteredGroups });
             this.lastRowModelSource = snapshot.filteredGroups;
         }
         this.listVirtualizer.sync();

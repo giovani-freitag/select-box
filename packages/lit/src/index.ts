@@ -22,7 +22,7 @@ export {
     type SelectBoxSnapshot,
     type SelectGroup,
     type SelectOption,
-    type SingleSelectBoxConfig,
+    type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
 
 export const packageName = "@select-box/lit" as const;

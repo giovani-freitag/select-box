@@ -3,7 +3,7 @@ import {
     type OptionFilterStrategy,
     type SelectBoxSnapshot,
     type SelectOption,
-    type SingleSelectBoxConfig,
+    type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 
@@ -16,7 +16,7 @@ export class SelectBoxController<TExtra extends object = object> implements Reac
     private readonly controller: CoreController<TExtra>;
     private unsubscribe: (() => void) | null = null;
 
-    constructor(host: ReactiveControllerHost, config: SingleSelectBoxConfig<TExtra>) {
+    constructor(host: ReactiveControllerHost, config: SingleSelectBoxControllerConfig<TExtra>) {
         this.host = host;
         this.controller = new CoreController<TExtra>(config);
         host.addController(this);

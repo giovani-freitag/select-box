@@ -1,5 +1,9 @@
 export type StoreListener = () => void;
 
+export interface StoreConfig<TState> {
+    readonly initialState: TState;
+}
+
 /**
  * Observer store with referential-equality change detection.
  */
@@ -7,8 +11,8 @@ export class Store<TState> {
     private currentState: TState;
     private readonly listeners = new Set<StoreListener>();
 
-    constructor(initialState: TState) {
-        this.currentState = initialState;
+    constructor(config: StoreConfig<TState>) {
+        this.currentState = config.initialState;
     }
 
     getState(): TState {

@@ -21,7 +21,7 @@ const groups: ReadonlyArray<SelectGroup> = [
 
 describe("SelectBoxRowModel", () => {
     test("emits a header row followed by each option in order", () => {
-        const model = new SelectBoxRowModel(groups);
+        const model = new SelectBoxRowModel({ groups });
 
         const summary = model
             .getRows()
@@ -31,13 +31,13 @@ describe("SelectBoxRowModel", () => {
     });
 
     test("length matches getRows().length", () => {
-        const model = new SelectBoxRowModel(groups);
+        const model = new SelectBoxRowModel({ groups });
 
         expect(model.length).toBe(model.getRows().length);
     });
 
     test("getRowAt returns undefined for out-of-range indices", () => {
-        const model = new SelectBoxRowModel(groups);
+        const model = new SelectBoxRowModel({ groups });
 
         expect(model.getRowAt(-1)).toBeUndefined();
         expect(model.getRowAt(model.length)).toBeUndefined();
@@ -45,21 +45,21 @@ describe("SelectBoxRowModel", () => {
     });
 
     test("skips headers when includeHeaders is false", () => {
-        const model = new SelectBoxRowModel(groups, { includeHeaders: false });
+        const model = new SelectBoxRowModel({ groups, includeHeaders: false });
 
         expect(model.getRows().every((row) => row.kind === "option")).toBe(true);
         expect(model.length).toBe(3);
     });
 
     test("emits empty-label headers when skipEmptyHeaders is false", () => {
-        const model = new SelectBoxRowModel(groups, { skipEmptyHeaders: false });
+        const model = new SelectBoxRowModel({ groups, skipEmptyHeaders: false });
 
         const headers = model.getRows().filter((row) => row.kind === "header");
         expect(headers).toHaveLength(2);
     });
 
     test("findRowIndexForActiveIndex skips headers and disabled options", () => {
-        const model = new SelectBoxRowModel(groups);
+        const model = new SelectBoxRowModel({ groups });
 
         // Selectable options: Apple (active 0), Lemon (active 1); Pear is disabled.
         const apple = model.findRowIndexForActiveIndex(0);
@@ -70,7 +70,7 @@ describe("SelectBoxRowModel", () => {
     });
 
     test("findRowIndexForActiveIndex returns -1 when the active index is negative or out of range", () => {
-        const model = new SelectBoxRowModel(groups);
+        const model = new SelectBoxRowModel({ groups });
 
         expect(model.findRowIndexForActiveIndex(-1)).toBe(-1);
         expect(model.findRowIndexForActiveIndex(99)).toBe(-1);

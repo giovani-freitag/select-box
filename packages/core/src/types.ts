@@ -93,7 +93,7 @@ export interface SelectBoxAddon<TExtra extends object = object> {
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }
 
-export interface SingleSelectBoxConfig<TExtra extends object = object> {
+export interface SingleSelectBoxControllerConfig<TExtra extends object = object> {
     /** Flat options. Leaves with a `group` key are bundled into that group. */
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
     /** Initial selected value (coerced to string). */

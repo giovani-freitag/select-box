@@ -194,7 +194,7 @@ function VirtualizedList<TExtra extends object>({
 }: VirtualizedListProps<TExtra>): JSX.Element {
     const listRef = useRef<HTMLDivElement>(null);
 
-    const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>(groups), [groups]);
+    const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>({ groups }), [groups]);
     const rowModelRef = useRef(rowModel);
     rowModelRef.current = rowModel;
 

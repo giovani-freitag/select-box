@@ -76,7 +76,7 @@ watch(
     },
 );
 
-const rowModel = computed(() => new SelectBoxRowModel<TExtra>(state.value.filteredGroups));
+const rowModel = computed(() => new SelectBoxRowModel<TExtra>({ groups: state.value.filteredGroups }));
 
 const virtualizer = new SelectBoxListVirtualizer({
     getScrollElement: () => listRef.value,

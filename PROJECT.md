@@ -91,7 +91,7 @@ create-option, remove-button, restore-on-backspace, persist).
 
 ```ts
 class SingleSelectBoxController<TExtra extends object = object> {
-    constructor(config: SingleSelectBoxConfig<TExtra>);
+    constructor(config: SingleSelectBoxControllerConfig<TExtra>);
 
     getState(): SelectBoxSnapshot<TExtra>;
     subscribe(listener: () => void): () => void;   // returns unsubscribe
@@ -176,7 +176,7 @@ interface SelectGroup<TExtra extends object = object> {
     options: SelectOption<TExtra>[];
 }
 
-interface SingleSelectBoxConfig<TExtra extends object = object> {
+interface SingleSelectBoxControllerConfig<TExtra extends object = object> {
     options?: SelectOption<TExtra>[];          // flat with optional `group` field
     groups?: SelectGroup<TExtra>[];            // pre-grouped
     initialValue?: string | number | null;     // coerced to string

@@ -47,7 +47,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private previousValue: string | null = null;
 
     private readonly listRef: Ref<HTMLDivElement> = createRef();
-    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
     private lastRowModelSource: ReadonlyArray<unknown> | null = null;
     private virtualizer: SelectBoxListVirtualizer | null = null;
     private unsubscribeFromVirtualizer: (() => void) | null = null;
@@ -137,7 +137,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         if (this.controller !== null && this.virtualizer !== null) {
             const filteredGroups = this.controller.state.filteredGroups;
             if (filteredGroups !== this.lastRowModelSource) {
-                this.rowModel = new SelectBoxRowModel<TExtra>(filteredGroups);
+                this.rowModel = new SelectBoxRowModel<TExtra>({ groups: filteredGroups });
                 this.lastRowModelSource = filteredGroups;
             }
             // willUpdate fires BEFORE the template renders, so listRef is still
