@@ -1,6 +1,6 @@
-export { ListVirtualizer } from "./list-virtualizer.js";
+export { SelectBoxListVirtualizer } from "./select-box-list-virtualizer.js";
 export type {
-    ListVirtualizerConfig,
-    VirtualRange,
-    VirtualRow,
-} from "./list-virtualizer.js";
+    SelectBoxListVirtualizerOptions,
+    VirtualAlignment,
+} from "./select-box-list-virtualizer.js";
+export type { VirtualItem } from "@tanstack/virtual-core";

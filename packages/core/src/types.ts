@@ -96,8 +96,6 @@ export interface SelectBoxAddon<TExtra extends object = object> {
 export interface SingleSelectBoxConfig<TExtra extends object = object> {
     /** Flat options. Leaves with a `group` key are bundled into that group. */
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
-    /** Pre-built groups. Combined with `options` if both are supplied. */
-    readonly groups?: ReadonlyArray<SelectGroup<TExtra>>;
     /** Initial selected value (coerced to string). */
     readonly initialValue?: string | number | null;
     /** Custom filter; defaults to case-insensitive substring match. */

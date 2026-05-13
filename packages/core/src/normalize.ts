@@ -12,27 +12,18 @@ function coerceOption<TExtra extends object>(option: SelectOption<TExtra>): Sele
 }
 
 /**
- * Collapses flat `options` and pre-built `groups` into a single stable ordered
- * group list. All option `value`s are coerced to strings.
+ * Bundles flat `options` into ordered groups by their `group` key. Leaves
+ * without a key fall into a synthetic bucket labelled by `ungroupedLabel`.
+ * Every option's `value` is coerced to a string along the way.
  */
 export function normalizeOptionsToGroups<TExtra extends object>(input: {
-    options?: ReadonlyArray<SelectOption<TExtra>>;
-    groups?: ReadonlyArray<SelectGroup<TExtra>>;
+    options: ReadonlyArray<SelectOption<TExtra>>;
     ungroupedLabel: string;
 }): ReadonlyArray<SelectGroup<TExtra>> {
     const orderedKeys: string[] = [];
-    const buckets = new Map<string, { label: string; disabled?: boolean; options: SelectOption<TExtra>[] }>();
+    const buckets = new Map<string, { label: string; options: SelectOption<TExtra>[] }>();
 
-    for (const group of input.groups ?? []) {
-        orderedKeys.push(group.key);
-        buckets.set(group.key, {
-            label: group.label,
-            ...(group.disabled !== undefined ? { disabled: group.disabled } : {}),
-            options: group.options.map(coerceOption),
-        });
-    }
-
-    for (const option of input.options ?? []) {
+    for (const option of input.options) {
         const coerced = coerceOption(option);
         const key = coerced.group ?? UNGROUPED_KEY;
         const existing = buckets.get(key);
@@ -47,18 +38,16 @@ export function normalizeOptionsToGroups<TExtra extends object>(input: {
         });
     }
 
-    const result: SelectGroup<TExtra>[] = [];
-    for (const key of orderedKeys) {
-        const bucket = buckets.get(key);
-        if (!bucket) continue;
-        result.push({
+    return orderedKeys.map((key) => {
+        const bucket = buckets.get(key)!;
+        const allDisabled = bucket.options.every((option) => option.disabled === true);
+        return {
             key,
             label: bucket.label,
-            ...(bucket.disabled !== undefined ? { disabled: bucket.disabled } : {}),
+            ...(allDisabled ? { disabled: true } : {}),
             options: bucket.options,
-        });
-    }
-    return result;
+        };
+    });
 }
 
 /**

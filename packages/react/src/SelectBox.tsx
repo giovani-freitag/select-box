@@ -1,5 +1,5 @@
 import {
-    ListVirtualizer,
+    SelectBoxListVirtualizer,
     SelectBoxRowModel,
     type OptionFilterStrategy,
     type SelectBoxAddon,
@@ -20,13 +20,12 @@ import {
 
 import { useSelectBox } from "./use-select-box.js";
 
-const OPTION_ROW_HEIGHT = 36;
-const HEADER_ROW_HEIGHT = 28;
+const ESTIMATED_OPTION_HEIGHT = 36;
+const ESTIMATED_HEADER_HEIGHT = 28;
 const LIST_VIEWPORT_HEIGHT = 240;
 
 export interface SelectBoxProps<TExtra extends object = object> {
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
-    readonly groups?: ReadonlyArray<SelectGroup<TExtra>>;
     /** Initial value (coerced to string). The component owns the selection internally; listen via `onChange`. */
     readonly defaultValue?: string | number | null;
     /**
@@ -51,7 +50,6 @@ export interface SelectBoxProps<TExtra extends object = object> {
 export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<TExtra>): JSX.Element {
     const {
         options,
-        groups,
         defaultValue = null,
         onChange,
         placeholder,
@@ -65,7 +63,6 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
 
     const { state, controller } = useSelectBox<TExtra>({
         ...(options !== undefined ? { options } : {}),
-        ...(groups !== undefined ? { groups } : {}),
         ...(addons !== undefined ? { addons } : {}),
         ...(filter !== undefined ? { filter } : {}),
         ...(ungroupedLabel !== undefined ? { ungroupedLabel } : {}),
@@ -198,61 +195,47 @@ function VirtualizedList<TExtra extends object>({
     const listRef = useRef<HTMLDivElement>(null);
 
     const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>(groups), [groups]);
-
     const rowModelRef = useRef(rowModel);
     rowModelRef.current = rowModel;
-    const rowHeightFn = useCallback(
-        (index: number) => rowHeightAt(rowModelRef.current, index),
-        [],
-    );
 
     const [virtualizer] = useState(
         () =>
-            new ListVirtualizer({
-                rowCount: rowModel.length,
-                rowHeight: rowHeightFn,
-                viewportHeight: LIST_VIEWPORT_HEIGHT,
+            new SelectBoxListVirtualizer({
+                getScrollElement: () => listRef.current,
+                getCount: () => rowModelRef.current.length,
+                estimateSize: (index) => estimateRowSize(rowModelRef.current, index),
+                initialViewportHeight: LIST_VIEWPORT_HEIGHT,
             }),
     );
 
     useEffect(() => {
-        virtualizer.setRowCount(rowModel.length);
+        virtualizer.mount();
+        return () => virtualizer.dispose();
+    }, [virtualizer]);
+
+    useEffect(() => {
+        virtualizer.sync();
     }, [virtualizer, rowModel]);
 
     const subscribe = useCallback(
         (listener: () => void) => virtualizer.subscribe(listener),
         [virtualizer],
     );
-    const getSnapshot = useCallback(() => virtualizer.getRange(), [virtualizer]);
-    const range = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-
-    useEffect(() => {
-        const list = listRef.current;
-        if (!list) return;
-        function handleScroll(): void {
-            virtualizer.setScrollOffset(list!.scrollTop);
-        }
-        list.addEventListener("scroll", handleScroll, { passive: true });
-        return () => {
-            list.removeEventListener("scroll", handleScroll);
-        };
-    }, [virtualizer]);
+    const getSnapshot = useCallback(
+        () => virtualizer.getVirtualItems(),
+        [virtualizer],
+    );
+    const virtualItems = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    const totalSize = virtualizer.getTotalSize();
+    const paddingTop = virtualItems[0]?.start ?? 0;
+    const paddingBottom = totalSize - (virtualItems.at(-1)?.end ?? 0);
 
     const activeRowIndex = rowModel.findRowIndexForActiveIndex(activeIndex);
 
     useEffect(() => {
-        const list = listRef.current;
-        if (!list || activeRowIndex < 0) return;
-        const targetOffset = virtualizer.getOffset(activeRowIndex);
-        const targetHeight = rowHeightAt(rowModel, activeRowIndex);
-        const viewportTop = list.scrollTop;
-        const viewportBottom = viewportTop + list.clientHeight;
-        if (targetOffset < viewportTop) {
-            list.scrollTop = targetOffset;
-        } else if (targetOffset + targetHeight > viewportBottom) {
-            list.scrollTop = targetOffset + targetHeight - list.clientHeight;
-        }
-    }, [virtualizer, rowModel, activeRowIndex]);
+        if (activeRowIndex < 0) return;
+        virtualizer.scrollToIndex(activeRowIndex, "auto");
+    }, [virtualizer, activeRowIndex]);
 
     return (
         <div
@@ -261,17 +244,21 @@ function VirtualizedList<TExtra extends object>({
             data-select-list
             style={{ maxHeight: LIST_VIEWPORT_HEIGHT, overflowY: "auto" }}
         >
-            <div style={{ paddingTop: range.paddingTop, paddingBottom: range.paddingBottom }}>
-                {range.visibleRows.map((virtualRow) => {
+            <div style={{ paddingTop, paddingBottom: Math.max(0, paddingBottom) }}>
+                {virtualItems.map((virtualRow) => {
                     const row = rowModel.getRowAt(virtualRow.index);
                     if (!row) return null;
+                    const measureRef = (node: HTMLElement | null): void => {
+                        virtualizer.measureElement(node);
+                    };
                     if (row.kind === "header") {
                         return (
                             <div
                                 key={`header-${row.groupIndex}`}
+                                ref={measureRef}
+                                data-index={virtualRow.index}
                                 className="select-box-group-label"
                                 data-select-group-label
-                                style={{ height: HEADER_ROW_HEIGHT }}
                             >
                                 {row.group.label}
                             </div>
@@ -288,6 +275,8 @@ function VirtualizedList<TExtra extends object>({
                     return (
                         <button
                             key={row.option.value}
+                            ref={measureRef}
+                            data-index={virtualRow.index}
                             type="button"
                             className={classes}
                             disabled={row.option.disabled}
@@ -295,7 +284,6 @@ function VirtualizedList<TExtra extends object>({
                             onClick={() => controller.commitOption(row.option)}
                             data-select-option
                             data-select-active={isActive ? "" : undefined}
-                            style={{ height: OPTION_ROW_HEIGHT }}
                         >
                             {row.option.label}
                         </button>
@@ -306,11 +294,13 @@ function VirtualizedList<TExtra extends object>({
     );
 }
 
-function rowHeightAt<TExtra extends object>(
+function estimateRowSize<TExtra extends object>(
     rowModel: SelectBoxRowModel<TExtra>,
     index: number,
 ): number {
-    return rowModel.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+    return rowModel.getRowAt(index)?.kind === "header"
+        ? ESTIMATED_HEADER_HEIGHT
+        : ESTIMATED_OPTION_HEIGHT;
 }
 
 function useNotifyOnChange<TExtra extends object>(

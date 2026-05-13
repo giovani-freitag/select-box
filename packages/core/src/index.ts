@@ -7,11 +7,11 @@ export { Store } from "./store.js";
 export type { StoreListener } from "./store.js";
 export { TextHighlighter } from "./text-highlighter.js";
 export type { HighlightChunk } from "./text-highlighter.js";
-export { ListVirtualizer } from "./virtualizer/index.js";
+export { SelectBoxListVirtualizer } from "./virtualizer/index.js";
 export type {
-    ListVirtualizerConfig,
-    VirtualRange,
-    VirtualRow,
+    SelectBoxListVirtualizerOptions,
+    VirtualAlignment,
+    VirtualItem,
 } from "./virtualizer/index.js";
 export type {
     AddonHookContext,

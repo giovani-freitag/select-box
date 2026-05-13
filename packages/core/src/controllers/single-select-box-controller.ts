@@ -42,8 +42,7 @@ export class SingleSelectBoxController<TExtra extends object = object>
 
     constructor(config: SingleSelectBoxConfig<TExtra>) {
         this.allGroups = normalizeOptionsToGroups({
-            ...(config.options !== undefined ? { options: config.options } : {}),
-            ...(config.groups !== undefined ? { groups: config.groups } : {}),
+            options: config.options ?? [],
             ungroupedLabel: config.ungroupedLabel ?? "",
         });
         this.optionsByValue = indexOptionsByValue(this.allGroups);

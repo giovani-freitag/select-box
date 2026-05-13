@@ -41,6 +41,9 @@ importers:
       '@astrojs/vue':
         specifier: ^5.0.0
         version: 5.1.4(@types/node@24.12.3)(astro@5.18.1(@types/node@24.12.3)(rollup@4.60.3)(typescript@5.9.3)(yaml@2.8.4))(rollup@4.60.3)(vue@3.5.34(typescript@5.9.3))(yaml@2.8.4)
+      '@select-box/addon-fuzzy':
+        specifier: workspace:*
+        version: link:../packages/addon-fuzzy
       '@select-box/core':
         specifier: workspace:*
         version: link:../packages/core
@@ -184,6 +187,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)
 
   packages/core:
+    dependencies:
+      '@tanstack/virtual-core':
+        specifier: ^3.14.0
+        version: 3.14.0
     devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
@@ -1839,6 +1846,9 @@ packages:
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
+
+  '@tanstack/virtual-core@3.14.0':
+    resolution: {integrity: sha512-JLANqGy/D6k4Ujmh8Tr25lGimuOXNiaVyXaCAZS0W+1390sADdGnyUdSWNIfd49gebtIxGMij4IktRVzrdr12Q==}
 
   '@turbo/darwin-64@2.9.12':
     resolution: {integrity: sha512-eu3eFRmE9NjgZ0wPdRJ44l+LGSeIky+tz5ZQd8zQkw/Yqi+BM7wq+8nbabeoiVUcICi/IZweMOKl/MCmkrd1+g==}
@@ -6013,6 +6023,8 @@ snapshots:
   '@shikijs/vscode-textmate@10.0.2': {}
 
   '@sindresorhus/merge-streams@4.0.0': {}
+
+  '@tanstack/virtual-core@3.14.0': {}
 
   '@turbo/darwin-64@2.9.12':
     optional: true

@@ -494,12 +494,15 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
    `$.fn.selectBox(config)` + `.selectBox('controller'|'open'|...)`
    method-string overloads; teardown via `.selectBox('destroy')`. No
    concessions leaked back into the core.
-2. **Virtualizer cross-framework** — `[open]` TanStack Virtual ships
-   React/Vue/Solid adapters; for web components/jquery/lit we'd
-   reimplement the row math. Decision pending: write a tiny
-   framework-agnostic virtualizer in core (zero dep, matches the
-   project's "no framework leak" principle) vs. pull a per-wrapper adapter
-   set. Leaning toward in-core.
+2. **Virtualizer cross-framework** — `[resolved]` Use
+   `@tanstack/virtual-core` (the framework-agnostic core that all
+   official TanStack adapters wrap). Exposed through
+   `SelectBoxListVirtualizer` in `@select-box/core`, which owns the
+   `_didMount`/`_willUpdate` lifecycle so wrappers only call
+   `mount`/`sync`/`dispose` and pass `measureElement` to each rendered
+   row. Variable row heights work out of the box via the library's
+   built-in `ResizeObserver` measurement — no inline `style.height`
+   forced on options.
 3. **Matrix CI minutes cost** — `[deferred]` 5 frameworks × 2 browsers ×
    N specs gets expensive. Mitigation: only run full matrix on PRs that
    touch `packages/core` or `e2e/`; per-wrapper changes only run that

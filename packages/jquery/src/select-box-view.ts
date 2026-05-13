@@ -1,5 +1,5 @@
 import {
-    ListVirtualizer,
+    SelectBoxListVirtualizer,
     SelectBoxRowModel,
     SingleSelectBoxController,
     type SelectBoxSnapshot,
@@ -7,8 +7,8 @@ import {
     type SingleSelectBoxConfig,
 } from "@select-box/core";
 
-const OPTION_ROW_HEIGHT = 36;
-const HEADER_ROW_HEIGHT = 28;
+const ESTIMATED_OPTION_HEIGHT = 36;
+const ESTIMATED_HEADER_HEIGHT = 28;
 const LIST_VIEWPORT_HEIGHT = 240;
 
 /**
@@ -31,11 +31,12 @@ export class SelectBoxView<TExtra extends object = object> {
         | undefined;
     private readonly placeholder: string;
 
-    private readonly listVirtualizer: ListVirtualizer;
+    private readonly listVirtualizer: SelectBoxListVirtualizer;
     private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>([]);
+    private lastRowModelSource: ReadonlyArray<unknown> | null = null;
     private unsubscribeFromVirtualizer: (() => void) | null = null;
-    private readonly rowHeightFn = (index: number): number =>
-        this.rowHeightAt(this.rowModel, index);
+    private lastScrolledActiveIndex = -1;
+    private listInnerWrapper: HTMLDivElement | null = null;
 
     constructor(config: SingleSelectBoxConfig<TExtra> & {
         readonly placeholder?: string;
@@ -59,11 +60,13 @@ export class SelectBoxView<TExtra extends object = object> {
         this.root.append(this.trigger, this.popover);
         this.list.style.maxHeight = `${LIST_VIEWPORT_HEIGHT}px`;
         this.list.style.overflowY = "auto";
-        this.listVirtualizer = new ListVirtualizer({
-            rowCount: 0,
-            rowHeight: this.rowHeightFn,
-            viewportHeight: LIST_VIEWPORT_HEIGHT,
+        this.listVirtualizer = new SelectBoxListVirtualizer({
+            getScrollElement: () => this.list,
+            getCount: () => this.rowModel.length,
+            estimateSize: (index) => this.estimateRowSize(this.rowModel, index),
+            initialViewportHeight: LIST_VIEWPORT_HEIGHT,
         });
+        this.listVirtualizer.mount();
         this.unsubscribeFromVirtualizer = this.listVirtualizer.subscribe(this.handleSnapshotChange);
         this.listen();
         this.paint(this.controller.getState());
@@ -73,6 +76,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.unlisten();
         this.unsubscribeFromVirtualizer?.();
         this.unsubscribeFromVirtualizer = null;
+        this.listVirtualizer.dispose();
         this.controller.destroy();
         this.root.remove();
     }
@@ -142,7 +146,6 @@ export class SelectBoxView<TExtra extends object = object> {
         this.trigger.addEventListener("click", this.handleTriggerClick);
         this.search.addEventListener("input", this.handleSearchInput);
         this.search.addEventListener("keydown", this.handleSearchKeyDown);
-        this.list.addEventListener("scroll", this.handleListScroll, { passive: true });
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
@@ -152,14 +155,8 @@ export class SelectBoxView<TExtra extends object = object> {
         this.trigger.removeEventListener("click", this.handleTriggerClick);
         this.search.removeEventListener("input", this.handleSearchInput);
         this.search.removeEventListener("keydown", this.handleSearchKeyDown);
-        this.list.removeEventListener("scroll", this.handleListScroll);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
-
-    private readonly handleListScroll = (event: Event): void => {
-        const list = event.currentTarget as HTMLDivElement;
-        this.listVirtualizer.setScrollOffset(list.scrollTop);
-    };
 
     private readonly handleTriggerClick = (): void => {
         this.controller.toggle();
@@ -231,49 +228,76 @@ export class SelectBoxView<TExtra extends object = object> {
     }
 
     private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
-        // Sync virtualizer BEFORE touching the DOM — see WC's paintList for the
-        // same reasoning. setRowCount publishes synchronously and re-enters
-        // through the virtualizer subscription; doing the sync first keeps the
-        // outer call's replaceChildren idempotent.
-        this.rowModel = new SelectBoxRowModel<TExtra>(snapshot.filteredGroups);
-        this.listVirtualizer.setRowCount(this.rowModel.length);
-
-        this.list.replaceChildren();
+        if (snapshot.filteredGroups !== this.lastRowModelSource) {
+            this.rowModel = new SelectBoxRowModel<TExtra>(snapshot.filteredGroups);
+            this.lastRowModelSource = snapshot.filteredGroups;
+        }
+        this.listVirtualizer.sync();
 
         if (snapshot.isEmpty) {
             const empty = document.createElement("p");
             empty.className = "select-box-empty";
             empty.dataset["selectEmpty"] = "";
             empty.textContent = "No matches";
-            this.list.append(empty);
+            this.list.replaceChildren(empty);
+            this.listInnerWrapper = null;
             return;
         }
 
-        const range = this.listVirtualizer.getRange();
-        const activeRowIndex = this.rowModel.findRowIndexForActiveIndex(snapshot.activeIndex);
-
-        const wrapper = document.createElement("div");
-        wrapper.style.paddingTop = `${range.paddingTop}px`;
-        wrapper.style.paddingBottom = `${range.paddingBottom}px`;
-
-        for (const virtualRow of range.visibleRows) {
-            const row = this.rowModel.getRowAt(virtualRow.index);
-            if (row === undefined) continue;
-            if (row.kind === "header") {
-                wrapper.append(this.createHeaderElement(row.group.label));
-                continue;
-            }
-            wrapper.append(this.createOptionButton(row.option, virtualRow.index === activeRowIndex));
+        // Keep a stable inner wrapper anchored to `list` — never remove it
+        // between paints. Wiping the list and re-appending mid-paint shrinks
+        // `list.scrollHeight` to 0 and the browser clamps `scrollTop` to 0,
+        // which manifests as a scroll-reset flicker every time the user drags.
+        let wrapper = this.listInnerWrapper;
+        if (wrapper === null || wrapper.parentNode !== this.list) {
+            wrapper = document.createElement("div");
+            this.list.replaceChildren(wrapper);
+            this.listInnerWrapper = wrapper;
         }
 
-        this.list.append(wrapper);
-        this.scrollActiveOptionIntoView(activeRowIndex);
+        const items = this.listVirtualizer.getVirtualItems();
+        const totalSize = this.listVirtualizer.getTotalSize();
+        const paddingTop = items[0]?.start ?? 0;
+        const paddingBottom = Math.max(0, totalSize - (items.at(-1)?.end ?? 0));
+        const activeRowIndex = this.rowModel.findRowIndexForActiveIndex(snapshot.activeIndex);
+
+        wrapper.style.paddingTop = `${paddingTop}px`;
+        wrapper.style.paddingBottom = `${paddingBottom}px`;
+
+        const renderedNodes: HTMLElement[] = [];
+        for (const virtualRow of items) {
+            const row = this.rowModel.getRowAt(virtualRow.index);
+            if (row === undefined) continue;
+            const node =
+                row.kind === "header"
+                    ? this.createHeaderElement(row.group.label)
+                    : this.createOptionButton(row.option, virtualRow.index === activeRowIndex);
+            node.dataset["index"] = String(virtualRow.index);
+            renderedNodes.push(node);
+        }
+
+        // Atomic child swap on the same wrapper; total height is preserved
+        // (padding compensates), so the browser doesn't reset scrollTop.
+        wrapper.replaceChildren(...renderedNodes);
+
+        for (const node of renderedNodes) {
+            this.listVirtualizer.measureElement(node);
+        }
+
+        // Only scroll when the active row actually changed — otherwise every
+        // scroll-driven repaint would yank the viewport back to the active
+        // option, fighting the user's wheel/touch.
+        if (activeRowIndex >= 0 && activeRowIndex !== this.lastScrolledActiveIndex) {
+            this.lastScrolledActiveIndex = activeRowIndex;
+            this.listVirtualizer.scrollToIndex(activeRowIndex, "auto");
+        } else if (activeRowIndex < 0) {
+            this.lastScrolledActiveIndex = -1;
+        }
     }
 
     private createHeaderElement(label: string): HTMLDivElement {
         const header = document.createElement("div");
         header.className = "select-box-group-label";
-        header.style.height = `${HEADER_ROW_HEIGHT}px`;
         header.textContent = label;
         return header;
     }
@@ -285,7 +309,6 @@ export class SelectBoxView<TExtra extends object = object> {
         if (isActive) classes.push("select-box-option-active");
         if (option.disabled) classes.push("select-box-option-disabled");
         button.className = classes.join(" ");
-        button.style.height = `${OPTION_ROW_HEIGHT}px`;
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
         if (option.disabled) button.disabled = true;
@@ -295,22 +318,9 @@ export class SelectBoxView<TExtra extends object = object> {
         return button;
     }
 
-    private scrollActiveOptionIntoView(activeRowIndex: number): void {
-        if (activeRowIndex < 0) return;
-        const targetOffset = this.listVirtualizer.getOffset(activeRowIndex);
-        const targetHeight = this.rowHeightAt(this.rowModel, activeRowIndex);
-        const viewportTop = this.list.scrollTop;
-        const viewportBottom = viewportTop + this.list.clientHeight;
-        if (targetOffset < viewportTop) {
-            this.list.scrollTop = targetOffset;
-            return;
-        }
-        if (targetOffset + targetHeight > viewportBottom) {
-            this.list.scrollTop = targetOffset + targetHeight - this.list.clientHeight;
-        }
-    }
-
-    private rowHeightAt(model: SelectBoxRowModel<TExtra>, index: number): number {
-        return model.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+    private estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {
+        return model.getRowAt(index)?.kind === "header"
+            ? ESTIMATED_HEADER_HEIGHT
+            : ESTIMATED_OPTION_HEIGHT;
     }
 }

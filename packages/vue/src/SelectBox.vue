@@ -1,18 +1,18 @@
 <script setup lang="ts" generic="TExtra extends object = object">
 import {
-    ListVirtualizer,
+    SelectBoxListVirtualizer,
     SelectBoxRowModel,
     type OptionFilterStrategy,
     type SelectBoxAddon,
-    type SelectGroup,
     type SelectOption,
-    type VirtualRange,
+    type VirtualItem,
 } from "@select-box/core";
 import {
     computed,
     nextTick,
     onBeforeUnmount,
     onMounted,
+    onUpdated,
     shallowRef,
     useTemplateRef,
     watch,
@@ -22,7 +22,6 @@ import { useSelectBox } from "./use-select-box.js";
 
 export interface SelectBoxProps<TExtra extends object = object> {
     options?: ReadonlyArray<SelectOption<TExtra>>;
-    groups?: ReadonlyArray<SelectGroup<TExtra>>;
     defaultValue?: string | number | null;
     placeholder?: string;
     ungroupedLabel?: string;
@@ -30,8 +29,8 @@ export interface SelectBoxProps<TExtra extends object = object> {
     filter?: OptionFilterStrategy<TExtra>;
 }
 
-const OPTION_ROW_HEIGHT = 36;
-const HEADER_ROW_HEIGHT = 28;
+const ESTIMATED_OPTION_HEIGHT = 36;
+const ESTIMATED_HEADER_HEIGHT = 28;
 const LIST_VIEWPORT_HEIGHT = 240;
 
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), { defaultValue: null });
@@ -41,7 +40,6 @@ const emit = defineEmits<{
 
 const { state, controller } = useSelectBox<TExtra>({
     ...(props.options !== undefined ? { options: props.options } : {}),
-    ...(props.groups !== undefined ? { groups: props.groups } : {}),
     ...(props.addons !== undefined ? { addons: props.addons } : {}),
     ...(props.filter !== undefined ? { filter: props.filter } : {}),
     ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
@@ -80,23 +78,31 @@ watch(
 
 const rowModel = computed(() => new SelectBoxRowModel<TExtra>(state.value.filteredGroups));
 
-function rowHeightFn(index: number): number {
-    return rowHeightAt(rowModel.value, index);
-}
-
-const virtualizer = new ListVirtualizer({
-    rowCount: rowModel.value.length,
-    rowHeight: rowHeightFn,
-    viewportHeight: LIST_VIEWPORT_HEIGHT,
+const virtualizer = new SelectBoxListVirtualizer({
+    getScrollElement: () => listRef.value,
+    getCount: () => rowModel.value.length,
+    estimateSize: (index) => estimateRowSize(rowModel.value, index),
+    initialViewportHeight: LIST_VIEWPORT_HEIGHT,
 });
 
-const range = shallowRef<VirtualRange>(virtualizer.getRange());
+const virtualItems = shallowRef<ReadonlyArray<VirtualItem>>(virtualizer.getVirtualItems());
+const totalSize = shallowRef<number>(virtualizer.getTotalSize());
 const unsubscribeFromVirtualizer = virtualizer.subscribe(() => {
-    range.value = virtualizer.getRange();
+    virtualItems.value = virtualizer.getVirtualItems();
+    totalSize.value = virtualizer.getTotalSize();
 });
 
-watch(rowModel, (model) => {
-    virtualizer.setRowCount(model.length);
+const paddingTop = computed(() => virtualItems.value[0]?.start ?? 0);
+const paddingBottom = computed(() =>
+    Math.max(0, totalSize.value - (virtualItems.value.at(-1)?.end ?? 0)),
+);
+
+// `onUpdated` fires after the template commits, so listRef.value is guaranteed
+// populated before sync() re-resolves the scroll element. A pre-flush watch
+// would run with listRef still null and TanStack would never attach observers,
+// leaving the popover frozen at the first scroll fold.
+onUpdated(() => {
+    virtualizer.sync();
 });
 
 const activeRowIndex = computed(() =>
@@ -104,25 +110,24 @@ const activeRowIndex = computed(() =>
 );
 
 watch(activeRowIndex, (rowIndex) => {
-    const list = listRef.value;
-    if (list === null || rowIndex < 0) return;
-    const targetOffset = virtualizer.getOffset(rowIndex);
-    const targetHeight = rowHeightAt(rowModel.value, rowIndex);
-    const viewportTop = list.scrollTop;
-    const viewportBottom = viewportTop + list.clientHeight;
-    if (targetOffset < viewportTop) {
-        list.scrollTop = targetOffset;
+    if (rowIndex < 0) return;
+    virtualizer.scrollToIndex(rowIndex, "auto");
+});
+
+function measureRow(node: unknown): void {
+    if (node === null) {
+        virtualizer.measureElement(null);
         return;
     }
-    if (targetOffset + targetHeight > viewportBottom) {
-        list.scrollTop = targetOffset + targetHeight - list.clientHeight;
+    if (node instanceof HTMLElement) {
+        virtualizer.measureElement(node);
     }
-});
+}
 
 const visibleEntries = computed(() => {
     const model = rowModel.value;
     const activeIndex = activeRowIndex.value;
-    return range.value.visibleRows.flatMap((virtualRow) => {
+    return virtualItems.value.flatMap((virtualRow) => {
         const row = model.getRowAt(virtualRow.index);
         if (row === undefined) return [];
         return [{
@@ -134,21 +139,15 @@ const visibleEntries = computed(() => {
 });
 
 onMounted(() => {
-    listRef.value?.addEventListener("scroll", handleListScroll, { passive: true });
+    virtualizer.mount();
     document.addEventListener("mousedown", handleOutsideMouseDown);
 });
 
 onBeforeUnmount(() => {
-    listRef.value?.removeEventListener("scroll", handleListScroll);
     document.removeEventListener("mousedown", handleOutsideMouseDown);
     unsubscribeFromVirtualizer();
+    virtualizer.dispose();
 });
-
-function handleListScroll(): void {
-    const list = listRef.value;
-    if (list === null) return;
-    virtualizer.setScrollOffset(list.scrollTop);
-}
 
 function handleOutsideMouseDown(event: MouseEvent): void {
     if (!state.value.open) return;
@@ -180,8 +179,10 @@ function handleKeyDown(event: KeyboardEvent): void {
     }
 }
 
-function rowHeightAt(model: SelectBoxRowModel<TExtra>, index: number): number {
-    return model.getRowAt(index)?.kind === "header" ? HEADER_ROW_HEIGHT : OPTION_ROW_HEIGHT;
+function estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {
+    return model.getRowAt(index)?.kind === "header"
+        ? ESTIMATED_HEADER_HEIGHT
+        : ESTIMATED_OPTION_HEIGHT;
 }
 
 function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string {
@@ -239,27 +240,29 @@ function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string 
                 <div
                     v-else
                     :style="{
-                        paddingTop: `${range.paddingTop}px`,
-                        paddingBottom: `${range.paddingBottom}px`,
+                        paddingTop: `${paddingTop}px`,
+                        paddingBottom: `${paddingBottom}px`,
                     }"
                 >
                     <template v-for="entry in visibleEntries" :key="entry.virtualRow.index">
                         <div
                             v-if="entry.row.kind === 'header'"
+                            :ref="measureRow"
+                            :data-index="entry.virtualRow.index"
                             class="select-box-group-label"
                             data-select-group-label
-                            :style="{ height: `${HEADER_ROW_HEIGHT}px` }"
                         >
                             {{ entry.row.group.label }}
                         </div>
                         <button
                             v-else
+                            :ref="measureRow"
+                            :data-index="entry.virtualRow.index"
                             type="button"
                             :class="optionClasses(entry.row.option, entry.isActive)"
                             :disabled="entry.row.option.disabled"
                             data-select-option
                             :data-select-active="entry.isActive ? '' : undefined"
-                            :style="{ height: `${OPTION_ROW_HEIGHT}px` }"
                             @mousedown.prevent
                             @click="controller.commitOption(entry.row.option)"
                         >
