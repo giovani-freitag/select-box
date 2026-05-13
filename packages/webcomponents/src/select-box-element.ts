@@ -251,36 +251,65 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private listen(): void {
         if (!this.refs || !this.controller) return;
         this.unsubscribeFromStore = this.controller.subscribe(this.handleSnapshotChange);
-        this.refs.trigger.addEventListener("click", this.handleTriggerClick);
-        this.refs.search.addEventListener("input", this.handleSearchInput);
-        this.refs.search.addEventListener("keydown", this.handleSearchKeyDown);
+        this.refs.input.addEventListener("input", this.handleInputChange);
+        this.refs.input.addEventListener("focus", this.handleInputFocus);
+        this.refs.input.addEventListener("click", this.handleInputClick);
+        this.refs.input.addEventListener("keydown", this.handleInputKeyDown);
+        this.refs.caret.addEventListener("mousedown", this.handleCaretMouseDown);
+        this.refs.caret.addEventListener("click", this.handleCaretClick);
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
     private unlisten(): void {
         this.unsubscribeFromStore?.();
         this.unsubscribeFromStore = null;
-        this.refs?.trigger.removeEventListener("click", this.handleTriggerClick);
-        this.refs?.search.removeEventListener("input", this.handleSearchInput);
-        this.refs?.search.removeEventListener("keydown", this.handleSearchKeyDown);
+        this.refs?.input.removeEventListener("input", this.handleInputChange);
+        this.refs?.input.removeEventListener("focus", this.handleInputFocus);
+        this.refs?.input.removeEventListener("click", this.handleInputClick);
+        this.refs?.input.removeEventListener("keydown", this.handleInputKeyDown);
+        this.refs?.caret.removeEventListener("mousedown", this.handleCaretMouseDown);
+        this.refs?.caret.removeEventListener("click", this.handleCaretClick);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
-    private readonly handleTriggerClick = (): void => {
+    private readonly handleInputChange = (event: Event): void => {
         if (this.disabled || this.readOnly) return;
-        this.controller?.toggle();
-    };
-
-    private readonly handleSearchInput = (event: Event): void => {
         const input = event.currentTarget as HTMLInputElement;
+        if (!this.controller?.getState().open) this.controller?.open();
         this.controller?.setQuery(input.value);
     };
 
-    private readonly handleSearchKeyDown = (event: KeyboardEvent): void => {
+    private readonly handleInputFocus = (): void => {
+        if (this.disabled || this.readOnly) return;
+        if (!this.controller?.getState().open) this.controller?.open();
+    };
+
+    private readonly handleInputClick = (): void => {
+        if (this.disabled || this.readOnly) return;
+        if (!this.controller?.getState().open) this.controller?.open();
+    };
+
+    private readonly handleCaretMouseDown = (event: Event): void => {
+        // Keep the input focused when the caret is clicked.
+        event.preventDefault();
+    };
+
+    private readonly handleCaretClick = (): void => {
+        if (this.disabled || this.readOnly) return;
+        if (this.controller?.getState().open) {
+            this.controller.close();
+        } else {
+            this.controller?.open();
+            this.refs?.input.focus({ preventScroll: true });
+        }
+    };
+
+    private readonly handleInputKeyDown = (event: KeyboardEvent): void => {
         if (!this.controller) return;
         if (event.key === "ArrowDown") {
             event.preventDefault();
-            this.controller.moveActive(1);
+            if (!this.controller.getState().open) this.controller.open();
+            else this.controller.moveActive(1);
             return;
         }
         if (event.key === "ArrowUp") {
@@ -333,7 +362,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             this.internals.setValidity(
                 { valueMissing: true },
                 "Please pick an option.",
-                this.refs?.trigger,
+                this.refs?.input,
             );
             return;
         }
@@ -344,27 +373,23 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         if (!this.refs) return;
         const placeholder = this.getAttribute("placeholder") ?? "Select…";
 
-        this.refs.value.textContent = snapshot.selectedOption?.label ?? placeholder;
-        this.refs.value.classList.toggle("placeholder", snapshot.selectedOption === null);
-        this.refs.trigger.setAttribute("aria-expanded", String(snapshot.open));
-        this.refs.trigger.setAttribute("aria-readonly", String(this.readOnly));
-        this.refs.trigger.disabled = this.disabled;
+        const inputValue = snapshot.open ? snapshot.query : (snapshot.selectedOption?.label ?? "");
+        if (this.refs.input.value !== inputValue) {
+            this.refs.input.value = inputValue;
+        }
+        // While the popover is open with a selection, show the chosen label as
+        // placeholder so the user sees what was picked while filtering.
+        this.refs.input.placeholder = snapshot.open && snapshot.selectedOption
+            ? snapshot.selectedOption.label
+            : placeholder;
+        this.refs.input.setAttribute("aria-expanded", String(snapshot.open));
+        this.refs.input.setAttribute("aria-readonly", String(this.readOnly));
+        this.refs.input.disabled = this.disabled;
 
         this.refs.popover.hidden = !snapshot.open;
-        if (!snapshot.open) {
-            this.refs.search.value = "";
-            return;
-        }
+        if (!snapshot.open) return;
 
-        if (this.refs.search.value !== snapshot.query) {
-            this.refs.search.value = snapshot.query;
-        }
-        this.refs.search.placeholder = placeholder;
         this.paintList(snapshot);
-
-        if (document.activeElement !== this.refs.search) {
-            this.refs.search.focus({ preventScroll: true });
-        }
     }
 
     private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {

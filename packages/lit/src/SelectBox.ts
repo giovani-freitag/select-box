@@ -46,6 +46,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private controller: SelectBoxController<TExtra> | null = null;
     private previousValue: string | null = null;
 
+    private readonly inputRef: Ref<HTMLInputElement> = createRef();
     private readonly listRef: Ref<HTMLDivElement> = createRef();
     private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
     private lastRowModelSource: ReadonlyArray<unknown> | null = null;
@@ -213,21 +214,42 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         this.controller.close();
     };
 
-    private readonly handleTriggerClick = (): void => {
+    private readonly handleInputFocus = (): void => {
         if (this.disabled || this.readOnly) return;
-        this.controller?.toggle();
+        if (!this.controller?.state.open) this.controller?.open();
     };
 
-    private readonly handleSearchInput = (event: Event): void => {
-        const input = event.currentTarget as HTMLInputElement;
-        this.controller?.setQuery(input.value);
+    private readonly handleInputClick = (): void => {
+        if (this.disabled || this.readOnly) return;
+        if (!this.controller?.state.open) this.controller?.open();
     };
 
-    private readonly handleSearchKeyDown = (event: KeyboardEvent): void => {
+    private readonly handleInput = (event: Event): void => {
+        if (this.disabled || this.readOnly) return;
+        if (!this.controller?.state.open) this.controller?.open();
+        this.controller?.setQuery((event.target as HTMLInputElement).value);
+    };
+
+    private readonly handleCaretMouseDown = (event: MouseEvent): void => {
+        event.preventDefault();
+    };
+
+    private readonly handleCaretClick = (): void => {
+        if (this.disabled || this.readOnly) return;
+        if (this.controller?.state.open) {
+            this.controller.close();
+        } else {
+            this.controller?.open();
+            this.inputRef.value?.focus({ preventScroll: true });
+        }
+    };
+
+    private readonly handleKeyDown = (event: KeyboardEvent): void => {
         if (!this.controller) return;
         if (event.key === "ArrowDown") {
             event.preventDefault();
-            this.controller.moveActive(1);
+            if (!this.controller.state.open) this.controller.open();
+            else this.controller.moveActive(1);
             return;
         }
         if (event.key === "ArrowUp") {
@@ -275,29 +297,46 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     override render(): TemplateResult {
         const state = this.controller?.state;
         if (!state) return html``;
+        const inputValue = state.open ? state.query : (state.selectedOption?.label ?? "");
+        const placeholderText = state.open && state.selectedOption
+            ? state.selectedOption.label
+            : (this.placeholder || "Select…");
         return html`
             <div class="select-box" part="root" data-select-root>
-                <button
-                    type="button"
+                <div
                     class="select-box-trigger"
                     part="trigger"
-                    aria-haspopup="listbox"
-                    aria-expanded=${state.open}
-                    aria-readonly=${this.readOnly}
-                    ?disabled=${this.disabled}
                     data-select-trigger
-                    @click=${this.handleTriggerClick}
                 >
-                    <span
-                        part="value"
-                        class=${state.selectedOption
-                            ? "select-box-value"
-                            : "select-box-value select-box-placeholder"}
-                    >
-                        ${state.selectedOption?.label ?? this.placeholder ?? "Select…"}
-                    </span>
-                    <span class="select-box-caret" part="caret" aria-hidden="true">▾</span>
-                </button>
+                    <input
+                        ${ref(this.inputRef)}
+                        type="text"
+                        class="select-box-input"
+                        part="input"
+                        role="combobox"
+                        aria-haspopup="listbox"
+                        aria-autocomplete="list"
+                        aria-expanded=${state.open}
+                        aria-readonly=${this.readOnly}
+                        ?disabled=${this.disabled}
+                        placeholder=${placeholderText}
+                        .value=${inputValue}
+                        data-select-input
+                        @input=${this.handleInput}
+                        @focus=${this.handleInputFocus}
+                        @click=${this.handleInputClick}
+                        @keydown=${this.handleKeyDown}
+                    />
+                    <button
+                        type="button"
+                        class="select-box-caret"
+                        part="caret"
+                        tabindex="-1"
+                        aria-hidden="true"
+                        @mousedown=${this.handleCaretMouseDown}
+                        @click=${this.handleCaretClick}
+                    >▾</button>
+                </div>
                 ${state.open ? this.renderPopover(state) : nothing}
             </div>
         `;
@@ -306,16 +345,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private renderPopover(state: NonNullable<SelectBoxController<TExtra>["state"]>): TemplateResult {
         return html`
             <div class="select-box-popover" part="popover" role="listbox" data-select-popover>
-                <input
-                    class="select-box-search"
-                    part="search"
-                    type="text"
-                    placeholder=${this.placeholder || "Search…"}
-                    .value=${state.query}
-                    data-select-search
-                    @input=${this.handleSearchInput}
-                    @keydown=${this.handleSearchKeyDown}
-                />
                 <div
                     ${ref(this.listRef)}
                     class="select-box-list"

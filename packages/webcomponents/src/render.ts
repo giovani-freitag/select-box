@@ -1,9 +1,8 @@
 export interface SelectBoxShadowRefs {
-    readonly trigger: HTMLButtonElement;
-    readonly value: HTMLSpanElement;
-    readonly caret: HTMLSpanElement;
+    readonly trigger: HTMLDivElement;
+    readonly input: HTMLInputElement;
+    readonly caret: HTMLButtonElement;
     readonly popover: HTMLDivElement;
-    readonly search: HTMLInputElement;
     readonly list: HTMLDivElement;
 }
 
@@ -13,11 +12,10 @@ export interface SelectBoxShadowRefs {
 export function renderSelectBoxShadow(shadowRoot: ShadowRoot): SelectBoxShadowRefs {
     shadowRoot.innerHTML = SHADOW_TEMPLATE;
     return {
-        trigger: shadowRoot.querySelector<HTMLButtonElement>(".trigger")!,
-        value: shadowRoot.querySelector<HTMLSpanElement>(".value")!,
-        caret: shadowRoot.querySelector<HTMLSpanElement>(".caret")!,
+        trigger: shadowRoot.querySelector<HTMLDivElement>(".trigger")!,
+        input: shadowRoot.querySelector<HTMLInputElement>(".input")!,
+        caret: shadowRoot.querySelector<HTMLButtonElement>(".caret")!,
         popover: shadowRoot.querySelector<HTMLDivElement>(".popover")!,
-        search: shadowRoot.querySelector<HTMLInputElement>(".search")!,
         list: shadowRoot.querySelector<HTMLDivElement>(".list")!,
     };
 }
@@ -59,8 +57,7 @@ const SHADOW_TEMPLATE = `
     }
 
     .trigger {
-        all: unset;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: space-between;
         width: 100%;
@@ -70,30 +67,35 @@ const SHADOW_TEMPLATE = `
         color: var(--sb-color-text-primary);
         border: 1px solid var(--sb-color-border);
         border-radius: var(--sb-radius);
-        font: inherit;
-        cursor: pointer;
         transition: border-color 0.15s ease;
     }
 
-    .trigger:hover {
+    .trigger:hover,
+    .trigger:focus-within {
         border-color: var(--sb-color-text-primary);
     }
 
-    .value {
+    .input {
         flex: 1;
-        text-align: left;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        min-width: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        outline: none;
     }
 
-    .value.placeholder {
+    .input::placeholder {
         color: var(--sb-color-text-secondary);
     }
 
     .caret {
+        all: unset;
         margin-left: var(--sb-space-sm);
         color: var(--sb-color-text-secondary);
+        cursor: pointer;
+        line-height: 1;
     }
 
     .popover {
@@ -112,19 +114,6 @@ const SHADOW_TEMPLATE = `
 
     .popover[hidden] {
         display: none;
-    }
-
-    .search {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-        padding: var(--sb-space-sm) var(--sb-space-md);
-        background: transparent;
-        color: var(--sb-color-text-primary);
-        border: none;
-        border-bottom: 1px solid var(--sb-color-border);
-        font: inherit;
-        outline: none;
     }
 
     .list {
@@ -177,12 +166,20 @@ const SHADOW_TEMPLATE = `
         color: var(--sb-color-text-secondary);
     }
 </style>
-<button type="button" class="trigger" part="trigger" data-select-trigger aria-haspopup="listbox" aria-expanded="false">
-    <span class="value" part="value"></span>
-    <span class="caret" part="caret" aria-hidden="true">&#9662;</span>
-</button>
+<div class="trigger" part="trigger" data-select-trigger>
+    <input
+        class="input"
+        part="input"
+        type="text"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        data-select-input
+    />
+    <button class="caret" part="caret" type="button" tabindex="-1" aria-hidden="true" data-select-caret>&#9662;</button>
+</div>
 <div class="popover" part="popover" role="listbox" data-select-popover hidden>
-    <input class="search" part="search" type="text" data-select-search />
     <div class="list" part="list" data-select-list></div>
 </div>
 `;

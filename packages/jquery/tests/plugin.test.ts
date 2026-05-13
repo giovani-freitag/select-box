@@ -24,14 +24,16 @@ describe("$.fn.selectBox", () => {
         expect(typeof jQuery.fn.selectBox).toBe("function");
     });
 
-    test("initialising on a host element renders the trigger with the placeholder", () => {
+    test("initialising on a host element renders the trigger input with the placeholder", () => {
         jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, placeholder: "Pick a fruit" });
 
-        const trigger = document.querySelector<HTMLButtonElement>("#fruit [data-select-trigger]");
-        const value = document.querySelector("#fruit .select-box-value");
+        const trigger = document.querySelector<HTMLDivElement>("#fruit [data-select-trigger]");
+        const input = document.querySelector<HTMLInputElement>("#fruit [data-select-input]");
 
         expect(trigger).not.toBeNull();
-        expect(value?.textContent).toBe("Pick a fruit");
+        expect(input).not.toBeNull();
+        expect(input?.placeholder).toBe("Pick a fruit");
+        expect(input?.value).toBe("");
     });
 
     test("calling open() shows the popover and lists every option", () => {

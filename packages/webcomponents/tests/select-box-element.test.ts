@@ -18,17 +18,19 @@ beforeAll(() => {
 });
 
 describe("<select-box>", () => {
-    test("renders trigger with placeholder when no value is selected", () => {
+    test("renders the trigger input with placeholder when no value is selected", () => {
         const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
         element.setAttribute("placeholder", "Pick a fruit");
         element.options = fruits;
         document.body.append(element);
 
         const trigger = element.shadowRoot!.querySelector(".trigger");
-        const value = element.shadowRoot!.querySelector(".value");
+        const input = element.shadowRoot!.querySelector<HTMLInputElement>(".input");
 
         expect(trigger).not.toBeNull();
-        expect(value?.textContent).toBe("Pick a fruit");
+        expect(input).not.toBeNull();
+        expect(input?.placeholder).toBe("Pick a fruit");
+        expect(input?.value).toBe("");
 
         element.remove();
     });
@@ -39,8 +41,8 @@ describe("<select-box>", () => {
         element.setAttribute("ungrouped-label", "Other");
         document.body.append(element);
 
-        const trigger = element.shadowRoot!.querySelector<HTMLButtonElement>(".trigger");
-        trigger?.click();
+        const caret = element.shadowRoot!.querySelector<HTMLButtonElement>(".caret");
+        caret?.click();
 
         const popover = element.shadowRoot!.querySelector<HTMLDivElement>(".popover");
         const groupLabels = [...element.shadowRoot!.querySelectorAll(".group-label")].map(
@@ -67,7 +69,7 @@ describe("<select-box>", () => {
             observed.push((event.target as SelectBoxElement<FruitExtra>).value);
         });
 
-        element.shadowRoot!.querySelector<HTMLButtonElement>(".trigger")?.click();
+        element.shadowRoot!.querySelector<HTMLButtonElement>(".caret")?.click();
         const firstOption = element.shadowRoot!.querySelector<HTMLButtonElement>(".option");
         firstOption?.click();
 

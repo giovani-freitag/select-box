@@ -10,7 +10,7 @@ describe("@select-box/vue", () => {
         expect(typeof SelectBox).toBe("object");
     });
 
-    test("renders the trigger with placeholder when no value is selected", () => {
+    test("renders the trigger input with placeholder when no value is selected", () => {
         const wrapper = mount(SelectBox, {
             props: {
                 options: [
@@ -22,8 +22,11 @@ describe("@select-box/vue", () => {
         });
 
         const trigger = wrapper.find("[data-select-trigger]");
+        const input = wrapper.find<HTMLInputElement>("[data-select-input]");
 
         expect(trigger.exists()).toBe(true);
-        expect(trigger.text()).toContain("Pick a fruit");
+        expect(input.exists()).toBe(true);
+        expect(input.attributes("placeholder")).toBe("Pick a fruit");
+        expect(input.element.value).toBe("");
     });
 });

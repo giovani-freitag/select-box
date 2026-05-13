@@ -18,10 +18,10 @@ export class SelectBoxView<TExtra extends object = object> {
     readonly root: HTMLDivElement;
 
     private readonly controller: SingleSelectBoxController<TExtra>;
-    private readonly trigger: HTMLButtonElement;
-    private readonly value: HTMLSpanElement;
+    private readonly trigger: HTMLDivElement;
+    private readonly input: HTMLInputElement;
+    private readonly caret: HTMLButtonElement;
     private readonly popover: HTMLDivElement;
-    private readonly search: HTMLInputElement;
     private readonly list: HTMLDivElement;
 
     private unsubscribeFromStore: (() => void) | null = null;
@@ -52,9 +52,9 @@ export class SelectBoxView<TExtra extends object = object> {
         this.root.dataset["selectRoot"] = "";
 
         this.trigger = this.createTrigger();
-        this.value = this.trigger.querySelector<HTMLSpanElement>(".select-box-value")!;
+        this.input = this.trigger.querySelector<HTMLInputElement>(".select-box-input")!;
+        this.caret = this.trigger.querySelector<HTMLButtonElement>(".select-box-caret")!;
         this.popover = this.createPopover();
-        this.search = this.popover.querySelector<HTMLInputElement>(".select-box-search")!;
         this.list = this.popover.querySelector<HTMLDivElement>(".select-box-list")!;
 
         this.root.append(this.trigger, this.popover);
@@ -101,23 +101,28 @@ export class SelectBoxView<TExtra extends object = object> {
         this.controller.clear();
     }
 
-    private createTrigger(): HTMLButtonElement {
-        const trigger = document.createElement("button");
-        trigger.type = "button";
+    private createTrigger(): HTMLDivElement {
+        const trigger = document.createElement("div");
         trigger.className = "select-box-trigger";
-        trigger.setAttribute("aria-haspopup", "listbox");
-        trigger.setAttribute("aria-expanded", "false");
         trigger.dataset["selectTrigger"] = "";
 
-        const value = document.createElement("span");
-        value.className = "select-box-value";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "select-box-input";
+        input.setAttribute("role", "combobox");
+        input.setAttribute("aria-haspopup", "listbox");
+        input.setAttribute("aria-autocomplete", "list");
+        input.setAttribute("aria-expanded", "false");
+        input.dataset["selectInput"] = "";
 
-        const caret = document.createElement("span");
+        const caret = document.createElement("button");
+        caret.type = "button";
         caret.className = "select-box-caret";
+        caret.tabIndex = -1;
         caret.setAttribute("aria-hidden", "true");
         caret.textContent = "▾";
 
-        trigger.append(value, caret);
+        trigger.append(input, caret);
         return trigger;
     }
 
@@ -128,49 +133,69 @@ export class SelectBoxView<TExtra extends object = object> {
         popover.dataset["selectPopover"] = "";
         popover.hidden = true;
 
-        const search = document.createElement("input");
-        search.type = "text";
-        search.className = "select-box-search";
-        search.dataset["selectSearch"] = "";
-
         const list = document.createElement("div");
         list.className = "select-box-list";
         list.dataset["selectList"] = "";
 
-        popover.append(search, list);
+        popover.append(list);
         return popover;
     }
 
     private listen(): void {
         this.unsubscribeFromStore = this.controller.subscribe(this.handleSnapshotChange);
-        this.trigger.addEventListener("click", this.handleTriggerClick);
-        this.search.addEventListener("input", this.handleSearchInput);
-        this.search.addEventListener("keydown", this.handleSearchKeyDown);
+        this.input.addEventListener("input", this.handleInputChange);
+        this.input.addEventListener("focus", this.handleInputFocus);
+        this.input.addEventListener("click", this.handleInputClick);
+        this.input.addEventListener("keydown", this.handleInputKeyDown);
+        this.caret.addEventListener("mousedown", this.handleCaretMouseDown);
+        this.caret.addEventListener("click", this.handleCaretClick);
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
     private unlisten(): void {
         this.unsubscribeFromStore?.();
         this.unsubscribeFromStore = null;
-        this.trigger.removeEventListener("click", this.handleTriggerClick);
-        this.search.removeEventListener("input", this.handleSearchInput);
-        this.search.removeEventListener("keydown", this.handleSearchKeyDown);
+        this.input.removeEventListener("input", this.handleInputChange);
+        this.input.removeEventListener("focus", this.handleInputFocus);
+        this.input.removeEventListener("click", this.handleInputClick);
+        this.input.removeEventListener("keydown", this.handleInputKeyDown);
+        this.caret.removeEventListener("mousedown", this.handleCaretMouseDown);
+        this.caret.removeEventListener("click", this.handleCaretClick);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
-    private readonly handleTriggerClick = (): void => {
-        this.controller.toggle();
-    };
-
-    private readonly handleSearchInput = (event: Event): void => {
+    private readonly handleInputChange = (event: Event): void => {
         const input = event.currentTarget as HTMLInputElement;
+        if (!this.controller.getState().open) this.controller.open();
         this.controller.setQuery(input.value);
     };
 
-    private readonly handleSearchKeyDown = (event: KeyboardEvent): void => {
+    private readonly handleInputFocus = (): void => {
+        if (!this.controller.getState().open) this.controller.open();
+    };
+
+    private readonly handleInputClick = (): void => {
+        if (!this.controller.getState().open) this.controller.open();
+    };
+
+    private readonly handleCaretMouseDown = (event: Event): void => {
+        event.preventDefault();
+    };
+
+    private readonly handleCaretClick = (): void => {
+        if (this.controller.getState().open) {
+            this.controller.close();
+        } else {
+            this.controller.open();
+            this.input.focus({ preventScroll: true });
+        }
+    };
+
+    private readonly handleInputKeyDown = (event: KeyboardEvent): void => {
         if (event.key === "ArrowDown") {
             event.preventDefault();
-            this.controller.moveActive(1);
+            if (!this.controller.getState().open) this.controller.open();
+            else this.controller.moveActive(1);
             return;
         }
         if (event.key === "ArrowUp") {
@@ -206,25 +231,19 @@ export class SelectBoxView<TExtra extends object = object> {
     };
 
     private paint(snapshot: SelectBoxSnapshot<TExtra>): void {
-        this.value.textContent = snapshot.selectedOption?.label ?? this.placeholder;
-        this.value.classList.toggle("select-box-placeholder", snapshot.selectedOption === null);
-        this.trigger.setAttribute("aria-expanded", String(snapshot.open));
+        const inputValue = snapshot.open ? snapshot.query : (snapshot.selectedOption?.label ?? "");
+        if (this.input.value !== inputValue) {
+            this.input.value = inputValue;
+        }
+        this.input.placeholder = snapshot.open && snapshot.selectedOption
+            ? snapshot.selectedOption.label
+            : this.placeholder;
+        this.input.setAttribute("aria-expanded", String(snapshot.open));
 
         this.popover.hidden = !snapshot.open;
-        if (!snapshot.open) {
-            this.search.value = "";
-            return;
-        }
+        if (!snapshot.open) return;
 
-        if (this.search.value !== snapshot.query) {
-            this.search.value = snapshot.query;
-        }
-        this.search.placeholder = this.placeholder;
         this.paintList(snapshot);
-
-        if (document.activeElement !== this.search) {
-            this.search.focus({ preventScroll: true });
-        }
     }
 
     private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {

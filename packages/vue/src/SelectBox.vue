@@ -9,7 +9,6 @@ import {
 } from "@select-box/core";
 import {
     computed,
-    nextTick,
     onBeforeUnmount,
     onMounted,
     onUpdated,
@@ -47,22 +46,13 @@ const { state, controller } = useSelectBox<TExtra>({
 });
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
-const searchRef = useTemplateRef<HTMLInputElement>("searchEl");
+const inputRef = useTemplateRef<HTMLInputElement>("inputEl");
 const listRef = useTemplateRef<HTMLDivElement>("listEl");
 
 watch(
     () => props.filter,
     (filter) => {
         if (filter !== undefined) controller.setFilter(filter);
-    },
-);
-
-watch(
-    () => state.value.open,
-    async (isOpen) => {
-        if (!isOpen) return;
-        await nextTick();
-        searchRef.value?.focus({ preventScroll: true });
     },
 );
 
@@ -74,6 +64,16 @@ watch(
         previousValue = next;
         emit("change", next, state.value.selectedOption);
     },
+);
+
+const inputValue = computed(() =>
+    state.value.open ? state.value.query : (state.value.selectedOption?.label ?? ""),
+);
+
+const placeholderText = computed(() =>
+    state.value.open && state.value.selectedOption
+        ? state.value.selectedOption.label
+        : (props.placeholder ?? "Select…"),
 );
 
 const rowModel = computed(() => new SelectBoxRowModel<TExtra>({ groups: state.value.filteredGroups }));
@@ -156,6 +156,28 @@ function handleOutsideMouseDown(event: MouseEvent): void {
     controller.close();
 }
 
+function handleInput(event: Event): void {
+    if (!state.value.open) controller.open();
+    controller.setQuery((event.target as HTMLInputElement).value);
+}
+
+function handleInputFocus(): void {
+    if (!state.value.open) controller.open();
+}
+
+function handleInputClick(): void {
+    if (!state.value.open) controller.open();
+}
+
+function handleCaretClick(): void {
+    if (state.value.open) {
+        controller.close();
+    } else {
+        controller.open();
+        inputRef.value?.focus({ preventScroll: true });
+    }
+}
+
 function handleKeyDown(event: KeyboardEvent): void {
     if (event.key === "ArrowDown") {
         event.preventDefault();
@@ -198,21 +220,32 @@ function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string 
 
 <template>
     <div ref="rootEl" class="select-box" data-select-root>
-        <button
-            type="button"
-            class="select-box-trigger"
-            :aria-expanded="state.open"
-            aria-haspopup="listbox"
-            data-select-trigger
-            @click="controller.toggle()"
-        >
-            <span
-                :class="state.selectedOption ? 'select-box-value' : 'select-box-value select-box-placeholder'"
-            >
-                {{ state.selectedOption?.label ?? placeholder ?? "Select…" }}
-            </span>
-            <span class="select-box-caret" aria-hidden="true">▾</span>
-        </button>
+        <div class="select-box-trigger" data-select-trigger>
+            <input
+                ref="inputEl"
+                type="text"
+                class="select-box-input"
+                role="combobox"
+                aria-haspopup="listbox"
+                aria-autocomplete="list"
+                :aria-expanded="state.open"
+                :placeholder="placeholderText"
+                :value="inputValue"
+                data-select-input
+                @input="handleInput"
+                @focus="handleInputFocus"
+                @click="handleInputClick"
+                @keydown="handleKeyDown"
+            />
+            <button
+                type="button"
+                class="select-box-caret"
+                tabindex="-1"
+                aria-hidden="true"
+                @mousedown.prevent
+                @click="handleCaretClick"
+            >▾</button>
+        </div>
 
         <div
             v-if="state.open"
@@ -220,16 +253,6 @@ function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string 
             role="listbox"
             data-select-popover
         >
-            <input
-                ref="searchEl"
-                class="select-box-search"
-                type="text"
-                :placeholder="placeholder ?? 'Search…'"
-                :value="state.query"
-                data-select-search
-                @input="controller.setQuery(($event.target as HTMLInputElement).value)"
-                @keydown="handleKeyDown"
-            />
             <div
                 ref="listEl"
                 class="select-box-list"

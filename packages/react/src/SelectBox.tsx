@@ -13,6 +13,7 @@ import {
     useRef,
     useState,
     useSyncExternalStore,
+    type ChangeEvent,
     type JSX,
     type KeyboardEvent,
     type MouseEvent,
@@ -77,7 +78,7 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
     useNotifyOnChange(state.value, state.selectedOption, onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         if (!state.open) return;
         function handleMouseDown(event: globalThis.MouseEvent): void {
@@ -91,11 +92,32 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
         };
     }, [state.open, controller]);
 
-    useEffect(() => {
-        if (!state.open) return;
-        // autoFocus misfires inside iframes without OS focus; programmatic focus is reliable.
-        searchRef.current?.focus({ preventScroll: true });
-    }, [state.open]);
+    function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
+        if (!state.open) controller.open();
+        controller.setQuery(event.target.value);
+    }
+
+    function handleInputFocus(): void {
+        if (!state.open) controller.open();
+    }
+
+    function handleInputClick(): void {
+        if (!state.open) controller.open();
+    }
+
+    function handleCaretMouseDown(event: MouseEvent<HTMLButtonElement>): void {
+        // Prevent the input from losing focus when the caret is clicked.
+        event.preventDefault();
+    }
+
+    function handleCaretClick(): void {
+        if (state.open) {
+            controller.close();
+        } else {
+            controller.open();
+            inputRef.current?.focus({ preventScroll: true });
+        }
+    }
 
     function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
         if (event.key === "ArrowDown") {
@@ -125,40 +147,48 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
     }
 
     const rootClassName = ["select-box", className].filter(Boolean).join(" ");
+    const inputValue = state.open ? state.query : (state.selectedOption?.label ?? "");
+    // While the popover is open with a selection, fade the chosen label into the
+    // placeholder so the user can see what was picked while filtering.
+    const placeholderText = state.open && state.selectedOption
+        ? state.selectedOption.label
+        : (placeholder ?? "Select…");
 
     return (
         <div ref={rootRef} className={rootClassName} data-select-root>
-            <button
-                type="button"
-                className="select-box-trigger"
-                onClick={() => controller.toggle()}
-                aria-haspopup="listbox"
-                aria-expanded={state.open}
-                aria-label={ariaLabel}
-                aria-labelledby={ariaLabelledby}
-                data-select-trigger
-            >
-                <span className={state.selectedOption ? "select-box-value" : "select-box-value select-box-placeholder"}>
-                    {state.selectedOption?.label ?? placeholder ?? "Select…"}
-                </span>
-                <span className="select-box-caret" aria-hidden>
+            <div className="select-box-trigger" data-select-trigger>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    className="select-box-input"
+                    role="combobox"
+                    aria-haspopup="listbox"
+                    aria-expanded={state.open}
+                    aria-autocomplete="list"
+                    aria-label={ariaLabel}
+                    aria-labelledby={ariaLabelledby}
+                    placeholder={placeholderText}
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onFocus={handleInputFocus}
+                    onClick={handleInputClick}
+                    onKeyDown={handleKeyDown}
+                    data-select-input
+                />
+                <button
+                    type="button"
+                    className="select-box-caret"
+                    onMouseDown={handleCaretMouseDown}
+                    onClick={handleCaretClick}
+                    tabIndex={-1}
+                    aria-hidden
+                >
                     ▾
-                </span>
-            </button>
+                </button>
+            </div>
 
             {state.open ? (
                 <div className="select-box-popover" role="listbox" data-select-popover>
-                    <input
-                        ref={searchRef}
-                        className="select-box-search"
-                        type="text"
-                        placeholder={placeholder ?? "Search…"}
-                        value={state.query}
-                        onChange={(event) => controller.setQuery(event.target.value)}
-                        onKeyDown={handleKeyDown}
-                        data-select-search
-                    />
-
                     {state.isEmpty ? (
                         <div className="select-box-list" data-select-list>
                             <p className="select-box-empty" data-select-empty>
