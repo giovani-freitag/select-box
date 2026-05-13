@@ -1,48 +1,39 @@
-import { useEffect, useState } from "react";
+// #region snippet
+import { useMemo, useState } from "react";
 import { SelectBox } from "@select-box/react";
-import type { SelectOption } from "@select-box/core";
 
-import type { SillyOption } from "./silly-generator";
+function generate(count: number): ReadonlyArray<{ value: string; label: string }> {
+    return Array.from({ length: count }, (_, index) => ({
+        value: String(index),
+        label: `Item ${index + 1}`,
+    }));
+}
 
-export default function ReactDemo(): React.ReactElement {
-    const [seed, setSeed] = useState<ReadonlyArray<SillyOption>>(() => readSeed());
-    const [version, setVersion] = useState(0);
-    const [committedLabel, setCommittedLabel] = useState<string | null>(null);
-
-    useEffect(() => {
-        function handleBigListChanged(event: Event): void {
-            const detail = (event as CustomEvent<{ options: ReadonlyArray<SelectOption> }>).detail;
-            setSeed(detail.options as ReadonlyArray<SillyOption>);
-            setVersion((current) => current + 1);
-            setCommittedLabel(null);
-        }
-        window.addEventListener("big-list-changed", handleBigListChanged);
-        // The page-level controls may have already populated the seed before
-        // this island hydrated; sync once at mount in case the event fired earlier.
-        const current = readSeed();
-        if (current.length > 0) setSeed(current);
-        return () => window.removeEventListener("big-list-changed", handleBigListChanged);
-    }, []);
-
+export default function Demo(): React.ReactElement {
+    const [count, setCount] = useState(1000);
+    const [committed, setCommitted] = useState<{ value: string; label: string } | null>(null);
+    const options = useMemo(() => generate(count), [count]);
     return (
-        <div className="sb-demo-card">
-            <label className="sb-demo-label">Pick a critter ({seed.length.toLocaleString()})</label>
+        <div className="sb-demo">
+            <label>
+                Items: <strong>{count.toLocaleString()}</strong>
+                <input
+                    type="range"
+                    min="100"
+                    max="100000"
+                    step="100"
+                    value={count}
+                    onChange={(event) => setCount(Number(event.target.value))}
+                />
+            </label>
             <SelectBox
-                key={version}
-                options={seed}
-                placeholder="Search the menagerie…"
-                onChange={(_value, option) => setCommittedLabel(option?.label ?? null)}
+                key={count}
+                options={options}
+                placeholder="Search…"
+                onChange={(_value, option) => setCommitted(option)}
             />
-            <dl className="sb-demo-snapshot">
-                <dt>Last committed</dt>
-                <dd><code>{committedLabel ?? "null"}</code></dd>
-            </dl>
+            <output><code>{committed?.label ?? "null"}</code></output>
         </div>
     );
 }
-
-function readSeed(): ReadonlyArray<SillyOption> {
-    if (typeof window === "undefined") return [];
-    const seed = window.__bigListSeed;
-    return Array.isArray(seed) ? (seed as ReadonlyArray<SillyOption>) : [];
-}
+// #endregion snippet

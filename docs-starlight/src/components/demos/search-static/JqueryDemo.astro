@@ -1,0 +1,32 @@
+<!-- #region snippet -->
+<div class="sb-demo">
+    <div id="demo-search-static-jq"></div>
+    <output id="demo-search-static-jq-out"><code>null</code></output>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+
+    jQuery("#demo-search-static-jq")
+        .selectBox({
+            options: [
+                { value: "apple", label: "Apple" },
+                { value: "pear", label: "Pear" },
+                { value: "peach", label: "Peach" },
+                { value: "lemon", label: "Lemon" },
+                { value: "blueberry", label: "Blueberry" },
+                { value: "raspberry", label: "Raspberry" },
+                { value: "strawberry", label: "Strawberry" },
+                { value: "watermelon", label: "Watermelon" },
+            ],
+            filter: new FuzzyFilterStrategy(),
+            placeholder: "Search fruits…",
+        })
+        .on("change", (_event, _value, option) => {
+            const out = document.querySelector("#demo-search-static-jq-out code");
+            if (out) out.textContent = option ? JSON.stringify(option) : "null";
+        });
+</script>
+<!-- #endregion snippet -->

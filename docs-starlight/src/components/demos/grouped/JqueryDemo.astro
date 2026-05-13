@@ -1,44 +1,29 @@
----
-const triggerId = `jq-demo-grouped-${Math.random().toString(36).slice(2, 9)}`;
-const snapshotId = `${triggerId}-snapshot`;
----
-
-<div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <div id={triggerId}></div>
-    <dl class="sb-demo-snapshot">
-        <dt>Last committed value</dt>
-        <dd><code id={snapshotId}>null</code></dd>
-    </dl>
+<!-- #region snippet -->
+<div class="sb-demo">
+    <div id="demo-grouped-jq"></div>
+    <output id="demo-grouped-jq-out"><code>null</code></output>
 </div>
 
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
 
-    import { groupedFruits, type Fruit, type FruitExtra } from "./fruits";
-
-    function initialize(): void {
-        const containers = document.querySelectorAll<HTMLElement>(
-            "[id^='jq-demo-grouped-']",
-        );
-        for (const container of containers) {
-            if (container.dataset["bootstrapped"] === "true") continue;
-            if (container.tagName !== "DIV") continue;
-            container.dataset["bootstrapped"] = "true";
-            const snapshot = document.getElementById(`${container.id}-snapshot`);
-            jQuery(container)
-                .selectBox<FruitExtra>({
-                    options: groupedFruits,
-                    ungroupedLabel: "Citrus",
-                    placeholder: "Search fruits…",
-                })
-                .on("change", (_event, _value: string | null, option: Fruit | null) => {
-                    if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
-                });
-        }
-    }
-
-    initialize();
-    document.addEventListener("astro:page-load", initialize);
+    jQuery("#demo-grouped-jq")
+        .selectBox({
+            options: [
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "peach", label: "Peach", group: "Stone fruits" },
+                { value: "plum", label: "Plum", group: "Stone fruits" },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange" },
+            ],
+            ungroupedLabel: "Citrus",
+            placeholder: "Pick a fruit",
+        })
+        .on("change", (_event, _value, option) => {
+            const out = document.querySelector("#demo-grouped-jq-out code");
+            if (out) out.textContent = option ? JSON.stringify(option) : "null";
+        });
 </script>
+<!-- #endregion snippet -->

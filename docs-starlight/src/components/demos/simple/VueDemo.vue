@@ -1,29 +1,27 @@
+<!-- #region snippet -->
 <script setup lang="ts">
 import { ref } from "vue";
 import { SelectBox } from "@select-box/vue";
 
-import { simpleFruits, type Fruit, type FruitExtra } from "./fruits";
+const fruits = [
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "grape", label: "Grape" },
+    { value: "lemon", label: "Lemon" },
+    { value: "peach", label: "Peach" },
+];
 
-const committed = ref<Fruit | null>(null);
-
-function handleChange(_value: string | null, option: Fruit | null): void {
-    committed.value = option;
-}
+const committed = ref<(typeof fruits)[number] | null>(null);
 </script>
 
 <template>
-    <div class="sb-demo-card">
-        <label class="sb-demo-label">Pick a fruit</label>
+    <div class="sb-demo">
         <SelectBox
-            :options="simpleFruits"
-            placeholder="Search fruits…"
-            @change="handleChange"
+            :options="fruits"
+            placeholder="Pick a fruit"
+            @change="(_value, option) => (committed = option)"
         />
-        <dl class="sb-demo-snapshot">
-            <dt>Last committed value</dt>
-            <dd>
-                <code>{{ committed ? JSON.stringify(committed) : "null" }}</code>
-            </dd>
-        </dl>
+        <output><code>{{ committed ? JSON.stringify(committed) : "null" }}</code></output>
     </div>
 </template>
+<!-- #endregion snippet -->

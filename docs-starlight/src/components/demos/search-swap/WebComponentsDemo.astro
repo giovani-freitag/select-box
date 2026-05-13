@@ -1,0 +1,43 @@
+<!-- #region snippet -->
+<div class="sb-demo">
+    <label>
+        <input id="demo-search-swap-wc-toggle" type="checkbox" />
+        Use fuzzy search
+    </label>
+    <select-box id="demo-search-swap-wc" placeholder="Search fruits…"></select-box>
+    <output id="demo-search-swap-wc-out"><code>null</code></output>
+</div>
+
+<script>
+    import "@select-box/webcomponents/define";
+    import type { SelectBoxElement } from "@select-box/webcomponents";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    const SUBSTRING = new SubstringFilterStrategy();
+    const FUZZY = new FuzzyFilterStrategy();
+
+    const element = document.querySelector<SelectBoxElement>("#demo-search-swap-wc")!;
+    element.options = [
+        { value: "apple", label: "Apple" },
+        { value: "pear", label: "Pear" },
+        { value: "peach", label: "Peach" },
+        { value: "lemon", label: "Lemon" },
+        { value: "blueberry", label: "Blueberry" },
+        { value: "raspberry", label: "Raspberry" },
+        { value: "strawberry", label: "Strawberry" },
+        { value: "watermelon", label: "Watermelon" },
+    ];
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-search-swap-wc-out code");
+        if (out) out.textContent = element.selectedOption
+            ? JSON.stringify(element.selectedOption)
+            : "null";
+    });
+
+    document.querySelector<HTMLInputElement>("#demo-search-swap-wc-toggle")!
+        .addEventListener("change", function () {
+            element.filter = this.checked ? FUZZY : SUBSTRING;
+        });
+</script>
+<!-- #endregion snippet -->

@@ -1,0 +1,32 @@
+<!-- #region snippet -->
+<div class="sb-demo">
+    <select-box-lit id="demo-search-static-lit" placeholder="Search fruits…"></select-box-lit>
+    <output id="demo-search-static-lit-out"><code>null</code></output>
+</div>
+
+<script>
+    import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+
+    defineSelectBoxElement("select-box-lit");
+
+    const element = document.querySelector<SelectBox>("#demo-search-static-lit")!;
+    element.options = [
+        { value: "apple", label: "Apple" },
+        { value: "pear", label: "Pear" },
+        { value: "peach", label: "Peach" },
+        { value: "lemon", label: "Lemon" },
+        { value: "blueberry", label: "Blueberry" },
+        { value: "raspberry", label: "Raspberry" },
+        { value: "strawberry", label: "Strawberry" },
+        { value: "watermelon", label: "Watermelon" },
+    ];
+    element.filter = new FuzzyFilterStrategy();
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-search-static-lit-out code");
+        if (out) out.textContent = element.selectedOption
+            ? JSON.stringify(element.selectedOption)
+            : "null";
+    });
+</script>
+<!-- #endregion snippet -->

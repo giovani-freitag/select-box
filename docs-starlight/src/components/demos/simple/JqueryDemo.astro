@@ -1,43 +1,27 @@
----
-const triggerId = `jq-demo-simple-${Math.random().toString(36).slice(2, 9)}`;
-const snapshotId = `${triggerId}-snapshot`;
----
-
-<div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <div id={triggerId}></div>
-    <dl class="sb-demo-snapshot">
-        <dt>Last committed value</dt>
-        <dd><code id={snapshotId}>null</code></dd>
-    </dl>
+<!-- #region snippet -->
+<div class="sb-demo">
+    <div id="demo-simple-jq"></div>
+    <output id="demo-simple-jq-out"><code>null</code></output>
 </div>
 
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
 
-    import { simpleFruits, type Fruit, type FruitExtra } from "./fruits";
-
-    function initialize(): void {
-        const containers = document.querySelectorAll<HTMLElement>(
-            "[id^='jq-demo-simple-']",
-        );
-        for (const container of containers) {
-            if (container.dataset["bootstrapped"] === "true") continue;
-            if (container.tagName !== "DIV") continue;
-            container.dataset["bootstrapped"] = "true";
-            const snapshot = document.getElementById(`${container.id}-snapshot`);
-            jQuery(container)
-                .selectBox<FruitExtra>({
-                    options: simpleFruits,
-                    placeholder: "Search fruits…",
-                })
-                .on("change", (_event, _value: string | null, option: Fruit | null) => {
-                    if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
-                });
-        }
-    }
-
-    initialize();
-    document.addEventListener("astro:page-load", initialize);
+    jQuery("#demo-simple-jq")
+        .selectBox({
+            options: [
+                { value: "apple", label: "Apple" },
+                { value: "pear", label: "Pear" },
+                { value: "grape", label: "Grape" },
+                { value: "lemon", label: "Lemon" },
+                { value: "peach", label: "Peach" },
+            ],
+            placeholder: "Pick a fruit",
+        })
+        .on("change", (_event, _value, option) => {
+            const out = document.querySelector("#demo-simple-jq-out code");
+            if (out) out.textContent = option ? JSON.stringify(option) : "null";
+        });
 </script>
+<!-- #endregion snippet -->

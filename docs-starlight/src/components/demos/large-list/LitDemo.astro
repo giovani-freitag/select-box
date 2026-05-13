@@ -1,53 +1,45 @@
----
-const triggerId = `lit-demo-large-list-${Math.random().toString(36).slice(2, 9)}`;
-const snapshotId = `${triggerId}-snapshot`;
-const countId = `${triggerId}-count`;
----
-
-<div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>
-        Pick a critter (<span id={countId}>0</span>)
+<!-- #region snippet -->
+<div class="sb-demo">
+    <label>
+        Items:
+        <strong id="demo-large-list-lit-count">1,000</strong>
+        <input
+            id="demo-large-list-lit-range"
+            type="range"
+            min="100"
+            max="100000"
+            step="100"
+            value="1000"
+        />
     </label>
-    <select-box-lit id={triggerId} placeholder="Search the menagerie…"></select-box-lit>
-    <dl class="sb-demo-snapshot">
-        <dt>Last committed</dt>
-        <dd><code id={snapshotId}>null</code></dd>
-    </dl>
+    <select-box-lit id="demo-large-list-lit" placeholder="Search…"></select-box-lit>
+    <output id="demo-large-list-lit-out"><code>null</code></output>
 </div>
 
 <script>
     import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
-    import type { SillyOption } from "./silly-generator";
 
     defineSelectBoxElement("select-box-lit");
 
-    function initialize(): void {
-        const elements = document.querySelectorAll<SelectBox<SillyOption>>(
-            "select-box-lit[id^='lit-demo-large-list-']",
-        );
-        for (const element of elements) {
-            if (element.dataset["bootstrapped"] === "true") continue;
-            element.dataset["bootstrapped"] = "true";
-            const snapshot = document.getElementById(`${element.id}-snapshot`);
-            const countSpan = document.getElementById(`${element.id}-count`);
-            element.addEventListener("change", () => {
-                if (snapshot) {
-                    snapshot.textContent = element.selectedOption?.label ?? "null";
-                }
-            });
-            function applySeed(options: ReadonlyArray<unknown>): void {
-                element.options = options as never;
-                if (countSpan) countSpan.textContent = options.length.toLocaleString();
-            }
-            const current = window.__bigListSeed;
-            if (Array.isArray(current)) applySeed(current);
-            window.addEventListener("big-list-changed", (event) => {
-                const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
-                applySeed(detail.options);
-            });
-        }
+    function generate(count: number): ReadonlyArray<{ value: string; label: string }> {
+        return Array.from({ length: count }, (_, index) => ({
+            value: String(index),
+            label: `Item ${index + 1}`,
+        }));
     }
 
-    initialize();
-    document.addEventListener("astro:page-load", initialize);
+    const element = document.querySelector<SelectBox>("#demo-large-list-lit")!;
+    element.options = generate(1000);
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-large-list-lit-out code");
+        if (out) out.textContent = element.selectedOption?.label ?? "null";
+    });
+
+    document.querySelector<HTMLInputElement>("#demo-large-list-lit-range")!
+        .addEventListener("change", function () {
+            const count = Number(this.value);
+            document.querySelector("#demo-large-list-lit-count")!.textContent = count.toLocaleString();
+            element.options = generate(count);
+        });
 </script>
+<!-- #endregion snippet -->

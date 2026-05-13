@@ -3,141 +3,32 @@ title: Search
 description: Swap the default substring filter for fuzzy matching, all five frameworks in lockstep.
 ---
 
-import Demo from "../../../components/demos/search/Demo.astro";
+import StaticDemo from "../../../components/demos/search-static/Demo.astro";
+import SwapDemo from "../../../components/demos/search-swap/Demo.astro";
 
 The default filter is `SubstringFilterStrategy` — case- and diacritic-insensitive
-substring match. Install [`@select-box/addon-fuzzy`](/api/) and pass
-`FuzzyFilterStrategy` to tolerate typos and gaps via `fuse.js`. The filter is
-swappable at runtime via `controller.setFilter(strategy)` — no remount, no
-state loss.
+substring match. Pass any other strategy via the `filter` prop to change how
+matches are computed.
 
-<Demo>
-    <Fragment slot="react-code">
-        ```tsx
-        import { useState } from "react";
-        import { SelectBox } from "@select-box/react";
-        import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-        import { SubstringFilterStrategy, type OptionFilterStrategy } from "@select-box/core";
+## Set a filter once
 
-        const SUBSTRING = new SubstringFilterStrategy();
-        const FUZZY = new FuzzyFilterStrategy();
+`@select-box/addon-fuzzy` exports `FuzzyFilterStrategy`, which tolerates typos
+and gaps via `fuse.js`. Pass it as `filter` and you're done.
 
-        export function FruitSearch() {
-            const [filter, setFilter] = useState<OptionFilterStrategy>(SUBSTRING);
-            return (
-                <>
-                    <label>
-                        <input
-                            type="checkbox"
-                            onChange={(event) => setFilter(event.target.checked ? FUZZY : SUBSTRING)}
-                        />
-                        Use fuzzy search
-                    </label>
-                    <SelectBox options={fruits} filter={filter} placeholder="Search fruits…" />
-                </>
-            );
-        }
-        ```
-    </Fragment>
+<StaticDemo />
 
-    <Fragment slot="vue-code">
-        ```vue
-        <script setup lang="ts">
-        import { ref } from "vue";
-        import { SelectBox } from "@select-box/vue";
-        import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-        import { SubstringFilterStrategy } from "@select-box/core";
+## Swap the filter at runtime
 
-        const SUBSTRING = new SubstringFilterStrategy();
-        const FUZZY = new FuzzyFilterStrategy();
+The filter prop is reactive. Hand the controller a new strategy via
+`setFilter(strategy)` — or rebind the React/Vue prop — and the open popover
+re-filters in place. No remount, no state loss.
 
-        const filter = ref(SUBSTRING);
-        </script>
-
-        <template>
-            <label>
-                <input
-                    type="checkbox"
-                    @change="(event) => (filter = event.target.checked ? FUZZY : SUBSTRING)"
-                />
-                Use fuzzy search
-            </label>
-            <SelectBox :options="fruits" :filter="filter" placeholder="Search fruits…" />
-        </template>
-        ```
-    </Fragment>
-
-    <Fragment slot="lit-code">
-        ```html
-        <input type="checkbox" id="fuzzy-toggle" />
-        <select-box id="fruit" placeholder="Search fruits…"></select-box>
-
-        <script type="module">
-            import "@select-box/lit/define";
-            import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-            import { SubstringFilterStrategy } from "@select-box/core";
-
-            const SUBSTRING = new SubstringFilterStrategy();
-            const FUZZY = new FuzzyFilterStrategy();
-
-            const element = document.getElementById("fruit");
-            element.options = fruits;
-
-            document.getElementById("fuzzy-toggle").addEventListener("change", (event) => {
-                element.filter = event.target.checked ? FUZZY : SUBSTRING;
-            });
-        </script>
-        ```
-    </Fragment>
-
-    <Fragment slot="webcomponents-code">
-        ```html
-        <input type="checkbox" id="fuzzy-toggle" />
-        <select-box id="fruit" placeholder="Search fruits…"></select-box>
-
-        <script type="module">
-            import "@select-box/webcomponents/define";
-            import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-            import { SubstringFilterStrategy } from "@select-box/core";
-
-            const SUBSTRING = new SubstringFilterStrategy();
-            const FUZZY = new FuzzyFilterStrategy();
-
-            const element = document.getElementById("fruit");
-            element.options = fruits;
-
-            document.getElementById("fuzzy-toggle").addEventListener("change", (event) => {
-                element.filter = event.target.checked ? FUZZY : SUBSTRING;
-            });
-        </script>
-        ```
-    </Fragment>
-
-    <Fragment slot="jquery-code">
-        ```ts
-        import "@select-box/jquery";
-        import jQuery from "jquery";
-        import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-        import { SubstringFilterStrategy } from "@select-box/core";
-
-        const SUBSTRING = new SubstringFilterStrategy();
-        const FUZZY = new FuzzyFilterStrategy();
-
-        jQuery("#fruit").selectBox({ options: fruits, placeholder: "Search fruits…" });
-
-        jQuery("#fuzzy-toggle").on("change", function () {
-            jQuery("#fruit")
-                .selectBox("controller")
-                .setFilter(this.checked ? FUZZY : SUBSTRING);
-        });
-        ```
-    </Fragment>
-</Demo>
+<SwapDemo />
 
 ## Lock fuzzy on with an addon
 
-To enable fuzzy permanently (no toggle), pass `FuzzyAddon` instead of swapping
-the strategy by hand:
+To enable fuzzy permanently without managing the strategy yourself, register
+`FuzzyAddon`:
 
 ```ts
 import { FuzzyAddon } from "@select-box/addon-fuzzy";

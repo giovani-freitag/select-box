@@ -1,44 +1,30 @@
----
-const triggerId = `jq-demo-disabled-${Math.random().toString(36).slice(2, 9)}`;
-const snapshotId = `${triggerId}-snapshot`;
----
-
-<div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <div id={triggerId}></div>
-    <dl class="sb-demo-snapshot">
-        <dt>Last committed value</dt>
-        <dd><code id={snapshotId}>null</code></dd>
-    </dl>
+<!-- #region snippet -->
+<div class="sb-demo">
+    <div id="demo-disabled-jq"></div>
+    <output id="demo-disabled-jq-out"><code>null</code></output>
 </div>
 
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
 
-    import { disabledFruits, type Fruit, type FruitExtra } from "./fruits";
-
-    function initialize(): void {
-        const containers = document.querySelectorAll<HTMLElement>(
-            "[id^='jq-demo-disabled-']",
-        );
-        for (const container of containers) {
-            if (container.dataset["bootstrapped"] === "true") continue;
-            if (container.tagName !== "DIV") continue;
-            container.dataset["bootstrapped"] = "true";
-            const snapshot = document.getElementById(`${container.id}-snapshot`);
-            jQuery(container)
-                .selectBox<FruitExtra>({
-                    options: disabledFruits,
-                    ungroupedLabel: "Citrus",
-                    placeholder: "Search fruits…",
-                })
-                .on("change", (_event, _value: string | null, option: Fruit | null) => {
-                    if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
-                });
-        }
-    }
-
-    initialize();
-    document.addEventListener("astro:page-load", initialize);
+    jQuery("#demo-disabled-jq")
+        .selectBox({
+            options: [
+                { value: "apple", label: "Apple", group: "In stock" },
+                { value: "pear", label: "Pear", group: "In stock" },
+                { value: "grape", label: "Grape", group: "In stock", disabled: true },
+                { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+                { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange", disabled: true },
+            ],
+            ungroupedLabel: "Citrus",
+            placeholder: "Pick a fruit",
+        })
+        .on("change", (_event, _value, option) => {
+            const out = document.querySelector("#demo-disabled-jq-out code");
+            if (out) out.textContent = option ? JSON.stringify(option) : "null";
+        });
 </script>
+<!-- #endregion snippet -->

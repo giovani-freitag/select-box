@@ -1,55 +1,39 @@
+<!-- #region snippet -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { SelectBox } from "@select-box/vue";
-import type { SelectOption } from "@select-box/core";
 
-import type { SillyOption } from "./silly-generator";
-
-const seed = ref<ReadonlyArray<SillyOption>>(readSeed());
-const seedVersion = ref(0);
-const committedLabel = ref<string | null>(null);
-
-function handleBigListChanged(event: Event): void {
-    const detail = (event as CustomEvent<{ options: ReadonlyArray<SelectOption> }>).detail;
-    seed.value = detail.options as ReadonlyArray<SillyOption>;
-    seedVersion.value += 1;
-    committedLabel.value = null;
+function generate(count: number): ReadonlyArray<{ value: string; label: string }> {
+    return Array.from({ length: count }, (_, index) => ({
+        value: String(index),
+        label: `Item ${index + 1}`,
+    }));
 }
 
-function handleChange(_value: string | null, option: SillyOption | null): void {
-    committedLabel.value = option?.label ?? null;
-}
-
-function readSeed(): ReadonlyArray<SillyOption> {
-    if (typeof window === "undefined") return [];
-    const value = window.__bigListSeed;
-    return Array.isArray(value) ? (value as ReadonlyArray<SillyOption>) : [];
-}
-
-onMounted(() => {
-    window.addEventListener("big-list-changed", handleBigListChanged);
-    // Page-level controls may have populated the seed before this island
-    // hydrated; sync once at mount in case the event fired earlier.
-    seed.value = readSeed();
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener("big-list-changed", handleBigListChanged);
-});
+const count = ref(1000);
+const committed = ref<{ value: string; label: string } | null>(null);
+const options = computed(() => generate(count.value));
 </script>
 
 <template>
-    <div class="sb-demo-card">
-        <label class="sb-demo-label">Pick a critter ({{ seed.length.toLocaleString() }})</label>
+    <div class="sb-demo">
+        <label>
+            Items: <strong>{{ count.toLocaleString() }}</strong>
+            <input
+                type="range"
+                min="100"
+                max="100000"
+                step="100"
+                v-model.number="count"
+            />
+        </label>
         <SelectBox
-            :key="seedVersion"
-            :options="seed"
-            placeholder="Search the menagerie…"
-            @change="handleChange"
+            :key="count"
+            :options="options"
+            placeholder="Search…"
+            @change="(_value, option) => (committed = option)"
         />
-        <dl class="sb-demo-snapshot">
-            <dt>Last committed</dt>
-            <dd><code>{{ committedLabel ?? "null" }}</code></dd>
-        </dl>
+        <output><code>{{ committed?.label ?? "null" }}</code></output>
     </div>
 </template>
+<!-- #endregion snippet -->

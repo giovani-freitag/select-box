@@ -9,70 +9,7 @@ Pass a huge array to `options` — the popover still opens instantly and
 typing-to-filter stays responsive. Use the slider to regenerate the dataset
 and feel the cost.
 
-<Demo>
-    <Fragment slot="react-code">
-        ```tsx
-        import { SelectBox } from "@select-box/react";
-
-        const critters = generate(100_000);
-
-        <SelectBox
-            options={critters}
-            placeholder="Search the menagerie…"
-        />;
-        ```
-    </Fragment>
-
-    <Fragment slot="vue-code">
-        ```vue
-        <script setup lang="ts">
-        import { SelectBox } from "@select-box/vue";
-
-        const critters = generate(100_000);
-        </script>
-
-        <template>
-            <SelectBox :options="critters" placeholder="Search the menagerie…" />
-        </template>
-        ```
-    </Fragment>
-
-    <Fragment slot="lit-code">
-        ```html
-        <select-box id="critters" placeholder="Search the menagerie…"></select-box>
-
-        <script type="module">
-            import "@select-box/lit/define";
-
-            document.getElementById("critters").options = generate(100_000);
-        </script>
-        ```
-    </Fragment>
-
-    <Fragment slot="webcomponents-code">
-        ```html
-        <select-box id="critters" placeholder="Search the menagerie…"></select-box>
-
-        <script type="module">
-            import "@select-box/webcomponents/define";
-
-            document.getElementById("critters").options = generate(100_000);
-        </script>
-        ```
-    </Fragment>
-
-    <Fragment slot="jquery-code">
-        ```ts
-        import "@select-box/jquery";
-        import jQuery from "jquery";
-
-        jQuery("#critters").selectBox({
-            options: generate(100_000),
-            placeholder: "Search the menagerie…",
-        });
-        ```
-    </Fragment>
-</Demo>
+<Demo />
 
 ## How it stays fast
 

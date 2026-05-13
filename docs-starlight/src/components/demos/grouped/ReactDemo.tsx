@@ -1,25 +1,28 @@
+// #region snippet
 import { useState } from "react";
 import { SelectBox } from "@select-box/react";
 
-import { groupedFruits, type Fruit, type FruitExtra } from "./fruits";
+const fruits = [
+    { value: "apple", label: "Apple", group: "Pomes" },
+    { value: "pear", label: "Pear", group: "Pomes" },
+    { value: "peach", label: "Peach", group: "Stone fruits" },
+    { value: "plum", label: "Plum", group: "Stone fruits" },
+    { value: "lemon", label: "Lemon" },
+    { value: "orange", label: "Orange" },
+];
 
-export default function ReactDemo(): React.ReactElement {
-    const [committed, setCommitted] = useState<Fruit | null>(null);
+export default function Demo(): React.ReactElement {
+    const [committed, setCommitted] = useState<(typeof fruits)[number] | null>(null);
     return (
-        <div className="sb-demo-card">
-            <label className="sb-demo-label">Pick a fruit</label>
-            <SelectBox<FruitExtra>
-                options={groupedFruits}
+        <div className="sb-demo">
+            <SelectBox
+                options={fruits}
                 ungroupedLabel="Citrus"
-                placeholder="Search fruits…"
+                placeholder="Pick a fruit"
                 onChange={(_value, option) => setCommitted(option)}
             />
-            <dl className="sb-demo-snapshot">
-                <dt>Last committed value</dt>
-                <dd>
-                    <code>{committed ? JSON.stringify(committed) : "null"}</code>
-                </dd>
-            </dl>
+            <output><code>{committed ? JSON.stringify(committed) : "null"}</code></output>
         </div>
     );
 }
+// #endregion snippet

@@ -2,15 +2,19 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { SelectBox } from "@select-box/vue";
+import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+
+const FUZZY = new FuzzyFilterStrategy();
 
 const fruits = [
-    { value: "apple", label: "Apple", group: "In stock" },
-    { value: "pear", label: "Pear", group: "In stock" },
-    { value: "grape", label: "Grape", group: "In stock", disabled: true },
-    { value: "plum", label: "Plum", group: "Out of season", disabled: true },
-    { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "peach", label: "Peach" },
     { value: "lemon", label: "Lemon" },
-    { value: "orange", label: "Orange", disabled: true },
+    { value: "blueberry", label: "Blueberry" },
+    { value: "raspberry", label: "Raspberry" },
+    { value: "strawberry", label: "Strawberry" },
+    { value: "watermelon", label: "Watermelon" },
 ];
 
 const committed = ref<(typeof fruits)[number] | null>(null);
@@ -20,8 +24,8 @@ const committed = ref<(typeof fruits)[number] | null>(null);
     <div class="sb-demo">
         <SelectBox
             :options="fruits"
-            ungrouped-label="Citrus"
-            placeholder="Pick a fruit"
+            :filter="FUZZY"
+            placeholder="Search fruits…"
             @change="(_value, option) => (committed = option)"
         />
         <output><code>{{ committed ? JSON.stringify(committed) : "null" }}</code></output>

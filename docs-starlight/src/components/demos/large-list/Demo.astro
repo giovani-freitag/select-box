@@ -1,14 +1,20 @@
 ---
+import { Code } from "@astrojs/starlight/components";
 import FrameworkDemo from "../FrameworkDemo.astro";
-import Controls from "./Controls.astro";
+import { extractSnippet } from "../extract-snippet.ts";
 import ReactDemo from "./ReactDemo.tsx";
 import VueDemo from "./VueDemo.vue";
 import LitDemo from "./LitDemo.astro";
 import WebComponentsDemo from "./WebComponentsDemo.astro";
 import JqueryDemo from "./JqueryDemo.astro";
+
+import reactSource from "./ReactDemo.tsx?raw";
+import vueSource from "./VueDemo.vue?raw";
+import litSource from "./LitDemo.astro?raw";
+import webcomponentsSource from "./WebComponentsDemo.astro?raw";
+import jquerySource from "./JqueryDemo.astro?raw";
 ---
 
-<Controls />
 <FrameworkDemo>
     <ReactDemo slot="react" client:only="react" />
     <VueDemo slot="vue" client:only="vue" />
@@ -16,9 +22,9 @@ import JqueryDemo from "./JqueryDemo.astro";
     <WebComponentsDemo slot="webcomponents" />
     <JqueryDemo slot="jquery" />
 
-    <slot name="react-code" slot="react-code" />
-    <slot name="vue-code" slot="vue-code" />
-    <slot name="lit-code" slot="lit-code" />
-    <slot name="webcomponents-code" slot="webcomponents-code" />
-    <slot name="jquery-code" slot="jquery-code" />
+    <Code slot="react-code" code={extractSnippet(reactSource)} lang="tsx" />
+    <Code slot="vue-code" code={extractSnippet(vueSource)} lang="vue" />
+    <Code slot="lit-code" code={extractSnippet(litSource)} lang="astro" />
+    <Code slot="webcomponents-code" code={extractSnippet(webcomponentsSource)} lang="astro" />
+    <Code slot="jquery-code" code={extractSnippet(jquerySource)} lang="astro" />
 </FrameworkDemo>

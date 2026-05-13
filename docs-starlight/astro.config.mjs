@@ -8,8 +8,8 @@ import mdx from "@astrojs/mdx";
 export default defineConfig({
     site: "https://select-box.dev",
     integrations: [
-        react({ include: ["**/demos/**/ReactDemo.tsx", "**/components/react/**"] }),
-        vue({ include: ["**/demos/**/VueDemo.vue", "**/components/vue/**"] }),
+        react({ include: ["**/demos/**/*.tsx", "**/components/react/**"] }),
+        vue({ include: ["**/demos/**/*.vue", "**/components/vue/**"] }),
         starlight({
             title: "select-box",
             description:
@@ -53,6 +53,9 @@ export default defineConfig({
             ],
             expressiveCode: {
                 themes: ["github-dark", "github-light"],
+                shiki: {
+                    langs: ["vue", "astro"],
+                },
                 styleOverrides: {
                     borderRadius: "10px",
                     frames: {

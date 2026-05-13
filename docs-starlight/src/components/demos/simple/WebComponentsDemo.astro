@@ -1,38 +1,26 @@
----
-const triggerId = `wc-demo-simple-${Math.random().toString(36).slice(2, 9)}`;
-const snapshotId = `${triggerId}-snapshot`;
----
-
-<div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <select-box id={triggerId} placeholder="Search fruits…"></select-box>
-    <dl class="sb-demo-snapshot">
-        <dt>Last committed value</dt>
-        <dd><code id={snapshotId}>null</code></dd>
-    </dl>
+<!-- #region snippet -->
+<div class="sb-demo">
+    <select-box id="demo-simple-wc" placeholder="Pick a fruit"></select-box>
+    <output id="demo-simple-wc-out"><code>null</code></output>
 </div>
 
 <script>
     import "@select-box/webcomponents/define";
     import type { SelectBoxElement } from "@select-box/webcomponents";
-    import { simpleFruits, type FruitExtra } from "./fruits";
 
-    function initialize(): void {
-        const elements = document.querySelectorAll<SelectBoxElement<FruitExtra>>(
-            "select-box[id^='wc-demo-simple-']",
-        );
-        for (const element of elements) {
-            if (element.dataset["bootstrapped"] === "true") continue;
-            element.dataset["bootstrapped"] = "true";
-            element.options = simpleFruits;
-            const snapshot = document.getElementById(`${element.id}-snapshot`);
-            element.addEventListener("change", (event) => {
-                const option = (event.target as SelectBoxElement<FruitExtra>).selectedOption;
-                if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
-            });
-        }
-    }
-
-    initialize();
-    document.addEventListener("astro:page-load", initialize);
+    const element = document.querySelector<SelectBoxElement>("#demo-simple-wc")!;
+    element.options = [
+        { value: "apple", label: "Apple" },
+        { value: "pear", label: "Pear" },
+        { value: "grape", label: "Grape" },
+        { value: "lemon", label: "Lemon" },
+        { value: "peach", label: "Peach" },
+    ];
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-simple-wc-out code");
+        if (out) out.textContent = element.selectedOption
+            ? JSON.stringify(element.selectedOption)
+            : "null";
+    });
 </script>
+<!-- #endregion snippet -->
