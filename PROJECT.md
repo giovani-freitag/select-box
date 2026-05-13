@@ -156,7 +156,8 @@ the consumer's notes for context):
 
 ### 4.5 Option groups
 
-Native `<optgroup>` parity. Options can be supplied flat or nested:
+Native `<optgroup>` parity. Options are supplied as a flat list; leaves
+with a shared `group` key bundle under that header at normalization time:
 
 ```ts
 interface SelectOptionBase {
@@ -178,13 +179,16 @@ interface SelectGroup<TExtra extends object = object> {
 
 interface SingleSelectBoxControllerConfig<TExtra extends object = object> {
     options?: SelectOption<TExtra>[];          // flat with optional `group` field
-    groups?: SelectGroup<TExtra>[];            // pre-grouped
     initialValue?: string | number | null;     // coerced to string
     filter?: OptionFilterStrategy<TExtra>;
     ungroupedLabel?: string;
     addons?: SelectBoxAddon<TExtra>[];
 }
 ```
+
+The public surface accepts only the flat `options` shape; `SelectGroup`
+is an internal/snapshot type produced by normalization, not a consumer
+input.
 
 **Why `value: string`** — mirrors `<option value>` in HTML, makes identity
 comparison (`===`), serialization (form data, URL), and the internal
@@ -196,9 +200,11 @@ the full option in one callback.
 
 Rules:
 
-- The controller normalises both inputs into an internal **ordered list of
-  groups**. A flat `options` array without `group` fields collapses to a
-  single anonymous group rendered without a header.
+- The controller normalises the flat input into an internal **ordered
+  list of groups**. Leaves without `group` fall into a synthetic bucket
+  labelled by `ungroupedLabel` (defaults to `""`, which the row model
+  renders without a header — matching native `<select>` behaviour for
+  options outside an `<optgroup>`).
 - Filtering runs across leaves but the snapshot exposes
   `filteredGroups: SelectGroup<TValue>[]` so wrappers render headers.
   Empty groups are dropped from the snapshot.
@@ -339,40 +345,81 @@ the single-mode field stays for code that wants the simple case.
 
 ## 6. Testing strategy
 
-### 6.1 Unit (in `packages/core/tests`)
+Layered, from cheap-and-fast to expensive-and-thorough. We follow
+TanStack's approach: the bulk of the verification happens in unit +
+per-adapter integration; matrix E2E is reserved for behaviour that
+only a real browser can exercise.
 
-- Pure controller tests. No DOM. Vitest, `expect` only (no chai).
-- AAA pattern, blank-line separated (no `// arrange / // act / //
-  assert` comments).
+### 6.1 Unit — `packages/core/tests/` (Vitest)
 
-### 6.2 Per-wrapper integration
+The headless core gets the deepest coverage here. Pure controller and
+helper tests, no DOM. Vitest, `expect` only (no chai). AAA pattern with
+blank-line separation (no `// arrange / // act / // assert` comments).
+Covers: state machine transitions, filter strategies, option group
+normalization, row model, virtualizer adapter math, addon-host
+contract, snapshot stability. The core today has 7 suites; gaps to
+close: virtualizer math, multi-region snapshot stability under
+filter + commit churn, addon `extendSnapshot` ordering.
 
-- Each wrapper has its own `tests/` folder with the minimal harness
-  needed to mount it (jsdom for React/Vue, happy-dom for web
-  components, etc.).
-- Asserts the wrapper correctly subscribes/unsubscribes and renders the
-  snapshot fields.
+### 6.2 Per-wrapper integration — `packages/<framework>/tests/`
 
-### 6.3 Matrix E2E (the headline feature)
+Each adapter is a thin binding to the core controller; its tests
+exercise the lifecycle of that binding using idiomatic tooling:
 
-- Single `e2e/specs/*.spec.ts` suite written against framework-agnostic
-  data-test attributes (`[data-select-trigger]`, `[data-select-option]`,
-  `[data-select-active]`).
-- `examples/*` apps render the same scenarios in their respective
-  frameworks, all using the canonical data-test attributes.
-- Playwright's `projects` config runs the suite N times — once per
-  framework — by spawning each example's dev server.
-- A core regression fails the matrix in every framework simultaneously;
-  a wrapper-specific regression fails only its column. The output
-  diagnoses the layer immediately.
+- `@select-box/react` → Vitest + `@testing-library/react`.
+- `@select-box/vue` → Vitest + `@vue/test-utils`.
+- `@select-box/lit` → Vitest + JSDOM (LitElement render + assert DOM).
+- `@select-box/webcomponents` → Vitest + JSDOM, asserting on the
+  shadow root + form-associated internals.
+- `@select-box/jquery` → Vitest + JSDOM, jQuery against a host element.
+
+Each suite covers the same checklist (open/close, type-to-filter,
+Enter commits, click outside, Escape, keyboard nav, prop reactivity,
+listener cleanup) so a wrapper that forgets to wire a controller call
+breaks loudly. Paridade between adapters is verified by exercising
+the same scenario list in every package, not by a single shared spec.
+Most wrappers today only have a smoke test — expanding these is the
+next M1 deliverable.
+
+### 6.3 Matrix E2E — `e2e/` (Playwright, deferred)
+
+Lives in a top-level `e2e/` workspace (sibling of `packages/`), not
+inside any individual package. Playwright `projects` config spawns
+one fixture dev server per framework and runs a single spec set
+against each one:
 
 ```
-                 ┌─ wc ────── ✔ 42/42
-                 ├─ react ─── ✔ 42/42
-spec/keyboard ───┼─ vue ───── ✔ 42/42
-                 ├─ lit ───── ✔ 42/42
-                 └─ jquery ── ✗ 41/42   ← regression scoped to jquery only
+e2e/
+├── playwright.config.ts      ← projects = [react, vue, lit, wc, jquery]
+├── scenarios.ts              ← shared option lists / configs
+├── fixtures/<framework>/     ← tiny Vite app, mounts SelectBox by URL param
+├── lib/select-box-page.ts    ← page object via data-select-* contract
+└── specs/*.spec.ts           ← framework-agnostic specs
 ```
+
+Reserved for behaviour JSDOM can't faithfully simulate:
+
+- Virtualization layout + scroll with 10k+ options.
+- ARIA + screen-reader interactions in a real browser.
+- Popover positioning + viewport collision.
+- Focus traps and tab order.
+
+A core regression fails every project's run; a wrapper-specific
+regression fails only its column. The output diagnoses the layer
+immediately:
+
+```
+                 ┌─ wc ────── ✔ 12/12
+                 ├─ react ─── ✔ 12/12
+spec/keyboard ───┼─ vue ───── ✔ 12/12
+                 ├─ lit ───── ✔ 12/12
+                 └─ jquery ── ✗ 11/12   ← regression scoped to jquery only
+```
+
+**Deferred** until 6.1 + 6.2 are robust. CI cost mitigation
+(paths-filter so only PRs touching `packages/core/` or `e2e/` run the
+full matrix; per-wrapper PRs run only that wrapper's project) gets
+addressed when the suite ships.
 
 ## 7. Documentation site
 
@@ -401,9 +448,11 @@ gets retired (M3).
   prepends Starlight-compatible frontmatter (title/sidebar/editUrl) to
   each generated file before Astro picks them up. In docs-vitepress it
   emits straight to `api/`.
-- Canonical demo fixture: `docs-starlight/src/components/demos/fruits.ts`
-  (uses the new `SelectOption<FruitExtra>` shape — primitive value plus
-  `id`/`name` extras through the generic).
+- Each example folder under `docs-starlight/src/components/demos/<scenario>/`
+  is self-contained: the data is inlined inside every framework's demo
+  file (no shared `fruits.ts`), and the snippet shown next to the demo
+  is extracted from that same file via `// #region snippet` markers —
+  there is no divergence between displayed code and running code.
 
 ## 8. Pilot: select-box feature scope
 
@@ -414,10 +463,13 @@ project). Concretely:
 - Single + Multi mode (single shipped; multi is M2, discriminated by config).
 - Popover trigger UI (search input + virtualized list).
 - Inline chip UI (no popover, all options as toggleable chips) — M2.
-- Substring filtering as the default; fuzzy match shipped as a pluggable
-  `OptionFilterStrategy` for consumers who want it. Custom strategies via
-  the same `filter` slot.
-- Virtualized list rendering for long option sets — planned, not yet wired.
+- Substring filtering as the default; fuzzy match shipped via
+  `@select-box/addon-fuzzy` (exposes both `FuzzyFilterStrategy` and a
+  ready-to-register `FuzzyAddon`). Custom strategies plug into the same
+  `filter` slot.
+- Virtualized list rendering shipped via `SelectBoxListVirtualizer`
+  (wraps `@tanstack/virtual-core`); wrappers drive
+  `mount`/`sync`/`dispose` from their own lifecycle hooks.
 - **Option groups** (`<optgroup>` parity) — flat-with-`group` or nested
   `groups` input shape; filtered snapshot exposes `filteredGroups`;
   keyboard nav skips headers/disabled.
@@ -427,10 +479,11 @@ project). Concretely:
   every wrapper (RHF-friendly). The custom-element variants are
   form-associated (`ElementInternals`) so they submit natively.
 - **Addon system** (`.use(new Addon(config))`) wired in the core. Today
-  only `extendSnapshot` is invoked; the rest of the hook surface
-  (`transformGroups`, `interceptCommit`, etc.) is typed but not yet
-  called by the controller. Hoist-selected will ship as the reference
-  first-party addon and exercise `transformGroups` end-to-end.
+  the active hook surface is `attach`/`detach`/`extendSnapshot`. The
+  larger hook table in §4.6 (`transformGroups`, `interceptCommit`,
+  `interceptOpen/Close`, `onKeyDown`) is forward-looking design and
+  will be added once the first-party addon that needs each one is in
+  flight (`hoist-selected` is the canonical driver for `transformGroups`).
 
 The internal split mirrors the existing legacy controllers
 (`SingleComboboxController`, `MultiComboboxController` in the consumer
@@ -446,33 +499,39 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` pnpm workspaces + Turborepo + ESLint flat + tsconfig presets.
 - `[done]` `packages/core` + `packages/react` (plus vue/lit/wc/jquery) on
   the build pipeline.
-- `[plan]` CI: lint + typecheck + vitest on push (GitHub Actions).
+- `[done]` CI: lint + typecheck + vitest on push (`.github/workflows/ci.yml`).
 
 **M1 — Core + every wrapper, single mode** — `[wip]`
 - `[done]` `SingleSelectBoxController` (option coercion, value→option Map
   index, keyboard nav, filter strategy slot).
 - `[done]` Option groups in the snapshot + keyboard nav skipping
   headers/disabled.
-- `[wip]` Filter strategies: substring shipped (default); fuzzy planned
-  next.
-- `[plan]` Virtualizer (`packages/core/src/virtualizer/`) for long lists.
-- `[wip]` Addon hook surface: `.use()` and `extendSnapshot` live; the
-  other six hooks (`transformGroups`, `transformOptions`,
-  `interceptCommit`, `interceptOpen/Close`, `onKeyDown`) typed but not
-  yet invoked by the controller.
+- `[done]` Filter strategies: substring shipped (default); fuzzy shipped
+  as `@select-box/addon-fuzzy` (`FuzzyFilterStrategy` + `FuzzyAddon`).
+- `[done]` Virtualizer in `packages/core/src/virtualizer/`
+  (`SelectBoxListVirtualizer`, wraps `@tanstack/virtual-core`).
 - `[done]` Wrappers: web components, react, vue, lit, jquery — all with
-  the new `TExtra` generic + `value: string` shape.
+  the new `TExtra` generic + `value: string` shape; all converted to the
+  combobox trigger pattern (input-as-trigger + caret button + popover
+  with list only).
 - `[done]` Each wrapper has a demo in `docs-starlight/src/components/demos/`.
-- `[plan]` Matrix E2E suite (Playwright) — repo layout reserved but the
-  package + specs are not yet created.
+- `[wip]` Test coverage depth (see §6.1 + §6.2):
+  - `[wip]` Expand `packages/core/tests/` to cover virtualizer math +
+    addon-host ordering + snapshot stability edges.
+  - `[wip]` Lift each wrapper's `tests/` from smoke-only to the
+    full per-adapter integration checklist.
+- `[wip]` Addon surface: `attach`/`detach`/`extendSnapshot` live.
+  Extra hooks (`transformGroups`, `interceptCommit`,
+  `interceptOpen/Close`, `onKeyDown`) postponed until the first-party
+  addon that needs them is in flight (M2).
 
 **M2 — Multi mode + inline UI variant + first-party addons** — `[plan]`
 - `[plan]` `MultiSelectBoxController` extending the same base.
 - `[plan]` Inline chip surface as an alternative trigger render.
-- `[plan]` First-party addon packages (none exist yet): hoist-selected,
-  clear-button, inline-search, create-option, remove-button,
-  restore-on-backspace, persist (see §4.6).
-- `[plan]` Matrix E2E covers multi + inline + groups + hoist addon.
+- `[plan]` First-party addon packages (only `@select-box/addon-fuzzy`
+  shipped so far): hoist-selected, clear-button, create-option,
+  remove-button, restore-on-backspace, persist (see §4.6). Each one
+  pulls in the matching controller hook from §4.6.
 
 **M3 — Docs site live** — `[wip]`
 - `[done]` `docs-starlight/` site builds (Astro + Starlight + MDX + TypeDoc).
@@ -480,12 +539,28 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
   5 wrappers rendering natively on the same page.
 - `[done]` Landing page, getting-started guide, headless-vs-ready guide,
   components page, API ref auto-generated by TypeDoc.
+- `[done]` Example demos self-contained: data inlined per framework,
+  displayed snippet extracted from the same source file via
+  `// #region snippet` markers.
 - `[plan]` Production hosting + custom domain.
 - `[plan]` Retire `docs-vitepress/` once Starlight reaches parity.
 
 **M4 — Replace the legacy combobox in `the-origin-app`** — `[plan]`
 - `[plan]` Pilot consumer migrates to `@select-box/react`.
 - `[plan]` Validates that the public API is comfortable in real usage.
+
+**M5 — Matrix E2E parity** — `[plan]` (deferred until M1's testing
+depth is robust)
+- `[plan]` Bootstrap top-level `e2e/` workspace (sibling of `packages/`):
+  Playwright config with one project per framework, five tiny Vite
+  fixtures, shared `scenarios.ts` and a `data-select-*` page object
+  (see §6.3 for the layout).
+- `[plan]` Spec set covers the cases JSDOM can't simulate:
+  virtualization with 10k+ options, ARIA, popover positioning, focus
+  traps.
+- `[plan]` CI integration with paths-filter so per-wrapper PRs run only
+  that wrapper's project; full matrix only on PRs that touch
+  `packages/core/` or `e2e/`.
 
 ## 10. Open risks
 
