@@ -1,11 +1,23 @@
 ---
+import type { Scenario } from "./fruits.js";
+
+interface Props {
+    scenario?: Scenario;
+}
+
+const { scenario = "grouped" } = Astro.props;
 const triggerId = `wc-demo-${Math.random().toString(36).slice(2, 9)}`;
 const snapshotId = `${triggerId}-snapshot`;
 ---
 
 <div class="sb-demo-card">
     <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <select-box id={triggerId} placeholder="Search fruits…" ungrouped-label="Citrus"></select-box>
+    <select-box
+        id={triggerId}
+        data-scenario={scenario}
+        placeholder="Search fruits…"
+        ungrouped-label="Citrus"
+    ></select-box>
     <dl class="sb-demo-snapshot">
         <dt>Last committed value</dt>
         <dd><code id={snapshotId}>null</code></dd>
@@ -15,7 +27,17 @@ const snapshotId = `${triggerId}-snapshot`;
 <script>
     import "@select-box/webcomponents/define";
     import type { SelectBoxElement } from "@select-box/webcomponents";
-    import { fruits, type FruitExtra } from "./fruits.ts";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    import {
+        getFruitsForScenario,
+        type FruitExtra,
+        type Scenario,
+    } from "./fruits.ts";
+
+    const SUBSTRING_FILTER = new SubstringFilterStrategy<FruitExtra>();
+    const FUZZY_FILTER = new FuzzyFilterStrategy<FruitExtra>();
 
     function initializeWebComponentsDemos(): void {
         const elements = document.querySelectorAll<SelectBoxElement<FruitExtra>>(
@@ -24,13 +46,24 @@ const snapshotId = `${triggerId}-snapshot`;
         for (const element of elements) {
             if (element.dataset["bootstrapped"] === "true") continue;
             element.dataset["bootstrapped"] = "true";
-            element.options = fruits;
+            const scenario = (element.dataset["scenario"] ?? "grouped") as Scenario;
+            element.options = getFruitsForScenario(scenario);
             const snapshot = document.getElementById(`${element.id}-snapshot`);
             element.addEventListener("change", (event) => {
                 const option = (event.target as SelectBoxElement<FruitExtra>).selectedOption;
                 if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
             });
+            if (scenario === "search") {
+                wireFilterToggle(element);
+            }
         }
+    }
+
+    function wireFilterToggle(element: SelectBoxElement<FruitExtra>): void {
+        window.addEventListener("filter-mode-changed", (event) => {
+            const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
+            element.filter = mode === "fuzzy" ? FUZZY_FILTER : SUBSTRING_FILTER;
+        });
     }
 
     initializeWebComponentsDemos();

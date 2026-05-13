@@ -1,11 +1,18 @@
 ---
+import type { Scenario } from "./fruits.js";
+
+interface Props {
+    scenario?: Scenario;
+}
+
+const { scenario = "grouped" } = Astro.props;
 const triggerId = `jq-demo-${Math.random().toString(36).slice(2, 9)}`;
 const snapshotId = `${triggerId}-snapshot`;
 ---
 
 <div class="sb-demo-card">
     <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <div id={triggerId}></div>
+    <div id={triggerId} data-scenario={scenario}></div>
     <dl class="sb-demo-snapshot">
         <dt>Last committed value</dt>
         <dd><code id={snapshotId}>null</code></dd>
@@ -15,7 +22,18 @@ const snapshotId = `${triggerId}-snapshot`;
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
-    import { fruits, type Fruit, type FruitExtra } from "./fruits.ts";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    import {
+        getFruitsForScenario,
+        type Fruit,
+        type FruitExtra,
+        type Scenario,
+    } from "./fruits.ts";
+
+    const SUBSTRING_FILTER = new SubstringFilterStrategy<FruitExtra>();
+    const FUZZY_FILTER = new FuzzyFilterStrategy<FruitExtra>();
 
     function initializeJqueryDemos(): void {
         const containers = document.querySelectorAll<HTMLElement>("[id^='jq-demo-']");
@@ -23,17 +41,30 @@ const snapshotId = `${triggerId}-snapshot`;
             if (container.dataset["bootstrapped"] === "true") continue;
             if (container.tagName !== "DIV") continue;
             container.dataset["bootstrapped"] = "true";
+            const scenario = (container.dataset["scenario"] ?? "grouped") as Scenario;
             const snapshot = document.getElementById(`${container.id}-snapshot`);
             jQuery(container)
                 .selectBox<FruitExtra>({
-                    options: fruits,
+                    options: getFruitsForScenario(scenario),
                     ungroupedLabel: "Citrus",
                     placeholder: "Search fruits…",
                 })
                 .on("change", (_event, _value: string | null, option: Fruit | null) => {
                     if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
                 });
+            if (scenario === "search") {
+                wireFilterToggle(container);
+            }
         }
+    }
+
+    function wireFilterToggle(container: HTMLElement): void {
+        window.addEventListener("filter-mode-changed", (event) => {
+            const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
+            const controller = jQuery(container).selectBox("controller");
+            if (controller === undefined) return;
+            controller.setFilter(mode === "fuzzy" ? FUZZY_FILTER : SUBSTRING_FILTER);
+        });
     }
 
     initializeJqueryDemos();

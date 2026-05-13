@@ -1,0 +1,145 @@
+---
+title: Simple
+description: The minimum happy path — a flat list of options with no groups.
+---
+
+import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+
+The smallest reproduction: a flat array, primitive `value`, no groups. Switch
+between framework tabs — every preview is the real wrapper running natively
+on this page.
+
+<FrameworkDemo scenario="simple">
+    <Fragment slot="react-code">
+        ```tsx
+        import { SelectBox } from "@select-box/react";
+        import { useState } from "react";
+
+        const fruits = [
+            { value: "apple", label: "Apple" },
+            { value: "pear", label: "Pear" },
+            { value: "grape", label: "Grape" },
+            { value: "lemon", label: "Lemon" },
+            { value: "peach", label: "Peach" },
+        ];
+
+        export function FruitPicker() {
+            const [value, setValue] = useState<string | null>(null);
+            return (
+                <SelectBox
+                    options={fruits}
+                    placeholder="Pick a fruit"
+                    onChange={(next) => setValue(next)}
+                />
+            );
+        }
+        ```
+    </Fragment>
+
+    <Fragment slot="vue-code">
+        ```vue
+        <script setup lang="ts">
+        import { SelectBox } from "@select-box/vue";
+        import { ref } from "vue";
+
+        const fruits = [
+            { value: "apple", label: "Apple" },
+            { value: "pear", label: "Pear" },
+            { value: "grape", label: "Grape" },
+            { value: "lemon", label: "Lemon" },
+            { value: "peach", label: "Peach" },
+        ];
+
+        const value = ref<string | null>(null);
+        </script>
+
+        <template>
+            <SelectBox
+                :options="fruits"
+                placeholder="Pick a fruit"
+                @change="(next) => (value = next)"
+            />
+        </template>
+        ```
+    </Fragment>
+
+    <Fragment slot="lit-code">
+        ```html
+        <select-box id="fruit" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/lit/define";
+
+            const element = document.getElementById("fruit");
+            element.options = [
+                { value: "apple", label: "Apple" },
+                { value: "pear", label: "Pear" },
+                { value: "grape", label: "Grape" },
+                { value: "lemon", label: "Lemon" },
+                { value: "peach", label: "Peach" },
+            ];
+            element.addEventListener("change", (event) => {
+                console.log(event.target.value);
+            });
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="webcomponents-code">
+        ```html
+        <select-box id="fruit" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/webcomponents/define";
+
+            const element = document.getElementById("fruit");
+            element.options = [
+                { value: "apple", label: "Apple" },
+                { value: "pear", label: "Pear" },
+                { value: "grape", label: "Grape" },
+                { value: "lemon", label: "Lemon" },
+                { value: "peach", label: "Peach" },
+            ];
+            element.addEventListener("change", (event) => {
+                console.log(event.target.value);
+            });
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="jquery-code">
+        ```ts
+        import "@select-box/jquery";
+        import jQuery from "jquery";
+
+        const fruits = [
+            { value: "apple", label: "Apple" },
+            { value: "pear", label: "Pear" },
+            { value: "grape", label: "Grape" },
+            { value: "lemon", label: "Lemon" },
+            { value: "peach", label: "Peach" },
+        ];
+
+        jQuery("#fruit")
+            .selectBox({ options: fruits, placeholder: "Pick a fruit" })
+            .on("change", (_event, value) => {
+                console.log(value);
+            });
+        ```
+    </Fragment>
+</FrameworkDemo>
+
+## What you get for free
+
+- Case-insensitive **and diacritic-insensitive** substring search out of the box
+  (typing `sao` matches `São`).
+- Full keyboard navigation: `↓` / `↑` to move, `Enter` to commit, `Escape` to close.
+- ARIA combobox semantics — no extra wiring needed for screen readers.
+- The list is rendered through a virtualizer (see [Large list](/examples/large-list/)),
+  so even small datasets like this one stay snappy.
+
+## Next examples
+
+- [Optgroup](/examples/optgroup/) — bundle options under headers.
+- [Search](/examples/search/) — swap the default filter for fuzzy matching.
+- [Large list](/examples/large-list/) — 500 000 items in a popover.

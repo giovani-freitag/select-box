@@ -1,11 +1,18 @@
 ---
+import type { Scenario } from "./fruits.js";
+
+interface Props {
+    scenario?: Scenario;
+}
+
+const { scenario = "grouped" } = Astro.props;
 const triggerId = `lit-demo-${Math.random().toString(36).slice(2, 9)}`;
 const snapshotId = `${triggerId}-snapshot`;
 ---
 
 <div class="sb-demo-card">
     <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
-    <select-box-lit id={triggerId}></select-box-lit>
+    <select-box-lit id={triggerId} data-scenario={scenario}></select-box-lit>
     <dl class="sb-demo-snapshot">
         <dt>Last committed value</dt>
         <dd><code id={snapshotId}>null</code></dd>
@@ -14,9 +21,19 @@ const snapshotId = `${triggerId}-snapshot`;
 
 <script>
     import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
-    import { fruits, type FruitExtra } from "./fruits.ts";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    import {
+        getFruitsForScenario,
+        type FruitExtra,
+        type Scenario,
+    } from "./fruits.ts";
 
     defineSelectBoxElement("select-box-lit");
+
+    const SUBSTRING_FILTER = new SubstringFilterStrategy<FruitExtra>();
+    const FUZZY_FILTER = new FuzzyFilterStrategy<FruitExtra>();
 
     function initializeLitDemos(): void {
         const elements = document.querySelectorAll<SelectBox<FruitExtra>>(
@@ -25,7 +42,8 @@ const snapshotId = `${triggerId}-snapshot`;
         for (const element of elements) {
             if (element.dataset["bootstrapped"] === "true") continue;
             element.dataset["bootstrapped"] = "true";
-            element.options = fruits;
+            const scenario = (element.dataset["scenario"] ?? "grouped") as Scenario;
+            element.options = getFruitsForScenario(scenario);
             element.placeholder = "Search fruits…";
             element.ungroupedLabel = "Citrus";
             const snapshot = document.getElementById(`${element.id}-snapshot`);
@@ -36,7 +54,17 @@ const snapshotId = `${triggerId}-snapshot`;
                         : "null";
                 }
             });
+            if (scenario === "search") {
+                wireFilterToggle(element);
+            }
         }
+    }
+
+    function wireFilterToggle(element: SelectBox<FruitExtra>): void {
+        window.addEventListener("filter-mode-changed", (event) => {
+            const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
+            element.filter = mode === "fuzzy" ? FUZZY_FILTER : SUBSTRING_FILTER;
+        });
     }
 
     initializeLitDemos();

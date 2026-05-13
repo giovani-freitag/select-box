@@ -36,7 +36,10 @@ export default defineConfig({
                 },
                 {
                     label: "Examples",
-                    items: [{ label: "Select Box", link: "/examples/select-box/" }],
+                    items: [
+                        { label: "Simple", link: "/examples/simple/" },
+                        { label: "Reference", link: "/examples/select-box/" },
+                    ],
                 },
                 {
                     label: "API reference",

@@ -4,12 +4,14 @@ import VueDemo from "./demos/VueDemo.vue";
 import LitDemo from "./demos/LitDemo.astro";
 import WebComponentsDemo from "./demos/WebComponentsDemo.astro";
 import JqueryDemo from "./demos/JqueryDemo.astro";
+import type { Scenario } from "./demos/fruits.js";
 
 interface Props {
     initial?: "react" | "vue" | "lit" | "webcomponents" | "jquery";
+    scenario?: Scenario;
 }
 
-const { initial = "react" } = Astro.props;
+const { initial = "react", scenario = "grouped" } = Astro.props;
 const groupId = `sb-fwdemo-${Math.random().toString(36).slice(2, 9)}`;
 
 const frameworks = [
@@ -49,7 +51,7 @@ const frameworks = [
             hidden={initial !== "jquery"}
         >
             <div class="sb-fwdemo-preview">
-                <JqueryDemo />
+                <JqueryDemo scenario={scenario} />
             </div>
             <div class="sb-fwdemo-code"><slot name="jquery-code" /></div>
         </div>
@@ -62,7 +64,7 @@ const frameworks = [
             hidden={initial !== "lit"}
         >
             <div class="sb-fwdemo-preview">
-                <LitDemo />
+                <LitDemo scenario={scenario} />
             </div>
             <div class="sb-fwdemo-code"><slot name="lit-code" /></div>
         </div>
@@ -75,7 +77,7 @@ const frameworks = [
             hidden={initial !== "react"}
         >
             <div class="sb-fwdemo-preview">
-                <ReactDemo client:only="react" />
+                <ReactDemo client:only="react" scenario={scenario} />
             </div>
             <div class="sb-fwdemo-code"><slot name="react-code" /></div>
         </div>
@@ -88,7 +90,7 @@ const frameworks = [
             hidden={initial !== "vue"}
         >
             <div class="sb-fwdemo-preview">
-                <VueDemo client:only="vue" />
+                <VueDemo client:only="vue" scenario={scenario} />
             </div>
             <div class="sb-fwdemo-code"><slot name="vue-code" /></div>
         </div>
@@ -101,7 +103,7 @@ const frameworks = [
             hidden={initial !== "webcomponents"}
         >
             <div class="sb-fwdemo-preview">
-                <WebComponentsDemo />
+                <WebComponentsDemo scenario={scenario} />
             </div>
             <div class="sb-fwdemo-code"><slot name="webcomponents-code" /></div>
         </div>
