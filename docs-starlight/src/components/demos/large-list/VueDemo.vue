@@ -11,7 +11,6 @@ function generate(count: number): ReadonlyArray<{ value: string; label: string }
 }
 
 const count = ref(1000);
-const committed = ref<{ value: string; label: string } | null>(null);
 const options = computed(() => generate(count.value));
 </script>
 
@@ -27,13 +26,7 @@ const options = computed(() => generate(count.value));
                 v-model.number="count"
             />
         </label>
-        <SelectBox
-            :key="count"
-            :options="options"
-            placeholder="Search…"
-            @change="(_value, option) => (committed = option)"
-        />
-        <output><code>{{ committed?.label ?? "null" }}</code></output>
+        <SelectBox :key="count" :options="options" placeholder="Search…" />
     </div>
 </template>
 <!-- #endregion snippet -->

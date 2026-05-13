@@ -1,9 +1,6 @@
 // #region snippet
-import { useState } from "react";
 import { SelectBox } from "@select-box/react";
-import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
-
-const FUZZY = new FuzzyFilterStrategy();
+import { FuzzyAddon } from "@select-box/addon-fuzzy";
 
 const fruits = [
     { value: "apple", label: "Apple" },
@@ -16,17 +13,12 @@ const fruits = [
     { value: "watermelon", label: "Watermelon" },
 ];
 
+const ADDONS = [new FuzzyAddon()];
+
 export default function Demo(): React.ReactElement {
-    const [committed, setCommitted] = useState<(typeof fruits)[number] | null>(null);
     return (
         <div className="sb-demo">
-            <SelectBox
-                options={fruits}
-                filter={FUZZY}
-                placeholder="Search fruits…"
-                onChange={(_value, option) => setCommitted(option)}
-            />
-            <output><code>{committed ? JSON.stringify(committed) : "null"}</code></output>
+            <SelectBox options={fruits} addons={ADDONS} placeholder="Search fruits…" />
         </div>
     );
 }

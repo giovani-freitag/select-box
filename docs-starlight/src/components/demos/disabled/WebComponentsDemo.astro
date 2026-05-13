@@ -5,7 +5,6 @@
         placeholder="Pick a fruit"
         ungrouped-label="Citrus"
     ></select-box>
-    <output id="demo-disabled-wc-out"><code>null</code></output>
 </div>
 
 <script>
@@ -22,11 +21,5 @@
         { value: "lemon", label: "Lemon" },
         { value: "orange", label: "Orange", disabled: true },
     ];
-    element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-disabled-wc-out code");
-        if (out) out.textContent = element.selectedOption
-            ? JSON.stringify(element.selectedOption)
-            : "null";
-    });
 </script>
 <!-- #endregion snippet -->

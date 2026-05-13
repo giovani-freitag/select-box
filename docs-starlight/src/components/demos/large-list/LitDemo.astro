@@ -13,7 +13,6 @@
         />
     </label>
     <select-box-lit id="demo-large-list-lit" placeholder="Search…"></select-box-lit>
-    <output id="demo-large-list-lit-out"><code>null</code></output>
 </div>
 
 <script>
@@ -30,10 +29,6 @@
 
     const element = document.querySelector<SelectBox>("#demo-large-list-lit")!;
     element.options = generate(1000);
-    element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-large-list-lit-out code");
-        if (out) out.textContent = element.selectedOption?.label ?? "null";
-    });
 
     document.querySelector<HTMLInputElement>("#demo-large-list-lit-range")!
         .addEventListener("change", function () {

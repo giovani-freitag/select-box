@@ -1,0 +1,24 @@
+<!-- #region snippet -->
+<div class="sb-demo">
+    <div id="demo-search-jq"></div>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+
+    jQuery("#demo-search-jq").selectBox({
+        options: [
+            { value: "apple", label: "Apple" },
+            { value: "pear", label: "Pear" },
+            { value: "peach", label: "Peach" },
+            { value: "lemon", label: "Lemon" },
+            { value: "blueberry", label: "Blueberry" },
+            { value: "raspberry", label: "Raspberry" },
+            { value: "strawberry", label: "Strawberry" },
+            { value: "watermelon", label: "Watermelon" },
+        ],
+        placeholder: "Search fruits…",
+    });
+</script>
+<!-- #endregion snippet -->

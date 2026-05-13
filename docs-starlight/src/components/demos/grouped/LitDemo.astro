@@ -5,7 +5,6 @@
         placeholder="Pick a fruit"
         ungrouped-label="Citrus"
     ></select-box-lit>
-    <output id="demo-grouped-lit-out"><code>null</code></output>
 </div>
 
 <script>
@@ -22,11 +21,5 @@
         { value: "lemon", label: "Lemon" },
         { value: "orange", label: "Orange" },
     ];
-    element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-grouped-lit-out code");
-        if (out) out.textContent = element.selectedOption
-            ? JSON.stringify(element.selectedOption)
-            : "null";
-    });
 </script>
 <!-- #endregion snippet -->

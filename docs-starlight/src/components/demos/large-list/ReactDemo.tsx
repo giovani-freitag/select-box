@@ -11,7 +11,6 @@ function generate(count: number): ReadonlyArray<{ value: string; label: string }
 
 export default function Demo(): React.ReactElement {
     const [count, setCount] = useState(1000);
-    const [committed, setCommitted] = useState<{ value: string; label: string } | null>(null);
     const options = useMemo(() => generate(count), [count]);
     return (
         <div className="sb-demo">
@@ -26,13 +25,7 @@ export default function Demo(): React.ReactElement {
                     onChange={(event) => setCount(Number(event.target.value))}
                 />
             </label>
-            <SelectBox
-                key={count}
-                options={options}
-                placeholder="Search…"
-                onChange={(_value, option) => setCommitted(option)}
-            />
-            <output><code>{committed?.label ?? "null"}</code></output>
+            <SelectBox key={count} options={options} placeholder="Search…" />
         </div>
     );
 }

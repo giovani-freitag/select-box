@@ -1,29 +1,23 @@
 <!-- #region snippet -->
 <div class="sb-demo">
     <div id="demo-grouped-jq"></div>
-    <output id="demo-grouped-jq-out"><code>null</code></output>
 </div>
 
 <script>
     import jQuery from "jquery";
     import "@select-box/jquery";
 
-    jQuery("#demo-grouped-jq")
-        .selectBox({
-            options: [
-                { value: "apple", label: "Apple", group: "Pomes" },
-                { value: "pear", label: "Pear", group: "Pomes" },
-                { value: "peach", label: "Peach", group: "Stone fruits" },
-                { value: "plum", label: "Plum", group: "Stone fruits" },
-                { value: "lemon", label: "Lemon" },
-                { value: "orange", label: "Orange" },
-            ],
-            ungroupedLabel: "Citrus",
-            placeholder: "Pick a fruit",
-        })
-        .on("change", (_event, _value, option) => {
-            const out = document.querySelector("#demo-grouped-jq-out code");
-            if (out) out.textContent = option ? JSON.stringify(option) : "null";
-        });
+    jQuery("#demo-grouped-jq").selectBox({
+        options: [
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "peach", label: "Peach", group: "Stone fruits" },
+            { value: "plum", label: "Plum", group: "Stone fruits" },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange" },
+        ],
+        ungroupedLabel: "Citrus",
+        placeholder: "Pick a fruit",
+    });
 </script>
 <!-- #endregion snippet -->

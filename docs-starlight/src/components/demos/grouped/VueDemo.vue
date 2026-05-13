@@ -1,6 +1,5 @@
 <!-- #region snippet -->
 <script setup lang="ts">
-import { ref } from "vue";
 import { SelectBox } from "@select-box/vue";
 
 const fruits = [
@@ -11,8 +10,6 @@ const fruits = [
     { value: "lemon", label: "Lemon" },
     { value: "orange", label: "Orange" },
 ];
-
-const committed = ref<(typeof fruits)[number] | null>(null);
 </script>
 
 <template>
@@ -21,9 +18,7 @@ const committed = ref<(typeof fruits)[number] | null>(null);
             :options="fruits"
             ungrouped-label="Citrus"
             placeholder="Pick a fruit"
-            @change="(_value, option) => (committed = option)"
         />
-        <output><code>{{ committed ? JSON.stringify(committed) : "null" }}</code></output>
     </div>
 </template>
 <!-- #endregion snippet -->

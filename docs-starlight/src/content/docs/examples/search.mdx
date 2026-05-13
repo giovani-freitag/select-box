@@ -1,43 +1,24 @@
 ---
 title: Search
-description: Swap the default substring filter for fuzzy matching, all five frameworks in lockstep.
+description: Substring search out of the box; opt into fuzzy matching with an addon.
 ---
 
-import StaticDemo from "../../../components/demos/search-static/Demo.astro";
-import SwapDemo from "../../../components/demos/search-swap/Demo.astro";
+import DefaultDemo from "../../../components/demos/search/Demo.astro";
+import FuzzyDemo from "../../../components/demos/search-fuzzy/Demo.astro";
 
-The default filter is `SubstringFilterStrategy` — case- and diacritic-insensitive
-substring match. Pass any other strategy via the `filter` prop to change how
-matches are computed.
+## Default — substring matching
 
-## Set a filter once
+Typing in the trigger filters the list with a case- and diacritic-insensitive
+substring match. No setup beyond the `options` prop.
 
-`@select-box/addon-fuzzy` exports `FuzzyFilterStrategy`, which tolerates typos
-and gaps via `fuse.js`. Pass it as `filter` and you're done.
+<DefaultDemo />
 
-<StaticDemo />
+## Fuzzy via `FuzzyAddon`
 
-## Swap the filter at runtime
+Install [`@select-box/addon-fuzzy`](/api/) and register `FuzzyAddon` to tolerate
+typos and out-of-order characters via `fuse.js`.
 
-The filter prop is reactive. Hand the controller a new strategy via
-`setFilter(strategy)` — or rebind the React/Vue prop — and the open popover
-re-filters in place. No remount, no state loss.
-
-<SwapDemo />
-
-## Lock fuzzy on with an addon
-
-To enable fuzzy permanently without managing the strategy yourself, register
-`FuzzyAddon`:
-
-```ts
-import { FuzzyAddon } from "@select-box/addon-fuzzy";
-
-<SelectBox options={fruits} addons={[new FuzzyAddon({ threshold: 0.3 })]} />;
-```
-
-The addon calls `setFilter` at attach time and restores the previous filter on
-detach.
+<FuzzyDemo />
 
 ## Next examples
 

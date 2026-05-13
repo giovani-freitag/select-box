@@ -1,15 +1,13 @@
 <!-- #region snippet -->
 <div class="sb-demo">
-    <select-box id="demo-search-static-wc" placeholder="Search fruits…"></select-box>
-    <output id="demo-search-static-wc-out"><code>null</code></output>
+    <select-box id="demo-search-wc" placeholder="Search fruits…"></select-box>
 </div>
 
 <script>
     import "@select-box/webcomponents/define";
     import type { SelectBoxElement } from "@select-box/webcomponents";
-    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
 
-    const element = document.querySelector<SelectBoxElement>("#demo-search-static-wc")!;
+    const element = document.querySelector<SelectBoxElement>("#demo-search-wc")!;
     element.options = [
         { value: "apple", label: "Apple" },
         { value: "pear", label: "Pear" },
@@ -20,12 +18,5 @@
         { value: "strawberry", label: "Strawberry" },
         { value: "watermelon", label: "Watermelon" },
     ];
-    element.filter = new FuzzyFilterStrategy();
-    element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-search-static-wc-out code");
-        if (out) out.textContent = element.selectedOption
-            ? JSON.stringify(element.selectedOption)
-            : "null";
-    });
 </script>
 <!-- #endregion snippet -->

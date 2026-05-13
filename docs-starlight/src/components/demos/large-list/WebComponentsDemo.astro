@@ -13,7 +13,6 @@
         />
     </label>
     <select-box id="demo-large-list-wc" placeholder="Search…"></select-box>
-    <output id="demo-large-list-wc-out"><code>null</code></output>
 </div>
 
 <script>
@@ -29,10 +28,6 @@
 
     const element = document.querySelector<SelectBoxElement>("#demo-large-list-wc")!;
     element.options = generate(1000);
-    element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-large-list-wc-out code");
-        if (out) out.textContent = element.selectedOption?.label ?? "null";
-    });
 
     document.querySelector<HTMLInputElement>("#demo-large-list-wc-range")!
         .addEventListener("change", function () {
