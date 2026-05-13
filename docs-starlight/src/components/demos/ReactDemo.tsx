@@ -3,7 +3,13 @@ import { SelectBox } from "@select-box/react";
 import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
 import { SubstringFilterStrategy, type OptionFilterStrategy, type SelectOption } from "@select-box/core";
 
-import { getFruitsForScenario, type Fruit, type FruitExtra, type Scenario } from "./fruits.js";
+import {
+    getFruitsForScenario,
+    getUngroupedLabelForScenario,
+    type Fruit,
+    type FruitExtra,
+    type Scenario,
+} from "./fruits.js";
 import type { SillyOption } from "./silly-generator.js";
 
 interface ReactDemoProps {
@@ -35,13 +41,14 @@ function FixedScenarioDemo({ scenario }: { scenario: Exclude<Scenario, "large-li
     }, [scenario]);
 
     const fruits = getFruitsForScenario(scenario);
+    const ungroupedLabel = getUngroupedLabelForScenario(scenario);
 
     return (
         <div className="sb-demo-card">
             <label className="sb-demo-label">Pick a fruit</label>
             <SelectBox<FruitExtra>
                 options={fruits}
-                ungroupedLabel="Citrus"
+                {...(ungroupedLabel === undefined ? {} : { ungroupedLabel })}
                 placeholder="Search fruits…"
                 filter={filterStrategy}
                 onChange={(_value, option) => setCommittedOption(option)}

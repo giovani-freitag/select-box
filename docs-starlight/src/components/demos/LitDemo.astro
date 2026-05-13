@@ -8,10 +8,17 @@ interface Props {
 const { scenario = "grouped" } = Astro.props;
 const triggerId = `lit-demo-${Math.random().toString(36).slice(2, 9)}`;
 const snapshotId = `${triggerId}-snapshot`;
+const countId = `${triggerId}-count`;
+const isLargeList = scenario === "large-list";
 ---
 
 <div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <label class="sb-demo-label" for={triggerId}>
+        {isLargeList ? "Pick a critter" : "Pick a fruit"}
+        {isLargeList && (
+            <> (<span id={countId}>0</span>)</>
+        )}
+    </label>
     <select-box-lit id={triggerId} data-scenario={scenario}></select-box-lit>
     <dl class="sb-demo-snapshot">
         <dt>Last committed value</dt>
@@ -26,6 +33,7 @@ const snapshotId = `${triggerId}-snapshot`;
 
     import {
         getFruitsForScenario,
+        getUngroupedLabelForScenario,
         type FruitExtra,
         type Scenario,
     } from "./fruits.ts";
@@ -45,7 +53,10 @@ const snapshotId = `${triggerId}-snapshot`;
             const scenario = (element.dataset["scenario"] ?? "grouped") as Scenario;
             element.placeholder =
                 scenario === "large-list" ? "Search the menagerie…" : "Search fruits…";
-            element.ungroupedLabel = "Citrus";
+            const ungroupedLabel = getUngroupedLabelForScenario(scenario);
+            if (ungroupedLabel !== undefined) {
+                element.ungroupedLabel = ungroupedLabel;
+            }
             const snapshot = document.getElementById(`${element.id}-snapshot`);
             element.addEventListener("change", () => {
                 if (snapshot) {
@@ -73,13 +84,19 @@ const snapshotId = `${triggerId}-snapshot`;
     }
 
     function wireBigListSeed(element: SelectBox<FruitExtra>): void {
+        const countSpan = document.getElementById(`${element.id}-count`);
+        function updateCount(options: ReadonlyArray<unknown>): void {
+            if (countSpan) countSpan.textContent = options.length.toLocaleString();
+        }
         const current = window.__bigListSeed;
         if (Array.isArray(current)) {
             element.options = current as never;
+            updateCount(current);
         }
         window.addEventListener("big-list-changed", (event) => {
             const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
             element.options = detail.options as never;
+            updateCount(detail.options);
         });
     }
 

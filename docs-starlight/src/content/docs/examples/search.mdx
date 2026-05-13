@@ -8,14 +8,9 @@ import SearchFuzzyToggle from "../../../components/SearchFuzzyToggle.astro";
 
 The default filter is `SubstringFilterStrategy` — case- and diacritic-insensitive
 substring match. Install [`@select-box/addon-fuzzy`](/api/) and pass
-`FuzzyFilterStrategy` instead to tolerate typos and gaps via `fuse.js`.
-
-Toggle the switch and watch every framework swap filters at runtime through
-the same `controller.setFilter()` call. Try queries like:
-
-- `aple` — only fuzzy finds **Apple**, **Pineapple**, **Loquat**, etc.
-- `mng` — only fuzzy finds **Mango**, **Tangerine**.
-- `berry` — both match, but fuzzy ranks by score (best first).
+`FuzzyFilterStrategy` to tolerate typos and gaps via `fuse.js`. The filter is
+swappable at runtime via `controller.setFilter(strategy)` — no remount, no
+state loss.
 
 <SearchFuzzyToggle />
 
@@ -142,16 +137,10 @@ the same `controller.setFilter()` call. Try queries like:
     </Fragment>
 </FrameworkDemo>
 
-## How the swap works under the hood
+## Lock fuzzy on with an addon
 
-Every wrapper calls `controller.setFilter(newStrategy)` on the same core
-controller. The controller rebuilds `filteredGroups` against the current
-query, publishes a fresh snapshot, and every subscriber (the wrapper's
-render, the search input, the popover) reacts. **No remount.** Custom CSS
-or scroll positions stay intact.
-
-For pages that want fuzzy on permanently, plug the `FuzzyAddon` instead of
-swapping by hand:
+To enable fuzzy permanently (no toggle), pass `FuzzyAddon` instead of swapping
+the strategy by hand:
 
 ```ts
 import { FuzzyAddon } from "@select-box/addon-fuzzy";
@@ -159,7 +148,8 @@ import { FuzzyAddon } from "@select-box/addon-fuzzy";
 <SelectBox options={fruits} addons={[new FuzzyAddon({ threshold: 0.3 })]} />;
 ```
 
-`FuzzyAddon` is just a thin wrapper that calls `host.setFilter(new FuzzyFilterStrategy(config))` at attach time and restores the previous strategy on detach.
+The addon calls `setFilter` at attach time and restores the previous filter on
+detach.
 
 ## Next examples
 

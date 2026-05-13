@@ -4,7 +4,13 @@ import { SelectBox } from "@select-box/vue";
 import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
 import { SubstringFilterStrategy, type OptionFilterStrategy, type SelectOption } from "@select-box/core";
 
-import { getFruitsForScenario, type Fruit, type FruitExtra, type Scenario } from "./fruits";
+import {
+    getFruitsForScenario,
+    getUngroupedLabelForScenario,
+    type Fruit,
+    type FruitExtra,
+    type Scenario,
+} from "./fruits";
 import type { SillyOption } from "./silly-generator";
 
 interface VueDemoProps {
@@ -20,6 +26,7 @@ const committed = ref<Fruit | null>(null);
 const filterStrategy = ref<OptionFilterStrategy<FruitExtra>>(SUBSTRING_FILTER);
 
 const fruits = computed(() => getFruitsForScenario(props.scenario));
+const ungroupedLabel = computed(() => getUngroupedLabelForScenario(props.scenario));
 
 // Large-list state
 const seed = ref<ReadonlyArray<SillyOption>>(readSeed());
@@ -90,7 +97,7 @@ onBeforeUnmount(() => {
         <SelectBox
             :options="fruits"
             :filter="filterStrategy"
-            ungrouped-label="Citrus"
+            :ungrouped-label="ungroupedLabel"
             placeholder="Search fruits…"
             @change="handleChange"
         />

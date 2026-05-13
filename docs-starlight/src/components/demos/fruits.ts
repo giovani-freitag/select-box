@@ -7,7 +7,7 @@ export interface FruitExtra {
 
 export type Fruit = SelectOption<FruitExtra>;
 
-export type Scenario = "simple" | "grouped" | "search" | "large-list";
+export type Scenario = "simple" | "grouped" | "disabled" | "search" | "large-list";
 
 /** Flat list with no groups — the minimum happy path. */
 export const simpleFruits: ReadonlyArray<Fruit> = [
@@ -25,10 +25,27 @@ export const groupedFruits: ReadonlyArray<Fruit> = [
     { value: "quince", label: "Quince", group: "Pomes", id: 3, name: "quince" },
     { value: "peach", label: "Peach", group: "Stone fruits", id: 4, name: "peach" },
     { value: "plum", label: "Plum", group: "Stone fruits", id: 5, name: "plum" },
-    { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true, id: 6, name: "cherry" },
+    { value: "cherry", label: "Cherry", group: "Stone fruits", id: 6, name: "cherry" },
     { value: "lemon", label: "Lemon", id: 7, name: "lemon" },
     { value: "orange", label: "Orange", id: 8, name: "orange" },
     { value: "lime", label: "Lime", id: 9, name: "lime" },
+];
+
+/**
+ * Disabled options + a fully-disabled group so keyboard nav and pointer-skip
+ * behavior are visible side by side.
+ */
+export const disabledFruits: ReadonlyArray<Fruit> = [
+    { value: "apple", label: "Apple", group: "In stock", id: 1, name: "apple" },
+    { value: "pear", label: "Pear", group: "In stock", id: 2, name: "pear" },
+    { value: "grape", label: "Grape", group: "In stock", disabled: true, id: 3, name: "grape" },
+    { value: "peach", label: "Peach", group: "In stock", id: 4, name: "peach" },
+    { value: "plum", label: "Plum", group: "Out of season", disabled: true, id: 5, name: "plum" },
+    { value: "cherry", label: "Cherry", group: "Out of season", disabled: true, id: 6, name: "cherry" },
+    { value: "quince", label: "Quince", group: "Out of season", disabled: true, id: 7, name: "quince" },
+    { value: "lemon", label: "Lemon", id: 8, name: "lemon" },
+    { value: "orange", label: "Orange", disabled: true, id: 9, name: "orange" },
+    { value: "lime", label: "Lime", id: 10, name: "lime" },
 ];
 
 /** Wider dataset so substring vs fuzzy differences are visible while typing. */
@@ -76,9 +93,19 @@ export function getFruitsForScenario(scenario: Scenario): ReadonlyArray<Fruit> {
             return simpleFruits;
         case "grouped":
             return groupedFruits;
+        case "disabled":
+            return disabledFruits;
         case "search":
             return searchableFruits;
         case "large-list":
             return [];
     }
+}
+
+/**
+ * Only scenarios that mix grouped + ungrouped options need a label for the
+ * ungrouped bucket; flat datasets render cleaner without a synthetic header.
+ */
+export function getUngroupedLabelForScenario(scenario: Scenario): string | undefined {
+    return scenario === "grouped" || scenario === "disabled" ? "Citrus" : undefined;
 }

@@ -1,0 +1,141 @@
+---
+title: Disabled
+description: Dim individual options or entire groups — keyboard nav skips them, pointers can't commit them.
+---
+
+import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+
+Set `disabled: true` on an option to keep it visible but uncommittable. When
+every option in a group is disabled, the group header dims along with them
+(keyboard nav skips the whole block).
+
+<FrameworkDemo scenario="disabled">
+    <Fragment slot="react-code">
+        ```tsx
+        import { SelectBox } from "@select-box/react";
+
+        const fruits = [
+            { value: "apple", label: "Apple", group: "In stock" },
+            { value: "pear", label: "Pear", group: "In stock" },
+            { value: "grape", label: "Grape", group: "In stock", disabled: true },
+            { value: "peach", label: "Peach", group: "In stock" },
+            { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+            { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange", disabled: true },
+            { value: "lime", label: "Lime" },
+        ];
+
+        <SelectBox options={fruits} ungroupedLabel="Citrus" placeholder="Pick a fruit" />;
+        ```
+    </Fragment>
+
+    <Fragment slot="vue-code">
+        ```vue
+        <script setup lang="ts">
+        import { SelectBox } from "@select-box/vue";
+
+        const fruits = [
+            { value: "apple", label: "Apple", group: "In stock" },
+            { value: "pear", label: "Pear", group: "In stock" },
+            { value: "grape", label: "Grape", group: "In stock", disabled: true },
+            { value: "peach", label: "Peach", group: "In stock" },
+            { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+            { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange", disabled: true },
+            { value: "lime", label: "Lime" },
+        ];
+        </script>
+
+        <template>
+            <SelectBox :options="fruits" ungrouped-label="Citrus" placeholder="Pick a fruit" />
+        </template>
+        ```
+    </Fragment>
+
+    <Fragment slot="lit-code">
+        ```html
+        <select-box id="fruit" ungrouped-label="Citrus" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/lit/define";
+
+            document.getElementById("fruit").options = [
+                { value: "apple", label: "Apple", group: "In stock" },
+                { value: "pear", label: "Pear", group: "In stock" },
+                { value: "grape", label: "Grape", group: "In stock", disabled: true },
+                { value: "peach", label: "Peach", group: "In stock" },
+                { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+                { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange", disabled: true },
+                { value: "lime", label: "Lime" },
+            ];
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="webcomponents-code">
+        ```html
+        <select-box id="fruit" ungrouped-label="Citrus" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/webcomponents/define";
+
+            document.getElementById("fruit").options = [
+                { value: "apple", label: "Apple", group: "In stock" },
+                { value: "pear", label: "Pear", group: "In stock" },
+                { value: "grape", label: "Grape", group: "In stock", disabled: true },
+                { value: "peach", label: "Peach", group: "In stock" },
+                { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+                { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange", disabled: true },
+                { value: "lime", label: "Lime" },
+            ];
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="jquery-code">
+        ```ts
+        import "@select-box/jquery";
+        import jQuery from "jquery";
+
+        jQuery("#fruit").selectBox({
+            options: [
+                { value: "apple", label: "Apple", group: "In stock" },
+                { value: "pear", label: "Pear", group: "In stock" },
+                { value: "grape", label: "Grape", group: "In stock", disabled: true },
+                { value: "peach", label: "Peach", group: "In stock" },
+                { value: "plum", label: "Plum", group: "Out of season", disabled: true },
+                { value: "cherry", label: "Cherry", group: "Out of season", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange", disabled: true },
+                { value: "lime", label: "Lime" },
+            ],
+            ungroupedLabel: "Citrus",
+            placeholder: "Pick a fruit",
+        });
+        ```
+    </Fragment>
+</FrameworkDemo>
+
+## What "disabled" guarantees
+
+- **Pointer clicks are ignored.** Hovering still highlights the row, but the
+  controller's commit method short-circuits on disabled options.
+- **Keyboard nav skips them.** `↓` / `↑` find the next enabled option in either
+  direction; `Enter` on a disabled active option is a no-op.
+- **Filtering still matches them.** A disabled row that matches the query stays
+  visible (dimmed) — users can see *why* a value is unavailable rather than
+  wondering whether they spelled it wrong.
+- **Programmatic `setValue` works.** Disabled is a UI concern, not a data
+  constraint — restoring persisted state still sets the value even if the option
+  is currently disabled.
+
+## Next examples
+
+- [Search](/examples/search/) — swap the default filter for fuzzy matching.
+- [Large list](/examples/large-list/) — 500 000 items virtualized in a popover.

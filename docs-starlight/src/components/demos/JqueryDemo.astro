@@ -8,10 +8,17 @@ interface Props {
 const { scenario = "grouped" } = Astro.props;
 const triggerId = `jq-demo-${Math.random().toString(36).slice(2, 9)}`;
 const snapshotId = `${triggerId}-snapshot`;
+const countId = `${triggerId}-count`;
+const isLargeList = scenario === "large-list";
 ---
 
 <div class="sb-demo-card">
-    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <label class="sb-demo-label" for={triggerId}>
+        {isLargeList ? "Pick a critter" : "Pick a fruit"}
+        {isLargeList && (
+            <> (<span id={countId}>0</span>)</>
+        )}
+    </label>
     <div id={triggerId} data-scenario={scenario}></div>
     <dl class="sb-demo-snapshot">
         <dt>Last committed value</dt>
@@ -27,6 +34,7 @@ const snapshotId = `${triggerId}-snapshot`;
 
     import {
         getFruitsForScenario,
+        getUngroupedLabelForScenario,
         type Fruit,
         type FruitExtra,
         type Scenario,
@@ -47,10 +55,11 @@ const snapshotId = `${triggerId}-snapshot`;
                 scenario === "large-list"
                     ? readBigListSeed()
                     : getFruitsForScenario(scenario);
+            const ungroupedLabel = getUngroupedLabelForScenario(scenario);
             jQuery(container)
                 .selectBox<FruitExtra>({
                     options: initialOptions as never,
-                    ungroupedLabel: "Citrus",
+                    ...(ungroupedLabel === undefined ? {} : { ungroupedLabel }),
                     placeholder:
                         scenario === "large-list" ? "Search the menagerie…" : "Search fruits…",
                 })
@@ -61,6 +70,7 @@ const snapshotId = `${triggerId}-snapshot`;
                 wireFilterToggle(container);
             }
             if (scenario === "large-list") {
+                writeCount(container, initialOptions.length);
                 wireBigListSeed(container);
             }
         }
@@ -86,7 +96,13 @@ const snapshotId = `${triggerId}-snapshot`;
                 placeholder: "Search the menagerie…",
             });
             container.dataset["bootstrapped"] = "true";
+            writeCount(container, detail.options.length);
         });
+    }
+
+    function writeCount(container: HTMLElement, count: number): void {
+        const span = document.getElementById(`${container.id}-count`);
+        if (span) span.textContent = count.toLocaleString();
     }
 
     function readBigListSeed(): ReadonlyArray<unknown> {
