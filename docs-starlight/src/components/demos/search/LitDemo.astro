@@ -1,0 +1,52 @@
+---
+const triggerId = `lit-demo-search-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <select-box-lit id={triggerId} placeholder="Search fruits…"></select-box-lit>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed value</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    import { searchableFruits, type FruitExtra } from "./fruits";
+
+    defineSelectBoxElement("select-box-lit");
+
+    const SUBSTRING = new SubstringFilterStrategy<FruitExtra>();
+    const FUZZY = new FuzzyFilterStrategy<FruitExtra>();
+
+    function initialize(): void {
+        const elements = document.querySelectorAll<SelectBox<FruitExtra>>(
+            "select-box-lit[id^='lit-demo-search-']",
+        );
+        for (const element of elements) {
+            if (element.dataset["bootstrapped"] === "true") continue;
+            element.dataset["bootstrapped"] = "true";
+            element.options = searchableFruits;
+            const snapshot = document.getElementById(`${element.id}-snapshot`);
+            element.addEventListener("change", () => {
+                if (snapshot) {
+                    snapshot.textContent = element.selectedOption
+                        ? JSON.stringify(element.selectedOption)
+                        : "null";
+                }
+            });
+            window.addEventListener("filter-mode-changed", (event) => {
+                const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
+                element.filter = mode === "fuzzy" ? FUZZY : SUBSTRING;
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>

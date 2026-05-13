@@ -3,13 +3,13 @@ title: Option groups
 description: Bundle options under headers — flat with a group key, or pre-built groups with metadata.
 ---
 
-import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+import Demo from "../../../components/demos/grouped/Demo.astro";
 
 Add a `group` key on each option. Options sharing the same key bundle under
 that header, and options without a `group` fall under whatever `ungroupedLabel`
 you pass.
 
-<FrameworkDemo scenario="grouped">
+<Demo>
     <Fragment slot="react-code">
         ```tsx
         import { SelectBox } from "@select-box/react";
@@ -110,7 +110,7 @@ you pass.
         jQuery("#fruit").selectBox({ options: fruits, ungroupedLabel: "Citrus", placeholder: "Pick a fruit" });
         ```
     </Fragment>
-</FrameworkDemo>
+</Demo>
 
 ## How filtering interacts with groups
 

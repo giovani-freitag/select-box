@@ -3,16 +3,13 @@ title: Large list
 description: Hundreds of thousands of items in a popover. Virtualization keeps the DOM under control.
 ---
 
-import FrameworkDemo from "../../../components/FrameworkDemo.astro";
-import LargeListControls from "../../../components/LargeListControls.astro";
+import Demo from "../../../components/demos/large-list/Demo.astro";
 
 Pass a huge array to `options` — the popover still opens instantly and
 typing-to-filter stays responsive. Use the slider to regenerate the dataset
 and feel the cost.
 
-<LargeListControls />
-
-<FrameworkDemo scenario="large-list">
+<Demo>
     <Fragment slot="react-code">
         ```tsx
         import { SelectBox } from "@select-box/react";
@@ -75,7 +72,7 @@ and feel the cost.
         });
         ```
     </Fragment>
-</FrameworkDemo>
+</Demo>
 
 ## How it stays fast
 

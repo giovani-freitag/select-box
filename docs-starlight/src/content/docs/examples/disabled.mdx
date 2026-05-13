@@ -3,13 +3,13 @@ title: Disabled
 description: Dim individual options or entire groups — keyboard nav skips them, pointers can't commit them.
 ---
 
-import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+import Demo from "../../../components/demos/disabled/Demo.astro";
 
 Set `disabled: true` on an option to keep it visible but uncommittable. When
 every option in a group is disabled, the group header dims along with them
 (keyboard nav skips the whole block).
 
-<FrameworkDemo scenario="disabled">
+<Demo>
     <Fragment slot="react-code">
         ```tsx
         import { SelectBox } from "@select-box/react";
@@ -120,7 +120,7 @@ every option in a group is disabled, the group header dims along with them
         });
         ```
     </Fragment>
-</FrameworkDemo>
+</Demo>
 
 ## What "disabled" guarantees
 

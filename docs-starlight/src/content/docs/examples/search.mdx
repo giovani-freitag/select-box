@@ -3,8 +3,7 @@ title: Search
 description: Swap the default substring filter for fuzzy matching, all five frameworks in lockstep.
 ---
 
-import FrameworkDemo from "../../../components/FrameworkDemo.astro";
-import SearchFuzzyToggle from "../../../components/SearchFuzzyToggle.astro";
+import Demo from "../../../components/demos/search/Demo.astro";
 
 The default filter is `SubstringFilterStrategy` — case- and diacritic-insensitive
 substring match. Install [`@select-box/addon-fuzzy`](/api/) and pass
@@ -12,9 +11,7 @@ substring match. Install [`@select-box/addon-fuzzy`](/api/) and pass
 swappable at runtime via `controller.setFilter(strategy)` — no remount, no
 state loss.
 
-<SearchFuzzyToggle />
-
-<FrameworkDemo scenario="search">
+<Demo>
     <Fragment slot="react-code">
         ```tsx
         import { useState } from "react";
@@ -135,7 +132,7 @@ state loss.
         });
         ```
     </Fragment>
-</FrameworkDemo>
+</Demo>
 
 ## Lock fuzzy on with an addon
 

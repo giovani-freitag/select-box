@@ -1,0 +1,59 @@
+---
+const triggerId = `jq-demo-large-list-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+const countId = `${triggerId}-count`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>
+        Pick a critter (<span id={countId}>0</span>)
+    </label>
+    <div id={triggerId}></div>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+
+    import type { SillyOption } from "./silly-generator";
+
+    function initialize(): void {
+        const containers = document.querySelectorAll<HTMLElement>(
+            "[id^='jq-demo-large-list-']",
+        );
+        for (const container of containers) {
+            if (container.dataset["bootstrapped"] === "true") continue;
+            if (container.tagName !== "DIV") continue;
+            const snapshot = document.getElementById(`${container.id}-snapshot`);
+            const countSpan = document.getElementById(`${container.id}-count`);
+            function rebuild(options: ReadonlyArray<unknown>): void {
+                jQuery(container)
+                    .selectBox<SillyOption>({
+                        options: options as never,
+                        placeholder: "Search the menagerie…",
+                    })
+                    .off("change")
+                    .on("change", (_event, _value: string | null, option: SillyOption | null) => {
+                        if (snapshot) snapshot.textContent = option?.label ?? "null";
+                    });
+                if (countSpan) countSpan.textContent = options.length.toLocaleString();
+            }
+            const current = window.__bigListSeed;
+            rebuild(Array.isArray(current) ? current : []);
+            container.dataset["bootstrapped"] = "true";
+            window.addEventListener("big-list-changed", (event) => {
+                const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
+                // jQuery plugin doesn't take new options after init; tear down + rebuild.
+                jQuery(container).selectBox("destroy");
+                rebuild(detail.options);
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>

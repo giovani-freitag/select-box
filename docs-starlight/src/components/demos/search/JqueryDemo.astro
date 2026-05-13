@@ -1,0 +1,54 @@
+---
+const triggerId = `jq-demo-search-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <div id={triggerId}></div>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed value</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+    import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
+    import { SubstringFilterStrategy } from "@select-box/core";
+
+    import { searchableFruits, type Fruit, type FruitExtra } from "./fruits";
+
+    const SUBSTRING = new SubstringFilterStrategy<FruitExtra>();
+    const FUZZY = new FuzzyFilterStrategy<FruitExtra>();
+
+    function initialize(): void {
+        const containers = document.querySelectorAll<HTMLElement>(
+            "[id^='jq-demo-search-']",
+        );
+        for (const container of containers) {
+            if (container.dataset["bootstrapped"] === "true") continue;
+            if (container.tagName !== "DIV") continue;
+            container.dataset["bootstrapped"] = "true";
+            const snapshot = document.getElementById(`${container.id}-snapshot`);
+            jQuery(container)
+                .selectBox<FruitExtra>({
+                    options: searchableFruits,
+                    placeholder: "Search fruits…",
+                })
+                .on("change", (_event, _value: string | null, option: Fruit | null) => {
+                    if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
+                });
+            window.addEventListener("filter-mode-changed", (event) => {
+                const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
+                const controller = jQuery(container).selectBox("controller");
+                if (controller === undefined) return;
+                controller.setFilter(mode === "fuzzy" ? FUZZY : SUBSTRING);
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>

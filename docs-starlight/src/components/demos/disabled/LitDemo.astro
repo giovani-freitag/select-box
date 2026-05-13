@@ -1,0 +1,46 @@
+---
+const triggerId = `lit-demo-disabled-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <select-box-lit
+        id={triggerId}
+        placeholder="Search fruits…"
+        ungrouped-label="Citrus"
+    ></select-box-lit>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed value</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
+    import { disabledFruits, type FruitExtra } from "./fruits";
+
+    defineSelectBoxElement("select-box-lit");
+
+    function initialize(): void {
+        const elements = document.querySelectorAll<SelectBox<FruitExtra>>(
+            "select-box-lit[id^='lit-demo-disabled-']",
+        );
+        for (const element of elements) {
+            if (element.dataset["bootstrapped"] === "true") continue;
+            element.dataset["bootstrapped"] = "true";
+            element.options = disabledFruits;
+            const snapshot = document.getElementById(`${element.id}-snapshot`);
+            element.addEventListener("change", () => {
+                if (snapshot) {
+                    snapshot.textContent = element.selectedOption
+                        ? JSON.stringify(element.selectedOption)
+                        : "null";
+                }
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>

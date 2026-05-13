@@ -8,8 +8,8 @@ import mdx from "@astrojs/mdx";
 export default defineConfig({
     site: "https://select-box.dev",
     integrations: [
-        react({ include: ["**/demos/Reac*", "**/components/react/**"] }),
-        vue({ include: ["**/demos/Vue*", "**/components/vue/**"] }),
+        react({ include: ["**/demos/**/ReactDemo.tsx", "**/components/react/**"] }),
+        vue({ include: ["**/demos/**/VueDemo.vue", "**/components/vue/**"] }),
         starlight({
             title: "select-box",
             description:

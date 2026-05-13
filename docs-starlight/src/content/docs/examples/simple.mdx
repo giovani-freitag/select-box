@@ -3,11 +3,11 @@ title: Simple
 description: The minimum happy path — a flat list of options with no groups.
 ---
 
-import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+import Demo from "../../../components/demos/simple/Demo.astro";
 
 A flat array of `{ value, label }` is enough. No groups, no extras.
 
-<FrameworkDemo scenario="simple">
+<Demo>
     <Fragment slot="react-code">
         ```tsx
         import { SelectBox } from "@select-box/react";
@@ -125,7 +125,7 @@ A flat array of `{ value, label }` is enough. No groups, no extras.
             });
         ```
     </Fragment>
-</FrameworkDemo>
+</Demo>
 
 ## What you get for free
 

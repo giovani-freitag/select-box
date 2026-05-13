@@ -1,0 +1,38 @@
+---
+const triggerId = `wc-demo-simple-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>Pick a fruit</label>
+    <select-box id={triggerId} placeholder="Search fruits…"></select-box>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed value</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import "@select-box/webcomponents/define";
+    import type { SelectBoxElement } from "@select-box/webcomponents";
+    import { simpleFruits, type FruitExtra } from "./fruits";
+
+    function initialize(): void {
+        const elements = document.querySelectorAll<SelectBoxElement<FruitExtra>>(
+            "select-box[id^='wc-demo-simple-']",
+        );
+        for (const element of elements) {
+            if (element.dataset["bootstrapped"] === "true") continue;
+            element.dataset["bootstrapped"] = "true";
+            element.options = simpleFruits;
+            const snapshot = document.getElementById(`${element.id}-snapshot`);
+            element.addEventListener("change", (event) => {
+                const option = (event.target as SelectBoxElement<FruitExtra>).selectedOption;
+                if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>

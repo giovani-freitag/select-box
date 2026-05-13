@@ -1,0 +1,51 @@
+---
+const triggerId = `wc-demo-large-list-${Math.random().toString(36).slice(2, 9)}`;
+const snapshotId = `${triggerId}-snapshot`;
+const countId = `${triggerId}-count`;
+---
+
+<div class="sb-demo-card">
+    <label class="sb-demo-label" for={triggerId}>
+        Pick a critter (<span id={countId}>0</span>)
+    </label>
+    <select-box id={triggerId} placeholder="Search the menagerie…"></select-box>
+    <dl class="sb-demo-snapshot">
+        <dt>Last committed</dt>
+        <dd><code id={snapshotId}>null</code></dd>
+    </dl>
+</div>
+
+<script>
+    import "@select-box/webcomponents/define";
+    import type { SelectBoxElement } from "@select-box/webcomponents";
+    import type { SillyOption } from "./silly-generator";
+
+    function initialize(): void {
+        const elements = document.querySelectorAll<SelectBoxElement<SillyOption>>(
+            "select-box[id^='wc-demo-large-list-']",
+        );
+        for (const element of elements) {
+            if (element.dataset["bootstrapped"] === "true") continue;
+            element.dataset["bootstrapped"] = "true";
+            const snapshot = document.getElementById(`${element.id}-snapshot`);
+            const countSpan = document.getElementById(`${element.id}-count`);
+            element.addEventListener("change", (event) => {
+                const option = (event.target as SelectBoxElement<SillyOption>).selectedOption;
+                if (snapshot) snapshot.textContent = option?.label ?? "null";
+            });
+            function applySeed(options: ReadonlyArray<unknown>): void {
+                element.options = options as never;
+                if (countSpan) countSpan.textContent = options.length.toLocaleString();
+            }
+            const current = window.__bigListSeed;
+            if (Array.isArray(current)) applySeed(current);
+            window.addEventListener("big-list-changed", (event) => {
+                const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
+                applySeed(detail.options);
+            });
+        }
+    }
+
+    initialize();
+    document.addEventListener("astro:page-load", initialize);
+</script>
