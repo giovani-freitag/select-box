@@ -222,19 +222,21 @@ extend behaviour without bloating the core.
 ```ts
 interface SelectBoxAddon<TValue> {
     readonly name: string;
-    // Two-phase setup: constructor stores config only; attach() allocates
-    // the addon's own state slice and is paired with detach().
-    attach(initialSnapshot: SelectBoxSnapshot<TValue>): void;
-    detach(): void;
+    // Lifecycle hooks — receive no arguments and cannot reach back into the
+    // controller. Use them for side-effectful setup the addon owns itself
+    // (timers, external listeners).
+    attach?(): void;
+    detach?(): void;
     // Optional pure-transformer hooks (see table below). The core calls
     // whichever the addon declares; the addon never receives a mutable
     // controller reference.
+    provideFilter?(): OptionFilterStrategy<TValue>;
     transformGroups?(groups, ctx): ReadonlyArray<SelectGroup<TValue>>;
     transformOptions?(options, group, ctx): ReadonlyArray<SelectOption<TValue>>;
     interceptCommit?(option, ctx): SelectOption<TValue> | null;
     interceptOpen?(ctx): boolean | Promise<boolean>;
     interceptClose?(ctx): boolean | Promise<boolean>;
-    extendSnapshot?(snapshot, ctx): unknown;
+    extendSnapshot?(ctx): unknown;
     onKeyDown?(event, ctx): "handled" | "pass";
 }
 
@@ -246,16 +248,19 @@ controller
 ```
 
 **Hook surface** — every hook is a **pure transformer** of read-only
-data. Hooks never receive a mutable controller reference, so an addon
-**cannot** trigger a state mutation from inside a hook. This is the same
-design TanStack Table uses for `getSortedRowModel` / `getFilteredRowModel`
-and it makes reentrancy structurally impossible.
+data, or a **provider** the core composes deterministically. Hooks never
+receive a mutable controller reference, so an addon **cannot** trigger a
+state mutation from inside a hook. This is the same design TanStack
+Table uses for `getSortedRowModel` / `getFilteredRowModel` and it makes
+reentrancy structurally impossible. The arch test in
+`packages/core/tests/arch/addon-contract.test.ts` locks the surface.
 
 Status key: `[done]` wired in core · `[plan]` typed but not invoked yet.
 
 | Hook | Status | Signature (simplified) | Purpose |
 |---|---|---|---|
-| `extendSnapshot` | `[done]` | `(snapshot, ctx) => addonState` | Return the slice to publish under `snapshot.addons[name]` |
+| `extendSnapshot` | `[done]` | `(ctx) => addonState` | Return the slice to publish under `snapshot.addons[name]` |
+| `provideFilter` | `[done]` | `() => OptionFilterStrategy` | Contribute a filter strategy; last provider wins, explicit `setFilter`/`config.filter` overrides |
 | `transformGroups` | `[plan]` | `(groups, ctx) => groups` | Reorder, inject, hide groups (used by hoist) |
 | `transformOptions` | `[plan]` | `(options, group, ctx) => options` | Reorder/inject within a group |
 | `interceptCommit` | `[plan]` | `(option, ctx) => option \| null` | Replace (return new) or veto (return `null`) a commit |

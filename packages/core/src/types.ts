@@ -71,25 +71,27 @@ export interface AddonHookContext<TExtra extends object = object> {
 }
 
 /**
- * Controller surface visible to an addon. Mutators run only during
- * `attach`/`detach`; calling them from inside a snapshot hook reenters
- * the publish path.
- */
-export interface SelectBoxAddonHost<TExtra extends object = object> {
-    getState(): SelectBoxSnapshot<TExtra>;
-    getFilter(): OptionFilterStrategy<TExtra>;
-    setFilter(strategy: OptionFilterStrategy<TExtra>): void;
-    use(addon: SelectBoxAddon<TExtra>): void;
-}
-
-/**
- * Plugin contract: addons attach at registration, detach on controller destroy, and may
- * publish an extra snapshot slice via `extendSnapshot`.
+ * Plugin contract. Addons compose behavior through typed hooks; they never
+ * receive a mutable controller reference, so a hook cannot trigger a state
+ * mutation from inside the publish path.
+ *
+ * Lifecycle hooks (`attach`/`detach`) are for side-effectful setup the addon
+ * owns itself (timers, external listeners). They receive no arguments and
+ * cannot reach back into the controller.
  */
 export interface SelectBoxAddon<TExtra extends object = object> {
     readonly name: string;
-    attach(host: SelectBoxAddonHost<TExtra>): void;
-    detach(): void;
+    /** Optional one-time setup; called when the addon is registered. */
+    attach?(): void;
+    /** Optional teardown; called on `controller.destroy()`. */
+    detach?(): void;
+    /**
+     * Optional filter provider. If multiple addons provide, the last-registered
+     * wins. An explicit `config.filter` or `controller.setFilter(...)` always
+     * overrides providers.
+     */
+    provideFilter?(): OptionFilterStrategy<TExtra>;
+    /** Optional snapshot extension; return value lands at `snapshot.addons[name]`. */
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }
 

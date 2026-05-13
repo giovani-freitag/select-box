@@ -18,7 +18,6 @@ export type {
     OptionFilterStrategy,
     SearchMatchRange,
     SelectBoxAddon,
-    SelectBoxAddonHost,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,
     SelectGroup,

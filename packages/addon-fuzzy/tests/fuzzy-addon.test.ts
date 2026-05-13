@@ -10,7 +10,7 @@ const fruits = [
 ];
 
 describe("FuzzyAddon", () => {
-    test("attach swaps the controller's filter for FuzzyFilterStrategy", () => {
+    test("provides FuzzyFilterStrategy when no explicit filter is set", () => {
         const controller = new SingleSelectBoxController({ options: fruits });
 
         controller.use(new FuzzyAddon());
@@ -18,16 +18,15 @@ describe("FuzzyAddon", () => {
         expect(controller.getFilter()).toBeInstanceOf(FuzzyFilterStrategy);
     });
 
-    test("detach restores whatever filter was active at attach time", () => {
-        const original = new SubstringFilterStrategy();
-        const controller = new SingleSelectBoxController({ options: fruits, filter: original });
+    test("explicit config.filter overrides the addon's provider", () => {
+        const explicit = new SubstringFilterStrategy();
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            filter: explicit,
+            addons: [new FuzzyAddon()],
+        });
 
-        controller.use(new FuzzyAddon());
-        expect(controller.getFilter()).toBeInstanceOf(FuzzyFilterStrategy);
-
-        controller.destroy();
-
-        expect(controller.getFilter()).toBe(original);
+        expect(controller.getFilter()).toBe(explicit);
     });
 
     test("config flows through to the underlying strategy", () => {

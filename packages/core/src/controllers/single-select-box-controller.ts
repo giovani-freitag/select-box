@@ -5,7 +5,6 @@ import type {
     OptionFilterStrategy,
     SearchMatchRange,
     SelectBoxAddon,
-    SelectBoxAddonHost,
     SelectBoxAddonSnapshots,
     SelectBoxSnapshot,
     SelectGroup,
@@ -24,12 +23,12 @@ function coerceValue(input: string | number | null | undefined): string | null {
 /**
  * Framework-agnostic state and mutations for a single-select box.
  */
-export class SingleSelectBoxController<TExtra extends object = object>
-    implements SelectBoxAddonHost<TExtra>
-{
+export class SingleSelectBoxController<TExtra extends object = object> {
     private readonly store: Store<SelectBoxSnapshot<TExtra>>;
     private readonly allGroups: ReadonlyArray<SelectGroup<TExtra>>;
     private readonly optionsByValue: ReadonlyMap<string, SelectOption<TExtra>>;
+    private readonly defaultFilter: OptionFilterStrategy<TExtra>;
+    private explicitFilter: OptionFilterStrategy<TExtra> | null;
     private filterStrategy: OptionFilterStrategy<TExtra>;
     private readonly registeredAddons: SelectBoxAddon<TExtra>[] = [];
 
@@ -46,12 +45,16 @@ export class SingleSelectBoxController<TExtra extends object = object>
             ungroupedLabel: config.ungroupedLabel ?? "",
         });
         this.optionsByValue = indexOptionsByValue(this.allGroups);
-        this.filterStrategy = config.filter ?? new SubstringFilterStrategy<TExtra>();
+        this.defaultFilter = new SubstringFilterStrategy<TExtra>();
+        this.explicitFilter = config.filter ?? null;
+        this.filterStrategy = this.explicitFilter ?? this.defaultFilter;
         this.currentValue = coerceValue(config.initialValue);
-        this.store = new Store({ initialState: this.buildSnapshot() });
         for (const addon of config.addons ?? []) {
-            this.use(addon);
+            this.registeredAddons.push(addon);
+            addon.attach?.();
         }
+        this.resolveFilterStrategy();
+        this.store = new Store({ initialState: this.buildSnapshot() });
     }
 
     /** Highlight ranges the active strategy draws for `label` under the current query. */
@@ -63,7 +66,8 @@ export class SingleSelectBoxController<TExtra extends object = object>
     /** Registers an addon, runs its `attach`, and republishes the snapshot. */
     use(addon: SelectBoxAddon<TExtra>): this {
         this.registeredAddons.push(addon);
-        addon.attach(this);
+        addon.attach?.();
+        this.resolveFilterStrategy();
         this.publish();
         return this;
     }
@@ -76,10 +80,14 @@ export class SingleSelectBoxController<TExtra extends object = object>
         return this.filterStrategy;
     }
 
-    /** Swaps the filter strategy at runtime and republishes the snapshot. */
+    /**
+     * Sets an explicit filter strategy. An explicit filter always wins over
+     * addon-provided ones until cleared.
+     */
     setFilter(strategy: OptionFilterStrategy<TExtra>): void {
-        if (strategy === this.filterStrategy) return;
-        this.filterStrategy = strategy;
+        if (strategy === this.explicitFilter && strategy === this.filterStrategy) return;
+        this.explicitFilter = strategy;
+        this.resolveFilterStrategy();
         this.currentActiveIndex = this.firstSelectableIndex(this.computeFilteredGroups());
         this.publish();
     }
@@ -164,13 +172,26 @@ export class SingleSelectBoxController<TExtra extends object = object>
 
     destroy(): void {
         for (const addon of this.registeredAddons) {
-            addon.detach();
+            addon.detach?.();
         }
         this.registeredAddons.length = 0;
     }
 
     private publish(): void {
         this.store.setState(this.buildSnapshot());
+    }
+
+    private resolveFilterStrategy(): void {
+        if (this.explicitFilter !== null) {
+            this.filterStrategy = this.explicitFilter;
+            return;
+        }
+        let chosen: OptionFilterStrategy<TExtra> | null = null;
+        for (const addon of this.registeredAddons) {
+            const provided = addon.provideFilter?.();
+            if (provided) chosen = provided;
+        }
+        this.filterStrategy = chosen ?? this.defaultFilter;
     }
 
     private buildSnapshot(): SelectBoxSnapshot<TExtra> {
