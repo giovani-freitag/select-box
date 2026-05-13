@@ -8,7 +8,7 @@ const UNGROUPED_KEY = "__ungrouped__";
  * domain payload — is preserved as-is.
  */
 function coerceOption<TExtra extends object>(option: SelectOption<TExtra>): SelectOption<TExtra> {
-    return { ...option, value: String(option.value) } as SelectOption<TExtra>;
+    return { ...option, value: String(option.value) };
 }
 
 /**
