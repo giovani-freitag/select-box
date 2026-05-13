@@ -47,7 +47,6 @@ const snapshotId = `${triggerId}-snapshot`;
             if (element.dataset["bootstrapped"] === "true") continue;
             element.dataset["bootstrapped"] = "true";
             const scenario = (element.dataset["scenario"] ?? "grouped") as Scenario;
-            element.options = getFruitsForScenario(scenario);
             const snapshot = document.getElementById(`${element.id}-snapshot`);
             element.addEventListener("change", (event) => {
                 const option = (event.target as SelectBoxElement<FruitExtra>).selectedOption;
@@ -56,6 +55,11 @@ const snapshotId = `${triggerId}-snapshot`;
             if (scenario === "search") {
                 wireFilterToggle(element);
             }
+            if (scenario === "large-list") {
+                wireBigListSeed(element);
+            } else {
+                element.options = getFruitsForScenario(scenario);
+            }
         }
     }
 
@@ -63,6 +67,17 @@ const snapshotId = `${triggerId}-snapshot`;
         window.addEventListener("filter-mode-changed", (event) => {
             const mode = (event as CustomEvent<{ mode: "substring" | "fuzzy" }>).detail.mode;
             element.filter = mode === "fuzzy" ? FUZZY_FILTER : SUBSTRING_FILTER;
+        });
+    }
+
+    function wireBigListSeed(element: SelectBoxElement<FruitExtra>): void {
+        const current = window.__bigListSeed;
+        if (Array.isArray(current)) {
+            element.options = current as never;
+        }
+        window.addEventListener("big-list-changed", (event) => {
+            const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
+            element.options = detail.options as never;
         });
     }
 

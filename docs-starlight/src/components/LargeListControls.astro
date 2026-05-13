@@ -1,0 +1,118 @@
+---
+// Page-level slider that regenerates the silly options list and broadcasts
+// it to every framework demo island via `window.__bigListSeed` plus a
+// `big-list-changed` CustomEvent. Geometric scale: linear 0..100 slider
+// maps to 10..500 000 items.
+---
+
+<div class="sb-bigsize-controls not-content">
+    <label class="sb-bigsize-label" for="sb-bigsize-slider">
+        Items rendered:
+        <strong id="sb-bigsize-readout">10</strong>
+    </label>
+    <input
+        id="sb-bigsize-slider"
+        type="range"
+        min="0"
+        max="100"
+        step="1"
+        value="0"
+    />
+    <span class="sb-bigsize-status" id="sb-bigsize-status">ready</span>
+</div>
+
+<script>
+    import {
+        geometricCountForSlider,
+        generateSillyOptions,
+    } from "./demos/silly-generator.ts";
+
+    declare global {
+        interface Window {
+            __bigListSeed?: ReadonlyArray<unknown>;
+            __bigListSeedCount?: number;
+        }
+    }
+
+    function regenerate(slider: HTMLInputElement, readout: HTMLElement, status: HTMLElement): void {
+        const count = geometricCountForSlider(Number(slider.value));
+        readout.textContent = count.toLocaleString();
+        status.textContent = "generating…";
+        // Defer to the next frame so the readout actually paints before we
+        // block the main thread building 500k strings.
+        requestAnimationFrame(() => {
+            const start = performance.now();
+            const options = generateSillyOptions(count);
+            const elapsed = Math.round(performance.now() - start);
+            window.__bigListSeed = options;
+            window.__bigListSeedCount = count;
+            window.dispatchEvent(
+                new CustomEvent("big-list-changed", { detail: { options, count } }),
+            );
+            status.textContent = `${count.toLocaleString()} items in ${elapsed} ms`;
+        });
+    }
+
+    function wireBigSizeControls(): void {
+        const slider = document.getElementById("sb-bigsize-slider");
+        const readout = document.getElementById("sb-bigsize-readout");
+        const status = document.getElementById("sb-bigsize-status");
+        if (!(slider instanceof HTMLInputElement)) return;
+        if (!(readout instanceof HTMLElement)) return;
+        if (!(status instanceof HTMLElement)) return;
+        if (slider.dataset["wired"] === "true") return;
+        slider.dataset["wired"] = "true";
+        // Throttle: the input event fires while dragging; debounce so we only
+        // regenerate after the user pauses for 120 ms.
+        let pending: ReturnType<typeof setTimeout> | null = null;
+        slider.addEventListener("input", () => {
+            const count = geometricCountForSlider(Number(slider.value));
+            readout.textContent = count.toLocaleString();
+            if (pending !== null) clearTimeout(pending);
+            pending = setTimeout(() => regenerate(slider, readout, status), 120);
+        });
+        regenerate(slider, readout, status);
+    }
+
+    wireBigSizeControls();
+    document.addEventListener("astro:page-load", wireBigSizeControls);
+</script>
+
+<style>
+    .sb-bigsize-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 1rem 0 1.5rem;
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--sl-color-hairline);
+        background: var(--sl-color-bg-sidebar);
+    }
+
+    .sb-bigsize-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .sb-bigsize-label strong {
+        font-variant-numeric: tabular-nums;
+        color: var(--sl-color-text-accent);
+    }
+
+    .sb-bigsize-controls input[type="range"] {
+        flex: 1;
+        min-width: 200px;
+        accent-color: var(--sl-color-accent);
+    }
+
+    .sb-bigsize-status {
+        font-size: 0.8rem;
+        color: var(--sl-color-gray-3);
+        font-variant-numeric: tabular-nums;
+    }
+</style>

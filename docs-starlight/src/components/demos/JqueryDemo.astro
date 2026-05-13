@@ -43,17 +43,25 @@ const snapshotId = `${triggerId}-snapshot`;
             container.dataset["bootstrapped"] = "true";
             const scenario = (container.dataset["scenario"] ?? "grouped") as Scenario;
             const snapshot = document.getElementById(`${container.id}-snapshot`);
+            const initialOptions =
+                scenario === "large-list"
+                    ? readBigListSeed()
+                    : getFruitsForScenario(scenario);
             jQuery(container)
                 .selectBox<FruitExtra>({
-                    options: getFruitsForScenario(scenario),
+                    options: initialOptions as never,
                     ungroupedLabel: "Citrus",
-                    placeholder: "Search fruits…",
+                    placeholder:
+                        scenario === "large-list" ? "Search the menagerie…" : "Search fruits…",
                 })
                 .on("change", (_event, _value: string | null, option: Fruit | null) => {
                     if (snapshot) snapshot.textContent = option ? JSON.stringify(option) : "null";
                 });
             if (scenario === "search") {
                 wireFilterToggle(container);
+            }
+            if (scenario === "large-list") {
+                wireBigListSeed(container);
             }
         }
     }
@@ -65,6 +73,25 @@ const snapshotId = `${triggerId}-snapshot`;
             if (controller === undefined) return;
             controller.setFilter(mode === "fuzzy" ? FUZZY_FILTER : SUBSTRING_FILTER);
         });
+    }
+
+    function wireBigListSeed(container: HTMLElement): void {
+        window.addEventListener("big-list-changed", (event) => {
+            const detail = (event as CustomEvent<{ options: ReadonlyArray<unknown> }>).detail;
+            // jQuery plugin doesn't take new options after init; tear down + rebuild.
+            jQuery(container).selectBox("destroy");
+            container.dataset["bootstrapped"] = "";
+            jQuery(container).selectBox<FruitExtra>({
+                options: detail.options as never,
+                placeholder: "Search the menagerie…",
+            });
+            container.dataset["bootstrapped"] = "true";
+        });
+    }
+
+    function readBigListSeed(): ReadonlyArray<unknown> {
+        const value = window.__bigListSeed;
+        return Array.isArray(value) ? value : [];
     }
 
     initializeJqueryDemos();

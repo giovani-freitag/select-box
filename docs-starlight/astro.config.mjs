@@ -40,6 +40,7 @@ export default defineConfig({
                         { label: "Simple", link: "/examples/simple/" },
                         { label: "Option groups", link: "/examples/optgroup/" },
                         { label: "Search", link: "/examples/search/" },
+                        { label: "Large list", link: "/examples/large-list/" },
                         { label: "Reference", link: "/examples/select-box/" },
                     ],
                 },
