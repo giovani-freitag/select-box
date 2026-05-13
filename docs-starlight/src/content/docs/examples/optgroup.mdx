@@ -1,0 +1,165 @@
+---
+title: Option groups
+description: Bundle options under headers — flat with a group key, or pre-built groups with metadata.
+---
+
+import FrameworkDemo from "../../../components/FrameworkDemo.astro";
+
+Two ways to group: a `group?: string` key on each flat option (cheaper, no
+metadata), or a pre-built `groups: SelectGroup[]` array (when you need group
+labels, disabled flags, or explicit ordering).
+
+<FrameworkDemo scenario="grouped">
+    <Fragment slot="react-code">
+        ```tsx
+        import { SelectBox } from "@select-box/react";
+
+        // Flat options — leaves that share a `group` key bundle together;
+        // entries without `group` fall under whatever `ungroupedLabel` you pass.
+        const fruits = [
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "peach", label: "Peach", group: "Stone fruits" },
+            { value: "plum", label: "Plum", group: "Stone fruits" },
+            { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange" },
+        ];
+
+        <SelectBox options={fruits} ungroupedLabel="Citrus" placeholder="Pick a fruit" />;
+        ```
+    </Fragment>
+
+    <Fragment slot="vue-code">
+        ```vue
+        <script setup lang="ts">
+        import { SelectBox } from "@select-box/vue";
+
+        const fruits = [
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "peach", label: "Peach", group: "Stone fruits" },
+            { value: "plum", label: "Plum", group: "Stone fruits" },
+            { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange" },
+        ];
+        </script>
+
+        <template>
+            <SelectBox :options="fruits" ungrouped-label="Citrus" placeholder="Pick a fruit" />
+        </template>
+        ```
+    </Fragment>
+
+    <Fragment slot="lit-code">
+        ```html
+        <select-box id="fruit" ungrouped-label="Citrus" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/lit/define";
+
+            const fruits = [
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "peach", label: "Peach", group: "Stone fruits" },
+                { value: "plum", label: "Plum", group: "Stone fruits" },
+                { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange" },
+            ];
+            document.getElementById("fruit").options = fruits;
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="webcomponents-code">
+        ```html
+        <select-box id="fruit" ungrouped-label="Citrus" placeholder="Pick a fruit"></select-box>
+
+        <script type="module">
+            import "@select-box/webcomponents/define";
+
+            const fruits = [
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "peach", label: "Peach", group: "Stone fruits" },
+                { value: "plum", label: "Plum", group: "Stone fruits" },
+                { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange" },
+            ];
+            document.getElementById("fruit").options = fruits;
+        </script>
+        ```
+    </Fragment>
+
+    <Fragment slot="jquery-code">
+        ```ts
+        import "@select-box/jquery";
+        import jQuery from "jquery";
+
+        const fruits = [
+            { value: "apple", label: "Apple", group: "Pomes" },
+            { value: "pear", label: "Pear", group: "Pomes" },
+            { value: "peach", label: "Peach", group: "Stone fruits" },
+            { value: "plum", label: "Plum", group: "Stone fruits" },
+            { value: "cherry", label: "Cherry", group: "Stone fruits", disabled: true },
+            { value: "lemon", label: "Lemon" },
+            { value: "orange", label: "Orange" },
+        ];
+
+        jQuery("#fruit").selectBox({ options: fruits, ungroupedLabel: "Citrus", placeholder: "Pick a fruit" });
+        ```
+    </Fragment>
+</FrameworkDemo>
+
+## When to use `groups` instead
+
+The flat shape is cheapest — the controller normalizes it into ordered groups
+under the hood. Reach for `groups: SelectGroup[]` when:
+
+- The **order of headers must be explicit** (flat-with-key honors first-seen order, which depends on the array).
+- A whole **group should be disabled** (`disabled: true` on the group skips keyboard nav for every option inside).
+- The group needs **a different display label** than its key.
+
+```ts
+import type { SelectGroup } from "@select-box/core";
+
+const fruits: SelectGroup[] = [
+    {
+        key: "pomes",
+        label: "Pomes",
+        options: [
+            { value: "apple", label: "Apple" },
+            { value: "pear", label: "Pear" },
+        ],
+    },
+    {
+        key: "stone",
+        label: "Stone fruits",
+        disabled: true,            // whole group skipped by keyboard nav, dimmed in the list
+        options: [
+            { value: "peach", label: "Peach" },
+            { value: "plum", label: "Plum" },
+        ],
+    },
+];
+
+<SelectBox groups={fruits} placeholder="Pick a fruit" />;
+```
+
+You can also **combine** the two — pass `groups` for the metadata-rich ones plus
+`options` for the rest. The controller merges them in declaration order.
+
+## How filtering interacts with groups
+
+When the user types, every group's options are filtered independently. Groups
+that end up empty are dropped from `snapshot.filteredGroups` — the user only
+sees headers that still have at least one match. Keyboard navigation skips
+empty groups and disabled options automatically.
+
+## Next examples
+
+- [Search](/examples/search/) — swap the default filter for fuzzy matching.
+- [Large list](/examples/large-list/) — 500 000 items virtualized in a popover.
