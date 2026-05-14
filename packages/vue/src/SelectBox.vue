@@ -1,11 +1,16 @@
 <script setup lang="ts" generic="TExtra extends object = object">
 import {
+    SelectBoxKeyDispatcher,
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    SelectBoxSnapshotView,
     TextHighlighter,
     type HighlightChunk,
     type OptionFilterStrategy,
     type SelectBoxAddon,
+    type SelectBoxController,
+    type SelectBoxSnapshot,
+    type SelectionValue,
     type SelectOption,
     type VirtualItem,
 } from "@select-box/core";
@@ -17,35 +22,83 @@ import {
     shallowRef,
     useTemplateRef,
     watch,
+    type ShallowRef,
 } from "vue";
 
 import { useSelectBox } from "./use-select-box.js";
 
 export interface SelectBoxProps<TExtra extends object = object> {
     options?: ReadonlyArray<SelectOption<TExtra>>;
-    defaultValue?: string | number | null;
+    /** Single mode: `string | number | null`. Multi mode: `ReadonlyArray<string | number>`. */
+    defaultValue?: string | number | null | ReadonlyArray<string | number>;
     placeholder?: string;
     ungroupedLabel?: string;
     addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
     filter?: OptionFilterStrategy<TExtra>;
+    /** When `true`, switches to multi-select (chips inside the input, popover stays open on commit). */
+    multi?: boolean;
 }
 
 const ESTIMATED_OPTION_HEIGHT = 36;
 const ESTIMATED_HEADER_HEIGHT = 28;
 const LIST_VIEWPORT_HEIGHT = 240;
 
-const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), { defaultValue: null });
+const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
+    defaultValue: null,
+    multi: false,
+});
 const emit = defineEmits<{
+    /** Single-mode change. Fires only when `multi` is `false`. */
     (event: "change", value: string | null, option: SelectOption<TExtra> | null): void;
+    /** Multi-mode change. Fires only when `multi` is `true`. */
+    (
+        event: "change-multi",
+        values: ReadonlyArray<string>,
+        options: ReadonlyArray<SelectOption<TExtra>>,
+    ): void;
 }>();
 
-const { state, controller } = useSelectBox<TExtra>({
-    ...(props.options !== undefined ? { options: props.options } : {}),
-    ...(props.addons !== undefined ? { addons: props.addons } : {}),
-    ...(props.filter !== undefined ? { filter: props.filter } : {}),
-    ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
-    initialValue: props.defaultValue,
-});
+function commonConfig() {
+    return {
+        ...(props.options !== undefined ? { options: props.options } : {}),
+        ...(props.addons !== undefined ? { addons: props.addons } : {}),
+        ...(props.filter !== undefined ? { filter: props.filter } : {}),
+        ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
+    };
+}
+
+// Branch at the call site so each useSelectBox call hits a specific overload
+// at construction; thereafter the controller's mode can flip at runtime via
+// setMode without recreating the controller (selection preserved across the
+// flip via the driver's coerce step).
+const useResult = props.multi
+    ? useSelectBox<TExtra>({
+        mode: "multi",
+        ...commonConfig(),
+        initialValue: Array.isArray(props.defaultValue)
+            ? (props.defaultValue as ReadonlyArray<string | number>)
+            : [],
+    })
+    : useSelectBox<TExtra>({
+        ...commonConfig(),
+        initialValue: Array.isArray(props.defaultValue)
+            ? null
+            : (props.defaultValue as string | number | null),
+    });
+
+const state = useResult.state as ShallowRef<SelectBoxSnapshot<TExtra, SelectionValue>>;
+const controller = useResult.controller as SelectBoxController<TExtra, SelectionValue>;
+
+const keyDispatcher = new SelectBoxKeyDispatcher(controller);
+
+watch(
+    () => props.multi,
+    (multi) => {
+        controller.setMode(multi ? "multi" : "single");
+    },
+);
+
+const isMulti = computed(() => state.value.mode === "multi");
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
 const inputRef = useTemplateRef<HTMLInputElement>("inputEl");
@@ -58,27 +111,45 @@ watch(
     },
 );
 
-let previousValue: string | null = state.value.value;
+let previousValueKey = SelectBoxSnapshotView.valueKey(state.value.value);
 watch(
     () => state.value.value,
     (next) => {
-        if (next === previousValue) return;
-        previousValue = next;
-        emit("change", next, state.value.selectedOption);
+        const nextKey = SelectBoxSnapshotView.valueKey(next);
+        if (nextKey === previousValueKey) return;
+        previousValueKey = nextKey;
+        if (state.value.mode === "multi") {
+            emit(
+                "change-multi",
+                next as ReadonlyArray<string>,
+                state.value.selectedOptions,
+            );
+        } else {
+            emit("change", next as string | null, state.value.selectedOption);
+        }
     },
 );
 
-const inputValue = computed(() =>
-    state.value.open ? state.value.query : (state.value.selectedOption?.label ?? ""),
+const view = computed(
+    () => new SelectBoxSnapshotView<TExtra, SelectionValue>(state.value),
 );
 
-const placeholderText = computed(() =>
-    state.value.open && state.value.selectedOption
+const inputValue = computed(() => view.value.triggerInputValue);
+
+const placeholderText = computed(() => {
+    if (isMulti.value) {
+        return state.value.selectedOptions.length > 0 ? "" : (props.placeholder ?? "Select…");
+    }
+    return state.value.open && state.value.selectedOption
         ? state.value.selectedOption.label
-        : (props.placeholder ?? "Select…"),
-);
+        : (props.placeholder ?? "Select…");
+});
 
-const rowModel = computed(() => new SelectBoxRowModel<TExtra>({ groups: state.value.filteredGroups }));
+const hasSelection = computed(() => state.value.selectedOptions.length > 0);
+
+const rowModel = computed(
+    () => new SelectBoxRowModel<TExtra>({ groups: state.value.filteredGroups }),
+);
 
 const virtualizer = new SelectBoxListVirtualizer({
     getScrollElement: () => listRef.value,
@@ -99,10 +170,6 @@ const paddingBottom = computed(() =>
     Math.max(0, totalSize.value - (virtualItems.value.at(-1)?.end ?? 0)),
 );
 
-// `onUpdated` fires after the template commits, so listRef.value is guaranteed
-// populated before sync() re-resolves the scroll element. A pre-flush watch
-// would run with listRef still null and TanStack would never attach observers,
-// leaving the popover frozen at the first scroll fold.
 onUpdated(() => {
     virtualizer.sync();
 });
@@ -129,14 +196,19 @@ function measureRow(node: unknown): void {
 const visibleEntries = computed(() => {
     const model = rowModel.value;
     const activeIndex = activeRowIndex.value;
+    const currentView = view.value;
     return virtualItems.value.flatMap((virtualRow) => {
         const row = model.getRowAt(virtualRow.index);
         if (row === undefined) return [];
-        return [{
-            virtualRow,
-            row,
-            isActive: virtualRow.index === activeIndex,
-        }];
+        return [
+            {
+                virtualRow,
+                row,
+                isActive: virtualRow.index === activeIndex,
+                isSelected:
+                    row.kind === "option" && currentView.isSelected(row.option.value),
+            },
+        ];
     });
 });
 
@@ -158,6 +230,16 @@ function handleOutsideMouseDown(event: MouseEvent): void {
     controller.close();
 }
 
+function focusInput(): void {
+    inputRef.value?.focus({ preventScroll: true });
+}
+
+function handleControlMouseDown(event: MouseEvent): void {
+    if (event.target !== inputRef.value) event.preventDefault();
+    if (!state.value.open) controller.open();
+    focusInput();
+}
+
 function handleInput(event: Event): void {
     if (!state.value.open) controller.open();
     controller.setQuery((event.target as HTMLInputElement).value);
@@ -176,31 +258,31 @@ function handleCaretClick(): void {
         controller.close();
     } else {
         controller.open();
-        inputRef.value?.focus({ preventScroll: true });
+        focusInput();
     }
 }
 
 function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === "ArrowDown") {
+    if (keyDispatcher.dispatch(event.key) === "handled") {
         event.preventDefault();
-        if (!state.value.open) controller.open();
-        else controller.moveActive(1);
-        return;
     }
-    if (event.key === "ArrowUp") {
-        event.preventDefault();
-        controller.moveActive(-1);
-        return;
-    }
-    if (event.key === "Enter") {
-        event.preventDefault();
-        controller.commitActive();
-        return;
-    }
-    if (event.key === "Escape") {
-        event.preventDefault();
-        controller.close();
-    }
+}
+
+function handleChipRemove(option: SelectOption<TExtra>, event: MouseEvent): void {
+    event.stopPropagation();
+    controller.commitOption(option);
+    focusInput();
+}
+
+function handleClearAll(event: MouseEvent): void {
+    event.stopPropagation();
+    controller.clear();
+    focusInput();
+}
+
+function commitFromList(option: SelectOption<TExtra>): void {
+    controller.commitOption(option);
+    if (isMulti.value) focusInput();
 }
 
 function estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {
@@ -209,11 +291,16 @@ function estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): numbe
         : ESTIMATED_OPTION_HEIGHT;
 }
 
-function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string {
+function optionClasses(
+    isActive: boolean,
+    isSelected: boolean,
+    disabled: boolean | undefined,
+): string {
     return [
         "select-box-option",
         isActive ? "select-box-option-active" : null,
-        option.disabled ? "select-box-option-disabled" : null,
+        isSelected && isMulti.value ? "select-box-option-selected" : null,
+        disabled ? "select-box-option-disabled" : null,
     ]
         .filter((value): value is string => value !== null)
         .join(" ");
@@ -225,8 +312,66 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
 </script>
 
 <template>
-    <div ref="rootEl" class="select-box" data-select-root>
-        <div class="select-box-trigger" data-select-trigger>
+    <div
+        ref="rootEl"
+        :class="['select-box', isMulti ? 'select-box-multi' : null].filter(Boolean).join(' ')"
+        data-select-root
+        :data-select-mode="isMulti ? 'multi' : 'single'"
+    >
+        <!-- Multi-mode trigger: chips inside the input, click anywhere opens -->
+        <div
+            v-if="isMulti"
+            class="select-box-trigger"
+            data-select-trigger
+            role="combobox"
+            aria-haspopup="listbox"
+            :aria-expanded="state.open"
+            @mousedown="handleControlMouseDown"
+        >
+            <div class="select-box-tags" data-select-tags>
+                <span
+                    v-for="option in state.selectedOptions"
+                    :key="option.value"
+                    class="select-box-chip"
+                    data-select-chip
+                >
+                    {{ option.label }}
+                    <button
+                        type="button"
+                        class="select-box-chip-remove"
+                        :aria-label="`Remove ${option.label}`"
+                        @mousedown.stop
+                        @click="(event) => handleChipRemove(option, event)"
+                    >×</button>
+                </span>
+                <input
+                    ref="inputEl"
+                    type="text"
+                    class="select-box-input"
+                    role="searchbox"
+                    aria-autocomplete="list"
+                    :placeholder="placeholderText"
+                    :value="state.query"
+                    data-select-input
+                    @input="handleInput"
+                    @focus="handleInputFocus"
+                    @keydown="handleKeyDown"
+                />
+            </div>
+            <button
+                v-if="hasSelection"
+                type="button"
+                class="select-box-clear"
+                aria-label="Clear all"
+                tabindex="-1"
+                data-select-clear
+                @mousedown.stop
+                @click="handleClearAll"
+            >×</button>
+        </div>
+
+        <!-- Single-mode trigger: plain input + caret button -->
+        <div v-else class="select-box-trigger" data-select-trigger>
             <input
                 ref="inputEl"
                 type="text"
@@ -257,6 +402,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
             v-if="state.open"
             class="select-box-popover"
             role="listbox"
+            :aria-multiselectable="isMulti ? true : undefined"
             data-select-popover
         >
             <div
@@ -288,13 +434,21 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                             :ref="measureRow"
                             :data-index="entry.virtualRow.index"
                             type="button"
-                            :class="optionClasses(entry.row.option, entry.isActive)"
+                            role="option"
+                            :aria-selected="entry.isSelected"
+                            :class="optionClasses(entry.isActive, entry.isSelected, entry.row.option.disabled)"
                             :disabled="entry.row.option.disabled"
                             data-select-option
                             :data-select-active="entry.isActive ? '' : undefined"
+                            :data-select-selected="entry.isSelected ? '' : undefined"
                             @mousedown.prevent
-                            @click="controller.commitOption(entry.row.option)"
+                            @click="commitFromList(entry.row.option)"
                         >
+                            <span
+                                v-if="isMulti"
+                                class="select-box-option-tick"
+                                aria-hidden="true"
+                            >{{ entry.isSelected ? "✓" : "" }}</span>
                             <template
                                 v-for="(chunk, chunkIndex) in labelChunks(entry.row.option.label)"
                                 :key="chunkIndex"

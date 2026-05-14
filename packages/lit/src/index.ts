@@ -14,13 +14,21 @@ export function defineSelectBoxElement(tagName: string = TAG_NAME): void {
 }
 
 export {
+    MultiSelectBoxController,
+    SelectBoxKeyDispatcher,
+    SelectBoxSnapshotView,
+    SingleSelectBoxController,
     SubstringFilterStrategy,
     type AddonHookContext,
+    type MultiSelectBoxControllerConfig,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxAddonSnapshots,
+    type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
     type SelectGroup,
+    type SelectionMode,
+    type SelectionValue,
     type SelectOption,
     type SingleSelectBoxControllerConfig,
 } from "@select-box/core";

@@ -49,11 +49,69 @@ export interface OptionFilterStrategy<TExtra extends object = object> {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SelectBoxAddonSnapshots {}
 
-export interface SelectBoxSnapshot<TExtra extends object = object> {
+/** Selection cardinality. `"single"` keeps one option at a time; `"multi"` accumulates a list. */
+export type SelectionMode = "single" | "multi";
+
+/**
+ * Canonical value shape carried by the controller. The `string | null` arm is
+ * used by single-mode controllers; the `ReadonlyArray<string>` arm is used by
+ * multi-mode controllers. Consumer-facing API surfaces fix this generic via
+ * `SingleSelectBoxController` / `MultiSelectBoxController` so app code never
+ * has to narrow on the bare union.
+ */
+export type SelectionValue = string | null | ReadonlyArray<string>;
+
+/**
+ * Anything a consumer may hand to `initialValue` / `commitValue`. The active
+ * `SelectionDriver` coerces this into the canonical `SelectionValue` shape.
+ */
+export type SelectionValueInput =
+    | string
+    | number
+    | ReadonlyArray<string | number>
+    | null
+    | undefined;
+
+/**
+ * Mode-specific commit/clear/coerce behavior. Drivers are pure transformers —
+ * they receive the current value, return the next value, and never reach back
+ * into the controller. Lifetime is `new Driver()` per controller; no shared
+ * state.
+ */
+export interface SelectionDriver<TValue extends SelectionValue> {
+    readonly mode: SelectionMode;
+    /** `true` when commit should also close the popover (single mode); `false` to stay open (multi). */
+    readonly closeOnCommit: boolean;
+    /** The "nothing selected" value for this mode. */
+    empty(): TValue;
+    /** Normalises a raw consumer input (numeric, array, null) into the canonical value shape. */
+    coerce(input: SelectionValueInput): TValue;
+    /** Replace-or-toggle semantics. Always returns a new value reference when content changes. */
+    commit(current: TValue, option: SelectOptionBase): TValue;
+    /** Whether the given option key participates in the current selection. */
+    contains(value: TValue, optionValue: string): boolean;
+    /** Flat list of selected option keys, in selection order. Used to resolve to options. */
+    keys(value: TValue): ReadonlyArray<string>;
+}
+
+/**
+ * Live snapshot exposed by every wrapper. Carries both `selectedOption`
+ * (the first/only option, `null` when nothing is selected) and
+ * `selectedOptions` (full list, `[]` when nothing is selected) so that
+ * mode-agnostic consumer code can read whichever shape it prefers.
+ */
+export interface SelectBoxSnapshot<
+    TExtra extends object = object,
+    TValue extends SelectionValue = string | null,
+> {
+    readonly mode: SelectionMode;
     readonly open: boolean;
     readonly query: string;
-    readonly value: string | null;
+    readonly value: TValue;
+    /** First option in the current selection, or `null` when nothing is selected. */
     readonly selectedOption: SelectOption<TExtra> | null;
+    /** Every option in the current selection (length 0 or 1 in single mode). */
+    readonly selectedOptions: ReadonlyArray<SelectOption<TExtra>>;
     readonly filteredGroups: ReadonlyArray<SelectGroup<TExtra>>;
     readonly activeIndex: number;
     readonly activeOption: SelectOption<TExtra> | null;
@@ -67,7 +125,7 @@ export interface SelectBoxSnapshot<TExtra extends object = object> {
  * Read-only context passed to post-snapshot hooks (e.g. `extendSnapshot`).
  */
 export interface AddonHookContext<TExtra extends object = object> {
-    readonly snapshot: SelectBoxSnapshot<TExtra>;
+    readonly snapshot: SelectBoxSnapshot<TExtra, SelectionValue>;
 }
 
 /**
@@ -77,8 +135,13 @@ export interface AddonHookContext<TExtra extends object = object> {
  * because the hook is producing (or shifting) them.
  */
 export interface AddonTransformContext<TExtra extends object = object> {
-    readonly value: string | null;
+    readonly mode: SelectionMode;
+    /** Canonical value in its mode-specific shape. */
+    readonly value: SelectionValue;
+    /** First selected option (or `null`). */
     readonly selectedOption: SelectOption<TExtra> | null;
+    /** Every selected option (empty in "no selection" or single-mode-with-null). */
+    readonly selectedOptions: ReadonlyArray<SelectOption<TExtra>>;
     readonly query: string;
     readonly open: boolean;
 }
@@ -117,15 +180,37 @@ export interface SelectBoxAddon<TExtra extends object = object> {
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }
 
-export interface SingleSelectBoxControllerConfig<TExtra extends object = object> {
+/** Options + filter + addon configuration shared by every controller flavour. */
+export interface SelectBoxControllerCommonConfig<TExtra extends object = object> {
     /** Flat options. Leaves with a `group` key are bundled into that group. */
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
-    /** Initial selected value (coerced to string). */
-    readonly initialValue?: string | number | null;
     /** Custom filter; defaults to case-insensitive substring match. */
     readonly filter?: OptionFilterStrategy<TExtra>;
     /** Label rendered for the synthetic group that holds ungrouped options. */
     readonly ungroupedLabel?: string;
     /** Addons registered before the first snapshot. Equivalent to calling `.use()` in order. */
     readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+}
+
+/** Config accepted by the unified `SelectBoxController`. The `mode` flag picks the default driver. */
+export interface SelectBoxControllerConfig<TExtra extends object = object>
+    extends SelectBoxControllerCommonConfig<TExtra> {
+    /** Defaults to `"single"`. */
+    readonly mode?: SelectionMode;
+    /** Initial selection — single value for "single", array for "multi", `null` for empty. */
+    readonly initialValue?: SelectionValueInput;
+}
+
+/** Config accepted by `SingleSelectBoxController`. */
+export interface SingleSelectBoxControllerConfig<TExtra extends object = object>
+    extends SelectBoxControllerCommonConfig<TExtra> {
+    /** Initial selected value (coerced to string). */
+    readonly initialValue?: string | number | null;
+}
+
+/** Config accepted by `MultiSelectBoxController`. */
+export interface MultiSelectBoxControllerConfig<TExtra extends object = object>
+    extends SelectBoxControllerCommonConfig<TExtra> {
+    /** Initial selected values (each coerced to string; duplicates dropped). */
+    readonly initialValue?: ReadonlyArray<string | number>;
 }

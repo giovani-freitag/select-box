@@ -1,11 +1,14 @@
 import {
+    SelectBoxController,
+    SelectBoxKeyDispatcher,
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
-    SingleSelectBoxController,
+    SelectBoxSnapshotView,
     TextHighlighter,
+    type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
+    type SelectionValue,
     type SelectOption,
-    type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
 
 const ESTIMATED_OPTION_HEIGHT = 36;
@@ -13,22 +16,42 @@ const ESTIMATED_HEADER_HEIGHT = 28;
 const LIST_VIEWPORT_HEIGHT = 240;
 
 /**
- * Light-DOM select box view that wires a `SingleSelectBoxController` into a host element.
+ * Light-DOM select box view that wires a `SelectBoxController` into a host
+ * element. Supports both single and multi modes via the config's `mode` flag.
  */
 export class SelectBoxView<TExtra extends object = object> {
     readonly root: HTMLDivElement;
 
-    private readonly controller: SingleSelectBoxController<TExtra>;
+    private readonly controller: SelectBoxController<TExtra, SelectionValue>;
+    private readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
     private readonly trigger: HTMLDivElement;
+    private readonly tagsContainer: HTMLDivElement;
     private readonly input: HTMLInputElement;
     private readonly caret: HTMLButtonElement;
+    private readonly clearButton: HTMLButtonElement;
     private readonly popover: HTMLDivElement;
     private readonly list: HTMLDivElement;
 
+    /** Live mode flag — reflects the controller's current selection mode. */
+    private get multi(): boolean {
+        return this.controller.mode === "multi";
+    }
+
+    /** Adds or removes the multi-mode marker on the root. */
+    setMode(nextMode: "single" | "multi"): void {
+        this.controller.setMode(nextMode);
+    }
+
     private unsubscribeFromStore: (() => void) | null = null;
-    private previousValue: string | null = null;
-    private readonly onValueChange:
+    private previousValueKey: string;
+    private readonly onSingleChange:
         | ((value: string | null, option: SelectOption<TExtra> | null) => void)
+        | undefined;
+    private readonly onMultiChange:
+        | ((
+              values: ReadonlyArray<string>,
+              options: ReadonlyArray<SelectOption<TExtra>>,
+          ) => void)
         | undefined;
     private readonly placeholder: string;
 
@@ -39,22 +62,36 @@ export class SelectBoxView<TExtra extends object = object> {
     private lastScrolledActiveIndex = -1;
     private listInnerWrapper: HTMLDivElement | null = null;
 
-    constructor(config: SingleSelectBoxControllerConfig<TExtra> & {
-        readonly placeholder?: string;
-        readonly onValueChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
-    }) {
-        this.controller = new SingleSelectBoxController<TExtra>(config);
-        this.previousValue = this.controller.getState().value;
+    constructor(
+        config: SelectBoxControllerConfig<TExtra> & {
+            readonly placeholder?: string;
+            readonly onValueChange?: (
+                value: string | null,
+                option: SelectOption<TExtra> | null,
+            ) => void;
+            readonly onMultiValueChange?: (
+                values: ReadonlyArray<string>,
+                options: ReadonlyArray<SelectOption<TExtra>>,
+            ) => void;
+        },
+    ) {
+        this.controller = new SelectBoxController<TExtra, SelectionValue>(config);
+        this.keyDispatcher = new SelectBoxKeyDispatcher(this.controller);
+        this.previousValueKey = SelectBoxSnapshotView.valueKey(this.controller.getState().value);
         this.placeholder = config.placeholder ?? "Select…";
-        this.onValueChange = config.onValueChange;
+        this.onSingleChange = config.onValueChange;
+        this.onMultiChange = config.onMultiValueChange;
 
         this.root = document.createElement("div");
-        this.root.className = "select-box";
+        this.root.className = this.multi ? "select-box select-box-multi" : "select-box";
         this.root.dataset["selectRoot"] = "";
+        this.root.dataset["selectMode"] = this.multi ? "multi" : "single";
 
         this.trigger = this.createTrigger();
+        this.tagsContainer = this.trigger.querySelector<HTMLDivElement>(".select-box-tags")!;
         this.input = this.trigger.querySelector<HTMLInputElement>(".select-box-input")!;
         this.caret = this.trigger.querySelector<HTMLButtonElement>(".select-box-caret")!;
+        this.clearButton = this.trigger.querySelector<HTMLButtonElement>(".select-box-clear")!;
         this.popover = this.createPopover();
         this.list = this.popover.querySelector<HTMLDivElement>(".select-box-list")!;
 
@@ -82,7 +119,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.root.remove();
     }
 
-    getController(): SingleSelectBoxController<TExtra> {
+    getController(): SelectBoxController<TExtra, SelectionValue> {
         return this.controller;
     }
 
@@ -106,15 +143,28 @@ export class SelectBoxView<TExtra extends object = object> {
         const trigger = document.createElement("div");
         trigger.className = "select-box-trigger";
         trigger.dataset["selectTrigger"] = "";
+        if (this.multi) {
+            trigger.setAttribute("role", "combobox");
+            trigger.setAttribute("aria-haspopup", "listbox");
+            trigger.setAttribute("aria-expanded", "false");
+        }
+
+        const tags = document.createElement("div");
+        tags.className = "select-box-tags";
+        tags.dataset["selectTags"] = "";
 
         const input = document.createElement("input");
         input.type = "text";
         input.className = "select-box-input";
-        input.setAttribute("role", "combobox");
-        input.setAttribute("aria-haspopup", "listbox");
+        input.setAttribute("role", this.multi ? "searchbox" : "combobox");
+        if (!this.multi) {
+            input.setAttribute("aria-haspopup", "listbox");
+            input.setAttribute("aria-expanded", "false");
+        }
         input.setAttribute("aria-autocomplete", "list");
-        input.setAttribute("aria-expanded", "false");
         input.dataset["selectInput"] = "";
+
+        tags.append(input);
 
         const caret = document.createElement("button");
         caret.type = "button";
@@ -122,8 +172,18 @@ export class SelectBoxView<TExtra extends object = object> {
         caret.tabIndex = -1;
         caret.setAttribute("aria-hidden", "true");
         caret.textContent = "▾";
+        if (this.multi) caret.hidden = true;
 
-        trigger.append(input, caret);
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "select-box-clear";
+        clear.tabIndex = -1;
+        clear.setAttribute("aria-label", "Clear all");
+        clear.dataset["selectClear"] = "";
+        clear.textContent = "×";
+        clear.hidden = true;
+
+        trigger.append(tags, caret, clear);
         return trigger;
     }
 
@@ -131,6 +191,7 @@ export class SelectBoxView<TExtra extends object = object> {
         const popover = document.createElement("div");
         popover.className = "select-box-popover";
         popover.setAttribute("role", "listbox");
+        if (this.multi) popover.setAttribute("aria-multiselectable", "true");
         popover.dataset["selectPopover"] = "";
         popover.hidden = true;
 
@@ -150,6 +211,11 @@ export class SelectBoxView<TExtra extends object = object> {
         this.input.addEventListener("keydown", this.handleInputKeyDown);
         this.caret.addEventListener("mousedown", this.handleCaretMouseDown);
         this.caret.addEventListener("click", this.handleCaretClick);
+        // Always attach the multi-mode listeners; they self-gate on the
+        // controller's current mode so the view reacts when mode flips at runtime.
+        this.trigger.addEventListener("mousedown", this.handleTriggerMouseDown);
+        this.clearButton.addEventListener("mousedown", this.handleClearMouseDown);
+        this.clearButton.addEventListener("click", this.handleClearClick);
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
@@ -162,6 +228,9 @@ export class SelectBoxView<TExtra extends object = object> {
         this.input.removeEventListener("keydown", this.handleInputKeyDown);
         this.caret.removeEventListener("mousedown", this.handleCaretMouseDown);
         this.caret.removeEventListener("click", this.handleCaretClick);
+        this.trigger.removeEventListener("mousedown", this.handleTriggerMouseDown);
+        this.clearButton.removeEventListener("mousedown", this.handleClearMouseDown);
+        this.clearButton.removeEventListener("click", this.handleClearClick);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
@@ -192,26 +261,32 @@ export class SelectBoxView<TExtra extends object = object> {
         }
     };
 
+    private readonly handleTriggerMouseDown = (event: MouseEvent): void => {
+        if (this.controller.getState().mode !== "multi") return;
+        if (event.target === this.input) return;
+        if (event.target instanceof Element &&
+            event.target.closest("[data-select-chip-remove], [data-select-clear]")) return;
+        event.preventDefault();
+        if (!this.controller.getState().open) this.controller.open();
+        this.input.focus({ preventScroll: true });
+    };
+
+    private readonly handleClearMouseDown = (event: Event): void => {
+        if (this.controller.getState().mode !== "multi") return;
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    private readonly handleClearClick = (event: Event): void => {
+        if (this.controller.getState().mode !== "multi") return;
+        event.stopPropagation();
+        this.controller.clear();
+        this.input.focus({ preventScroll: true });
+    };
+
     private readonly handleInputKeyDown = (event: KeyboardEvent): void => {
-        if (event.key === "ArrowDown") {
+        if (this.keyDispatcher.dispatch(event.key) === "handled") {
             event.preventDefault();
-            if (!this.controller.getState().open) this.controller.open();
-            else this.controller.moveActive(1);
-            return;
-        }
-        if (event.key === "ArrowUp") {
-            event.preventDefault();
-            this.controller.moveActive(-1);
-            return;
-        }
-        if (event.key === "Enter") {
-            event.preventDefault();
-            this.controller.commitActive();
-            return;
-        }
-        if (event.key === "Escape") {
-            event.preventDefault();
-            this.controller.close();
         }
     };
 
@@ -225,29 +300,106 @@ export class SelectBoxView<TExtra extends object = object> {
     private readonly handleSnapshotChange = (): void => {
         const snapshot = this.controller.getState();
         this.paint(snapshot);
-        if (snapshot.value !== this.previousValue) {
-            this.previousValue = snapshot.value;
-            this.onValueChange?.(snapshot.value, snapshot.selectedOption);
+        const currentKey = SelectBoxSnapshotView.valueKey(snapshot.value);
+        if (currentKey !== this.previousValueKey) {
+            this.previousValueKey = currentKey;
+            if (snapshot.mode === "multi") {
+                this.onMultiChange?.(
+                    snapshot.value as ReadonlyArray<string>,
+                    snapshot.selectedOptions,
+                );
+            } else {
+                this.onSingleChange?.(
+                    snapshot.value as string | null,
+                    snapshot.selectedOption,
+                );
+            }
         }
     };
 
-    private paint(snapshot: SelectBoxSnapshot<TExtra>): void {
-        const inputValue = snapshot.open ? snapshot.query : (snapshot.selectedOption?.label ?? "");
+    private paint(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {
+        const view = new SelectBoxSnapshotView(snapshot);
+        const isMulti = snapshot.mode === "multi";
+
+        // Keep host-level mode markers in sync so consumer CSS can branch on them.
+        if (isMulti) {
+            this.root.classList.add("select-box-multi");
+        } else {
+            this.root.classList.remove("select-box-multi");
+        }
+        this.root.dataset["selectMode"] = snapshot.mode;
+        this.caret.hidden = isMulti;
+        if (isMulti) this.popover.setAttribute("aria-multiselectable", "true");
+        else this.popover.removeAttribute("aria-multiselectable");
+
+        const inputValue = view.triggerInputValue;
         if (this.input.value !== inputValue) {
             this.input.value = inputValue;
         }
-        this.input.placeholder = snapshot.open && snapshot.selectedOption
-            ? snapshot.selectedOption.label
-            : this.placeholder;
-        this.input.setAttribute("aria-expanded", String(snapshot.open));
+        const hasSelection = snapshot.selectedOptions.length > 0;
+        this.input.placeholder = isMulti
+            ? (hasSelection ? "" : this.placeholder)
+            : (snapshot.open && snapshot.selectedOption
+                ? snapshot.selectedOption.label
+                : this.placeholder);
+
+        if (isMulti) {
+            this.trigger.setAttribute("aria-expanded", String(snapshot.open));
+        } else {
+            this.input.setAttribute("aria-expanded", String(snapshot.open));
+        }
+
+        this.paintChips(snapshot, isMulti);
+        this.clearButton.hidden = !(isMulti && hasSelection);
 
         this.popover.hidden = !snapshot.open;
         if (!snapshot.open) return;
 
-        this.paintList(snapshot);
+        this.paintList(snapshot, view, isMulti);
     }
 
-    private paintList(snapshot: SelectBoxSnapshot<TExtra>): void {
+    private paintChips(
+        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
+        isMulti: boolean,
+    ): void {
+        const existingChips = this.tagsContainer.querySelectorAll<HTMLSpanElement>(
+            ".select-box-chip",
+        );
+        existingChips.forEach((chip) => chip.remove());
+        if (!isMulti) return;
+        const fragment = document.createDocumentFragment();
+        for (const option of snapshot.selectedOptions) {
+            fragment.appendChild(this.createChipElement(option));
+        }
+        this.tagsContainer.insertBefore(fragment, this.input);
+    }
+
+    private createChipElement(option: SelectOption<TExtra>): HTMLSpanElement {
+        const chip = document.createElement("span");
+        chip.className = "select-box-chip";
+        chip.dataset["selectChip"] = "";
+        chip.append(document.createTextNode(option.label));
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "select-box-chip-remove";
+        remove.setAttribute("aria-label", `Remove ${option.label}`);
+        remove.dataset["selectChipRemove"] = "";
+        remove.textContent = "×";
+        remove.addEventListener("mousedown", (event) => event.stopPropagation());
+        remove.addEventListener("click", (event) => {
+            event.stopPropagation();
+            this.controller.commitOption(option);
+            this.input.focus({ preventScroll: true });
+        });
+        chip.append(remove);
+        return chip;
+    }
+
+    private paintList(
+        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
+        view: SelectBoxSnapshotView<TExtra, SelectionValue>,
+        isMulti: boolean,
+    ): void {
         if (snapshot.filteredGroups !== this.lastRowModelSource) {
             this.rowModel = new SelectBoxRowModel<TExtra>({ groups: snapshot.filteredGroups });
             this.lastRowModelSource = snapshot.filteredGroups;
@@ -264,10 +416,6 @@ export class SelectBoxView<TExtra extends object = object> {
             return;
         }
 
-        // Keep a stable inner wrapper anchored to `list` — never remove it
-        // between paints. Wiping the list and re-appending mid-paint shrinks
-        // `list.scrollHeight` to 0 and the browser clamps `scrollTop` to 0,
-        // which manifests as a scroll-reset flicker every time the user drags.
         let wrapper = this.listInnerWrapper;
         if (wrapper === null || wrapper.parentNode !== this.list) {
             wrapper = document.createElement("div");
@@ -291,22 +439,22 @@ export class SelectBoxView<TExtra extends object = object> {
             const node =
                 row.kind === "header"
                     ? this.createHeaderElement(row.group.label)
-                    : this.createOptionButton(row.option, virtualRow.index === activeRowIndex);
+                    : this.createOptionButton(
+                          row.option,
+                          virtualRow.index === activeRowIndex,
+                          view.isSelected(row.option.value),
+                          isMulti,
+                      );
             node.dataset["index"] = String(virtualRow.index);
             renderedNodes.push(node);
         }
 
-        // Atomic child swap on the same wrapper; total height is preserved
-        // (padding compensates), so the browser doesn't reset scrollTop.
         wrapper.replaceChildren(...renderedNodes);
 
         for (const node of renderedNodes) {
             this.listVirtualizer.measureElement(node);
         }
 
-        // Only scroll when the active row actually changed — otherwise every
-        // scroll-driven repaint would yank the viewport back to the active
-        // option, fighting the user's wheel/touch.
         if (activeRowIndex >= 0 && activeRowIndex !== this.lastScrolledActiveIndex) {
             this.lastScrolledActiveIndex = activeRowIndex;
             this.listVirtualizer.scrollToIndex(activeRowIndex, "auto");
@@ -322,19 +470,38 @@ export class SelectBoxView<TExtra extends object = object> {
         return header;
     }
 
-    private createOptionButton(option: SelectOption<TExtra>, isActive: boolean): HTMLButtonElement {
+    private createOptionButton(
+        option: SelectOption<TExtra>,
+        isActive: boolean,
+        isSelected: boolean,
+        isMulti: boolean,
+    ): HTMLButtonElement {
         const button = document.createElement("button");
         button.type = "button";
+        button.setAttribute("role", "option");
+        button.setAttribute("aria-selected", String(isSelected));
         const classes = ["select-box-option"];
         if (isActive) classes.push("select-box-option-active");
+        if (isSelected && isMulti) classes.push("select-box-option-selected");
         if (option.disabled) classes.push("select-box-option-disabled");
         button.className = classes.join(" ");
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
+        if (isSelected) button.dataset["selectSelected"] = "";
         if (option.disabled) button.disabled = true;
+        if (isMulti) {
+            const tick = document.createElement("span");
+            tick.className = "select-box-option-tick";
+            tick.setAttribute("aria-hidden", "true");
+            tick.textContent = isSelected ? "✓" : "";
+            button.append(tick);
+        }
         button.append(...this.createLabelNodes(option.label));
         button.addEventListener("mousedown", (event) => event.preventDefault());
-        button.addEventListener("click", () => this.controller.commitOption(option));
+        button.addEventListener("click", () => {
+            this.controller.commitOption(option);
+            if (isMulti) this.input.focus({ preventScroll: true });
+        });
         return button;
     }
 

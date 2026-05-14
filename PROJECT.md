@@ -87,13 +87,20 @@ create-option, remove-button, restore-on-backspace, persist).
 
 ### 4.1 Pattern
 
-**Observer / external store.** Every controller exposes:
+**Observer / external store.** A single unified controller drives every
+select-box. Cardinality (single vs multi) is delegated to a pluggable
+`SelectionDriver` — everything else (open/close, filter pipeline,
+virtualization, keyboard nav, ARIA, addon host) is shared.
 
 ```ts
-class SingleSelectBoxController<TExtra extends object = object> {
-    constructor(config: SingleSelectBoxControllerConfig<TExtra>);
+class SelectBoxController<
+    TExtra extends object = object,
+    TValue extends SelectionValue = string | null,
+> {
+    readonly mode: SelectionMode;
+    constructor(config: SelectBoxControllerConfig<TExtra>);
 
-    getState(): SelectBoxSnapshot<TExtra>;
+    getState(): SelectBoxSnapshot<TExtra, TValue>;
     subscribe(listener: () => void): () => void;   // returns unsubscribe
 
     // Mutations — all sync, fire listeners after state change
@@ -103,18 +110,32 @@ class SingleSelectBoxController<TExtra extends object = object> {
     setQuery(query: string): void;
     moveActive(delta: number): void;
     commitActive(): void;
-    commitOption(option: SelectOption<TExtra>): void;
-    commitValue(value: string | number | null): void;  // resolves by string identity
+    commitOption(option: SelectOption<TExtra>): void;          // driver decides replace vs toggle
+    commitValue(input: SelectionValueInput): void;             // accepts single, array, or null
     clear(): void;
     use(addon: SelectBoxAddon<TExtra>): this;
     destroy(): void;
 }
+
+// Sugar over the unified class. Three lines each — preset `mode`, fix TValue.
+class SingleSelectBoxController<TExtra extends object = object>
+    extends SelectBoxController<TExtra, string | null> { /* { mode: "single" } */ }
+class MultiSelectBoxController<TExtra extends object = object>
+    extends SelectBoxController<TExtra, ReadonlyArray<string>> { /* { mode: "multi" } */ }
 ```
+
+The `SelectionDriver` contract is small — `empty`, `coerce`, `commit`,
+`contains`, `keys`, plus a `closeOnCommit` flag and a `mode` label.
+Drivers are **pure transformers**: they receive the current value, return
+the next value, and never reach back into the controller. The shipped
+drivers (`SingleSelectionDriver`, `MultiSelectionDriver`) cover both
+cardinalities; a future "tags"-style mode would add a third driver, not
+a new controller.
 
 `TExtra` is an optional payload generic — fields you ride on top of the
 canonical `{ value, label, group?, disabled? }` envelope (see §4.5). The
 controller never inspects `TExtra`; it just hands it back to you in
-`selectedOption` and the active/filtered snapshots.
+`selectedOption` / `selectedOptions` and the active/filtered snapshots.
 
 This is the same shape React's `useSyncExternalStore` consumes, what
 Vue's `customRef`/`watchEffect` bridges, what Lit's `ReactiveController`
@@ -335,16 +356,21 @@ factory but with the **same signature and snapshot fields**:
 | Framework | Entry | Returns |
 |---|---|---|
 | Vanilla / Web Components | `<select-box options="…" mode="single">` + DOM events | Element with `.controller` getter |
-| React | `const { state, controller } = useSelectBox(config)` | Snapshot + controller methods |
+| React | `const { state, controller } = useSelectBox(config)` (and `useMultiSelectBox`) | Snapshot + controller methods |
 | Vue | `const { state, controller } = useSelectBox(config)` | Reactive refs + methods |
 | Lit | `class extends LitElement { selectBox = new SelectBoxController(this, config) }` | Lit-reactive |
 | jQuery | `$('selector').selectBox(config)` chain + `.selectBox('controller')` | jQuery collection |
 
-Snapshot field names are identical across every wrapper. Today (single
-mode): `open`, `query`, `value` (string or null), `selectedOption`,
-`filteredGroups`, `activeIndex`, `activeOption`, `isEmpty`, `addons`.
-Multi mode (M2) will add a sibling `selectedOptions` plural alongside —
-the single-mode field stays for code that wants the simple case.
+Snapshot field names are identical across every wrapper:
+`mode`, `open`, `query`, `value`, `selectedOption`, `selectedOptions`,
+`filteredGroups`, `activeIndex`, `activeOption`, `isEmpty`,
+`highlightRanges`, `addons`. The `value` field is `string | null` in
+single mode and `ReadonlyArray<string>` in multi mode — typed via the
+controller's `TValue` generic. **Both `selectedOption` and
+`selectedOptions` are always present** (the singular is the first item
+of the list, or `null` when nothing is selected) so mode-agnostic
+consumer code reads whichever shape it prefers without narrowing.
+
 **Tests assert on these field names directly.**
 
 ## 6. Testing strategy
@@ -488,11 +514,13 @@ project). Concretely:
   `onKeyDown`) are forward-looking design and will be added once the
   first-party addon that needs each one is in flight.
 
-The internal split mirrors the existing legacy controllers
-(`SingleComboboxController`, `MultiComboboxController` in the consumer
-project) but lifts every DOM reference out — the controllers now operate
-purely on snapshots and options. They are renamed `SingleSelectBoxController`
-and `MultiSelectBoxController` here.
+The two legacy controllers (`SingleComboboxController` and
+`MultiComboboxController` in the consumer project) are unified here into
+a single `SelectBoxController` whose mode-specific behaviour lives in
+the injected `SelectionDriver` (see §4.1). `SingleSelectBoxController`
+and `MultiSelectBoxController` are kept as 3-line sugar subclasses that
+preset `mode` and fix the value-type generic — wrappers and apps that
+already import `SingleSelectBoxController` keep compiling unchanged.
 
 ## 9. Milestones
 
@@ -505,8 +533,10 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` CI: lint + typecheck + vitest on push (`.github/workflows/ci.yml`).
 
 **M1 — Core + every wrapper, single mode** — `[wip]`
-- `[done]` `SingleSelectBoxController` (option coercion, value→option Map
-  index, keyboard nav, filter strategy slot).
+- `[done]` Unified `SelectBoxController` (option coercion, value→option
+  Map index, keyboard nav, filter strategy slot, `SelectionDriver`
+  injection). `SingleSelectBoxController` shipped as the single-mode
+  sugar subclass.
 - `[done]` Option groups in the snapshot + keyboard nav skipping
   headers/disabled.
 - `[done]` Filter strategies: substring shipped (default); fuzzy shipped
@@ -528,8 +558,20 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
   Remaining hooks (`interceptCommit`, `interceptOpen/Close`, `onKeyDown`)
   postponed until the first-party addon that needs them is in flight (M2).
 
-**M2 — Multi mode + inline UI variant + first-party addons** — `[plan]`
-- `[plan]` `MultiSelectBoxController` extending the same base.
+**M2 — Multi mode + inline UI variant + first-party addons** — `[wip]`
+- `[done]` `MultiSelectBoxController` sugar over the unified controller,
+  driven by `MultiSelectionDriver` (toggle commit semantics, `closeOnCommit`
+  false, `value: ReadonlyArray<string>`, snapshot exposes both
+  `selectedOption` and `selectedOptions`).
+- `[done]` `@select-box/react` ships multi mode as a discriminated `multi`
+  prop on the same `<SelectBox />` (chips inside the input, popover that
+  stays open on commit, virtualised list, search and keyboard nav matching
+  the single-mode component). `useSelectBox` is overloaded so the hook
+  signature carries the mode through to the snapshot's value type;
+  `useMultiSelectBox` is exported as sugar.
+- `[wip]` Multi-mode wiring in the styled component of the remaining wrappers
+  (Vue, Lit, Web Components, jQuery) — same chip-inside-input UX, parity
+  test suite, demo on the docs framework switcher.
 - `[plan]` Inline chip surface as an alternative trigger render.
 - `[plan]` First-party addon packages (shipped: `@select-box/addon-fuzzy`,
   `@select-box/addon-hoist-selected`). Remaining: clear-button,

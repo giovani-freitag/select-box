@@ -1,14 +1,19 @@
-import type { SelectOption, SingleSelectBoxControllerConfig, SingleSelectBoxController } from "@select-box/core";
+import type {
+    SelectBoxController,
+    SelectBoxControllerConfig,
+    SelectionValue,
+    SelectOption,
+} from "@select-box/core";
 import type JQueryStatic from "jquery";
 
 import { SelectBoxView } from "./select-box-view.js";
 
 export interface SelectBoxPluginConfig<TExtra extends object = object>
-    extends SingleSelectBoxControllerConfig<TExtra> {
+    extends SelectBoxControllerConfig<TExtra> {
     readonly placeholder?: string;
 }
 
-type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller";
+type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller" | "setMode";
 
 const VIEWS = new WeakMap<HTMLElement, SelectBoxView>();
 
@@ -21,9 +26,10 @@ export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
     function selectBoxPlugin<TExtra extends object = object>(
         this: JQuery,
         configOrMethod: SelectBoxPluginConfig<TExtra> | Method,
-    ): JQuery | SingleSelectBoxController<TExtra> | undefined {
+        arg?: "single" | "multi",
+    ): JQuery | SelectBoxController<TExtra, SelectionValue> | undefined {
         if (typeof configOrMethod === "string") {
-            return invokeMethod<TExtra>(this, configOrMethod);
+            return invokeMethod<TExtra>(this, configOrMethod, arg);
         }
         return initialize<TExtra>(this, configOrMethod, jq);
     }
@@ -43,6 +49,12 @@ function initialize<TExtra extends object>(
             onValueChange: (value: string | null, option: SelectOption<TExtra> | null) => {
                 jq(host).trigger("change", [value, option]);
             },
+            onMultiValueChange: (
+                values: ReadonlyArray<string>,
+                options: ReadonlyArray<SelectOption<TExtra>>,
+            ) => {
+                jq(host).trigger("selectbox:change", [values, options]);
+            },
         });
         host.replaceChildren(view.root);
         VIEWS.set(host, view as unknown as SelectBoxView);
@@ -53,7 +65,8 @@ function initialize<TExtra extends object>(
 function invokeMethod<TExtra extends object>(
     collection: JQuery,
     method: Method,
-): JQuery | SingleSelectBoxController<TExtra> | undefined {
+    arg?: "single" | "multi",
+): JQuery | SelectBoxController<TExtra, SelectionValue> | undefined {
     if (method === "controller") {
         const first = collection.get(0);
         if (!first) return undefined;
@@ -76,6 +89,9 @@ function invokeMethod<TExtra extends object>(
                 break;
             case "clear":
                 view.clear();
+                break;
+            case "setMode":
+                if (arg === "single" || arg === "multi") view.setMode(arg);
                 break;
             case "destroy":
                 view.destroy();

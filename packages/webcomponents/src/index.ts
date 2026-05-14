@@ -3,14 +3,22 @@ import { SelectBoxElement } from "./select-box-element.js";
 export { SelectBoxElement } from "./select-box-element.js";
 
 export {
+    MultiSelectBoxController,
+    SelectBoxController,
+    SelectBoxKeyDispatcher,
+    SelectBoxSnapshotView,
     SingleSelectBoxController,
     SubstringFilterStrategy,
     type AddonHookContext,
+    type MultiSelectBoxControllerConfig,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxAddonSnapshots,
+    type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
     type SelectGroup,
+    type SelectionMode,
+    type SelectionValue,
     type SelectOption,
     type SingleSelectBoxControllerConfig,
 } from "@select-box/core";

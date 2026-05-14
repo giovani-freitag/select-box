@@ -1,24 +1,31 @@
 import {
-    SingleSelectBoxController as CoreController,
+    SelectBoxController as CoreController,
     type OptionFilterStrategy,
+    type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
+    type SelectionValue,
+    type SelectionValueInput,
     type SelectOption,
-    type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 
 /**
  * Lit `ReactiveController` adapter for the select-box core; requests a host
- * re-render on every snapshot change.
+ * re-render on every snapshot change. Generic over the value type so single-
+ * (`string | null`) and multi-mode (`ReadonlyArray<string>`) hosts both share
+ * this one adapter.
  */
-export class SelectBoxController<TExtra extends object = object> implements ReactiveController {
+export class SelectBoxController<
+    TExtra extends object = object,
+    TValue extends SelectionValue = string | null,
+> implements ReactiveController {
     private readonly host: ReactiveControllerHost;
-    private readonly controller: CoreController<TExtra>;
+    private readonly controller: CoreController<TExtra, TValue>;
     private unsubscribe: (() => void) | null = null;
 
-    constructor(host: ReactiveControllerHost, config: SingleSelectBoxControllerConfig<TExtra>) {
+    constructor(host: ReactiveControllerHost, config: SelectBoxControllerConfig<TExtra>) {
         this.host = host;
-        this.controller = new CoreController<TExtra>(config);
+        this.controller = new CoreController<TExtra, TValue>(config);
         host.addController(this);
     }
 
@@ -34,7 +41,12 @@ export class SelectBoxController<TExtra extends object = object> implements Reac
         this.controller.destroy();
     }
 
-    get state(): SelectBoxSnapshot<TExtra> {
+    /** Core controller — exposed so the styled component can wire dispatchers/views. */
+    get core(): CoreController<TExtra, TValue> {
+        return this.controller;
+    }
+
+    get state(): SelectBoxSnapshot<TExtra, TValue> {
         return this.controller.getState();
     }
 
@@ -66,8 +78,8 @@ export class SelectBoxController<TExtra extends object = object> implements Reac
         this.controller.commitOption(option);
     }
 
-    commitValue(value: string | number | null): void {
-        this.controller.commitValue(value);
+    commitValue(input: SelectionValueInput): void {
+        this.controller.commitValue(input);
     }
 
     setFilter(strategy: OptionFilterStrategy<TExtra>): void {

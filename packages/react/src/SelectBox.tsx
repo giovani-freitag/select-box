@@ -1,34 +1,49 @@
 import {
-    SelectBoxListVirtualizer,
-    SelectBoxRowModel,
-    TextHighlighter,
+    SelectBoxKeyDispatcher,
+    SelectBoxSnapshotView,
     type OptionFilterStrategy,
     type SelectBoxAddon,
+    type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
-    type SelectGroup,
+    type SelectionValue,
+    type SelectionValueInput,
     type SelectOption,
 } from "@select-box/core";
 import {
-    useCallback,
     useEffect,
-    useMemo,
     useRef,
-    useState,
-    useSyncExternalStore,
     type ChangeEvent,
     type JSX,
     type KeyboardEvent,
     type MouseEvent,
+    type RefObject,
 } from "react";
 
-import { useSelectBox } from "./use-select-box.js";
+import { useSelectBox, type UseSelectBoxResult } from "./use-select-box.js";
+import {
+    useClickOutsideClose,
+    useFilterReactivity,
+    useNotifyChange,
+    useSelectBoxKeyDispatcher,
+} from "./internal/hooks.js";
+import { SelectPopover } from "./internal/SelectPopover.js";
 
-const ESTIMATED_OPTION_HEIGHT = 36;
-const ESTIMATED_HEADER_HEIGHT = 28;
-const LIST_VIEWPORT_HEIGHT = 240;
+/* ---------------- props ---------------- */
 
-export interface SelectBoxProps<TExtra extends object = object> {
+interface SelectBoxBaseProps<TExtra extends object> {
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
+    readonly placeholder?: string;
+    readonly ungroupedLabel?: string;
+    readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+    readonly filter?: OptionFilterStrategy<TExtra>;
+    readonly className?: string;
+    readonly "aria-label"?: string;
+    readonly "aria-labelledby"?: string;
+}
+
+export interface SelectBoxSingleProps<TExtra extends object = object>
+    extends SelectBoxBaseProps<TExtra> {
+    readonly multi?: false;
     /** Initial value (coerced to string). The component owns the selection internally; listen via `onChange`. */
     readonly defaultValue?: string | number | null;
     /**
@@ -37,62 +52,150 @@ export interface SelectBoxProps<TExtra extends object = object> {
      * identifier; `option` is the full option object (with any extra payload).
      */
     readonly onChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
-    readonly placeholder?: string;
-    readonly ungroupedLabel?: string;
-    readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
-    readonly filter?: OptionFilterStrategy<TExtra>;
-    /** Extra class applied to the root element. */
-    readonly className?: string;
-    readonly "aria-label"?: string;
-    readonly "aria-labelledby"?: string;
+}
+
+export interface SelectBoxMultiProps<TExtra extends object = object>
+    extends SelectBoxBaseProps<TExtra> {
+    readonly multi: true;
+    /** Initial selection (each value coerced to string; duplicates dropped). */
+    readonly defaultValue?: ReadonlyArray<string | number>;
+    /** Fires whenever the committed selection changes. Both args are stable per change. */
+    readonly onChange?: (
+        values: ReadonlyArray<string>,
+        options: ReadonlyArray<SelectOption<TExtra>>,
+    ) => void;
 }
 
 /**
- * Default single-select box component; use `useSelectBox()` directly for custom markup.
+ * Discriminated union of single- and multi-select props. Set `multi` to `true`
+ * for multi-select semantics; the rest of the surface stays consistent.
  */
-export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<TExtra>): JSX.Element {
-    const {
-        options,
-        defaultValue = null,
-        onChange,
-        placeholder,
-        ungroupedLabel,
-        addons,
-        filter,
-        className,
-        "aria-label": ariaLabel,
-        "aria-labelledby": ariaLabelledby,
-    } = props;
+export type SelectBoxProps<TExtra extends object = object> =
+    | SelectBoxSingleProps<TExtra>
+    | SelectBoxMultiProps<TExtra>;
 
-    const { state, controller } = useSelectBox<TExtra>({
-        ...(options !== undefined ? { options } : {}),
-        ...(addons !== undefined ? { addons } : {}),
-        ...(filter !== undefined ? { filter } : {}),
-        ...(ungroupedLabel !== undefined ? { ungroupedLabel } : {}),
-        initialValue: defaultValue,
-    });
+/**
+ * Default select-box component. `multi` switches between single-pick (replace
+ * on commit, popover closes) and multi-pick (toggle on commit, popover stays
+ * open). Toggling `multi` at runtime preserves the current selection
+ * (single→multi wraps as singleton, multi→single keeps the first option),
+ * mirroring how the browser handles `<select multiple>` toggle. Drop to
+ * `useSelectBox()` for fully custom markup.
+ */
+export function SelectBox<TExtra extends object = object>(
+    props: SelectBoxProps<TExtra>,
+): JSX.Element {
+    const initialMulti = props.multi === true;
+    const initialValue: SelectionValueInput = initialMulti
+        ? ((props.defaultValue as ReadonlyArray<string | number> | undefined) ?? [])
+        : ((props.defaultValue as string | number | null | undefined) ?? null);
 
+    const controllerConfig: SelectBoxControllerConfig<TExtra> = {
+        mode: initialMulti ? "multi" : "single",
+        ...(props.options !== undefined ? { options: props.options } : {}),
+        ...(props.addons !== undefined ? { addons: props.addons } : {}),
+        ...(props.filter !== undefined ? { filter: props.filter } : {}),
+        ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
+        initialValue,
+    };
+
+    const { state, controller } = useSelectBox<TExtra>(
+        controllerConfig as Parameters<typeof useSelectBox<TExtra>>[0],
+    );
+
+    const wantMulti = props.multi === true;
     useEffect(() => {
-        if (filter === undefined) return;
-        controller.setFilter(filter);
-    }, [controller, filter]);
-
-    useNotifyOnChange(state.value, state.selectedOption, onChange);
+        const currentMulti = controller.mode === "multi";
+        if (currentMulti !== wantMulti) {
+            controller.setMode(wantMulti ? "multi" : "single");
+        }
+    }, [controller, wantMulti]);
 
     const rootRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        if (!state.open) return;
-        function handleMouseDown(event: globalThis.MouseEvent): void {
-            if (!(event.target instanceof Node)) return;
-            if (rootRef.current?.contains(event.target)) return;
-            controller.close();
-        }
-        document.addEventListener("mousedown", handleMouseDown);
-        return () => {
-            document.removeEventListener("mousedown", handleMouseDown);
-        };
-    }, [state.open, controller]);
+    const keyDispatcher = useSelectBoxKeyDispatcher(controller);
+
+    useFilterReactivity(controller, props.filter);
+    useClickOutsideClose(rootRef, state.open, controller);
+    useNotifyChange(state, props.onChange as SelectBoxProps<TExtra>["onChange"]);
+
+    const isMulti = state.mode === "multi";
+    const rootClassName = [
+        "select-box",
+        isMulti ? "select-box-multi" : null,
+        props.className,
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    function focusInput(): void {
+        inputRef.current?.focus({ preventScroll: true });
+    }
+
+    return (
+        <div
+            ref={rootRef}
+            className={rootClassName}
+            data-select-root
+            data-select-mode={state.mode}
+        >
+            {isMulti ? (
+                <MultiTrigger
+                    state={state}
+                    controller={controller as UseSelectBoxResult<TExtra, SelectionValue>["controller"]}
+                    inputRef={inputRef}
+                    keyDispatcher={keyDispatcher as SelectBoxKeyDispatcher<TExtra, SelectionValue>}
+                    placeholder={props.placeholder}
+                    ariaLabel={props["aria-label"]}
+                    ariaLabelledby={props["aria-labelledby"]}
+                    onFocusInput={focusInput}
+                />
+            ) : (
+                <SingleTrigger
+                    state={state}
+                    controller={controller as UseSelectBoxResult<TExtra, SelectionValue>["controller"]}
+                    inputRef={inputRef}
+                    keyDispatcher={keyDispatcher as SelectBoxKeyDispatcher<TExtra, SelectionValue>}
+                    placeholder={props.placeholder}
+                    ariaLabel={props["aria-label"]}
+                    ariaLabelledby={props["aria-labelledby"]}
+                />
+            )}
+
+            {state.open ? (
+                <SelectPopover<TExtra, SelectionValue>
+                    mode={state.mode}
+                    state={state}
+                    controller={controller as UseSelectBoxResult<TExtra, SelectionValue>["controller"]}
+                    onAfterCommit={isMulti ? focusInput : undefined}
+                />
+            ) : null}
+        </div>
+    );
+}
+
+/* ---------------- single trigger ---------------- */
+
+interface SingleTriggerProps<TExtra extends object> {
+    readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
+    readonly controller: UseSelectBoxResult<TExtra, SelectionValue>["controller"];
+    readonly inputRef: RefObject<HTMLInputElement | null>;
+    readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
+    readonly placeholder: string | undefined;
+    readonly ariaLabel: string | undefined;
+    readonly ariaLabelledby: string | undefined;
+}
+
+function SingleTrigger<TExtra extends object>({
+    state,
+    controller,
+    inputRef,
+    keyDispatcher,
+    placeholder,
+    ariaLabel,
+    ariaLabelledby,
+}: SingleTriggerProps<TExtra>): JSX.Element {
+    const view = new SelectBoxSnapshotView(state);
 
     function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
         if (!state.open) controller.open();
@@ -108,7 +211,6 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
     }
 
     function handleCaretMouseDown(event: MouseEvent<HTMLButtonElement>): void {
-        // Prevent the input from losing focus when the caret is clicked.
         event.preventDefault();
     }
 
@@ -122,250 +224,160 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
     }
 
     function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-        if (event.key === "ArrowDown") {
-            event.preventDefault();
-            if (!state.open) controller.open();
-            else controller.moveActive(1);
-            return;
-        }
-        if (event.key === "ArrowUp") {
-            event.preventDefault();
-            controller.moveActive(-1);
-            return;
-        }
-        if (event.key === "Enter") {
-            event.preventDefault();
-            controller.commitActive();
-            return;
-        }
-        if (event.key === "Escape") {
-            event.preventDefault();
-            controller.close();
-        }
+        if (keyDispatcher.dispatch(event.key) === "handled") event.preventDefault();
     }
 
-    function handleOptionMouseDown(event: MouseEvent<HTMLButtonElement>): void {
-        event.preventDefault();
-    }
-
-    const rootClassName = ["select-box", className].filter(Boolean).join(" ");
-    const inputValue = state.open ? state.query : (state.selectedOption?.label ?? "");
-    // While the popover is open with a selection, fade the chosen label into the
-    // placeholder so the user can see what was picked while filtering.
     const placeholderText = state.open && state.selectedOption
         ? state.selectedOption.label
         : (placeholder ?? "Select…");
 
     return (
-        <div ref={rootRef} className={rootClassName} data-select-root>
-            <div className="select-box-trigger" data-select-trigger>
+        <div className="select-box-trigger" data-select-trigger>
+            <input
+                ref={inputRef}
+                type="text"
+                className="select-box-input"
+                role="combobox"
+                aria-haspopup="listbox"
+                aria-expanded={state.open}
+                aria-autocomplete="list"
+                aria-label={ariaLabel}
+                aria-labelledby={ariaLabelledby}
+                placeholder={placeholderText}
+                value={view.triggerInputValue}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onClick={handleInputClick}
+                onKeyDown={handleKeyDown}
+                data-select-input
+            />
+            <button
+                type="button"
+                className="select-box-caret"
+                onMouseDown={handleCaretMouseDown}
+                onClick={handleCaretClick}
+                tabIndex={-1}
+                aria-hidden
+            >
+                ▾
+            </button>
+        </div>
+    );
+}
+
+/* ---------------- multi trigger ---------------- */
+
+interface MultiTriggerProps<TExtra extends object> {
+    readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
+    readonly controller: UseSelectBoxResult<TExtra, SelectionValue>["controller"];
+    readonly inputRef: RefObject<HTMLInputElement | null>;
+    readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
+    readonly placeholder: string | undefined;
+    readonly ariaLabel: string | undefined;
+    readonly ariaLabelledby: string | undefined;
+    readonly onFocusInput: () => void;
+}
+
+function MultiTrigger<TExtra extends object>({
+    state,
+    controller,
+    inputRef,
+    keyDispatcher,
+    placeholder,
+    ariaLabel,
+    ariaLabelledby,
+    onFocusInput,
+}: MultiTriggerProps<TExtra>): JSX.Element {
+    function handleControlMouseDown(event: MouseEvent<HTMLDivElement>): void {
+        if (event.target !== inputRef.current) event.preventDefault();
+        if (!state.open) controller.open();
+        onFocusInput();
+    }
+
+    function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
+        if (!state.open) controller.open();
+        controller.setQuery(event.target.value);
+    }
+
+    function handleInputFocus(): void {
+        if (!state.open) controller.open();
+    }
+
+    function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+        if (keyDispatcher.dispatch(event.key) === "handled") event.preventDefault();
+    }
+
+    function handleChipRemove(
+        option: SelectOption<TExtra>,
+        event: MouseEvent<HTMLButtonElement>,
+    ): void {
+        event.stopPropagation();
+        controller.commitOption(option);
+        onFocusInput();
+    }
+
+    function handleClearAll(event: MouseEvent<HTMLButtonElement>): void {
+        event.stopPropagation();
+        controller.clear();
+        onFocusInput();
+    }
+
+    const hasSelection = state.selectedOptions.length > 0;
+    const placeholderText = hasSelection ? "" : (placeholder ?? "Select…");
+
+    return (
+        <div
+            className="select-box-trigger"
+            data-select-trigger
+            role="combobox"
+            aria-expanded={state.open}
+            aria-haspopup="listbox"
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
+            onMouseDown={handleControlMouseDown}
+        >
+            <div className="select-box-tags" data-select-tags>
+                {state.selectedOptions.map((option) => (
+                    <span key={option.value} className="select-box-chip" data-select-chip>
+                        {option.label}
+                        <button
+                            type="button"
+                            className="select-box-chip-remove"
+                            aria-label={`Remove ${option.label}`}
+                            onMouseDown={(event) => event.stopPropagation()}
+                            onClick={(event) => handleChipRemove(option, event)}
+                        >
+                            ×
+                        </button>
+                    </span>
+                ))}
                 <input
                     ref={inputRef}
                     type="text"
                     className="select-box-input"
-                    role="combobox"
-                    aria-haspopup="listbox"
-                    aria-expanded={state.open}
+                    role="searchbox"
                     aria-autocomplete="list"
-                    aria-label={ariaLabel}
-                    aria-labelledby={ariaLabelledby}
                     placeholder={placeholderText}
-                    value={inputValue}
+                    value={state.query}
                     onChange={handleInputChange}
                     onFocus={handleInputFocus}
-                    onClick={handleInputClick}
                     onKeyDown={handleKeyDown}
                     data-select-input
                 />
+            </div>
+            {hasSelection && (
                 <button
                     type="button"
-                    className="select-box-caret"
-                    onMouseDown={handleCaretMouseDown}
-                    onClick={handleCaretClick}
+                    className="select-box-clear"
+                    aria-label="Clear all"
                     tabIndex={-1}
-                    aria-hidden
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={handleClearAll}
+                    data-select-clear
                 >
-                    ▾
+                    ×
                 </button>
-            </div>
-
-            {state.open ? (
-                <div className="select-box-popover" role="listbox" data-select-popover>
-                    {state.isEmpty ? (
-                        <div className="select-box-list" data-select-list>
-                            <p className="select-box-empty" data-select-empty>
-                                No matches
-                            </p>
-                        </div>
-                    ) : (
-                        <VirtualizedList
-                            groups={state.filteredGroups}
-                            activeIndex={state.activeIndex}
-                            highlightRanges={state.highlightRanges}
-                            controller={controller}
-                            handleOptionMouseDown={handleOptionMouseDown}
-                        />
-                    )}
-                </div>
-            ) : null}
+            )}
         </div>
     );
-}
-
-interface VirtualizedListProps<TExtra extends object> {
-    readonly groups: ReadonlyArray<SelectGroup<TExtra>>;
-    readonly activeIndex: number;
-    readonly highlightRanges: SelectBoxSnapshot<TExtra>["highlightRanges"];
-    readonly controller: ReturnType<typeof useSelectBox<TExtra>>["controller"];
-    readonly handleOptionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
-}
-
-function VirtualizedList<TExtra extends object>({
-    groups,
-    activeIndex,
-    highlightRanges,
-    controller,
-    handleOptionMouseDown,
-}: VirtualizedListProps<TExtra>): JSX.Element {
-    const listRef = useRef<HTMLDivElement>(null);
-
-    const rowModel = useMemo(() => new SelectBoxRowModel<TExtra>({ groups }), [groups]);
-    const rowModelRef = useRef(rowModel);
-    rowModelRef.current = rowModel;
-
-    const [virtualizer] = useState(
-        () =>
-            new SelectBoxListVirtualizer({
-                getScrollElement: () => listRef.current,
-                getCount: () => rowModelRef.current.length,
-                estimateSize: (index) => estimateRowSize(rowModelRef.current, index),
-                initialViewportHeight: LIST_VIEWPORT_HEIGHT,
-            }),
-    );
-
-    useEffect(() => {
-        virtualizer.mount();
-        return () => virtualizer.dispose();
-    }, [virtualizer]);
-
-    useEffect(() => {
-        virtualizer.sync();
-    }, [virtualizer, rowModel]);
-
-    const subscribe = useCallback(
-        (listener: () => void) => virtualizer.subscribe(listener),
-        [virtualizer],
-    );
-    const getSnapshot = useCallback(
-        () => virtualizer.getVirtualItems(),
-        [virtualizer],
-    );
-    const virtualItems = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-    const totalSize = virtualizer.getTotalSize();
-    const paddingTop = virtualItems[0]?.start ?? 0;
-    const paddingBottom = totalSize - (virtualItems.at(-1)?.end ?? 0);
-
-    const activeRowIndex = rowModel.findRowIndexForActiveIndex(activeIndex);
-
-    useEffect(() => {
-        if (activeRowIndex < 0) return;
-        virtualizer.scrollToIndex(activeRowIndex, "auto");
-    }, [virtualizer, activeRowIndex]);
-
-    return (
-        <div
-            ref={listRef}
-            className="select-box-list"
-            data-select-list
-            style={{ maxHeight: LIST_VIEWPORT_HEIGHT, overflowY: "auto" }}
-        >
-            <div style={{ paddingTop, paddingBottom: Math.max(0, paddingBottom) }}>
-                {virtualItems.map((virtualRow) => {
-                    const row = rowModel.getRowAt(virtualRow.index);
-                    if (!row) return null;
-                    const measureRef = (node: HTMLElement | null): void => {
-                        virtualizer.measureElement(node);
-                    };
-                    if (row.kind === "header") {
-                        return (
-                            <div
-                                key={`header-${row.groupIndex}`}
-                                ref={measureRef}
-                                data-index={virtualRow.index}
-                                className="select-box-group-label"
-                                data-select-group-label
-                            >
-                                {row.group.label}
-                            </div>
-                        );
-                    }
-                    const isActive = virtualRow.index === activeRowIndex;
-                    const classes = [
-                        "select-box-option",
-                        isActive ? "select-box-option-active" : null,
-                        row.option.disabled ? "select-box-option-disabled" : null,
-                    ]
-                        .filter(Boolean)
-                        .join(" ");
-                    return (
-                        <button
-                            key={row.option.value}
-                            ref={measureRef}
-                            data-index={virtualRow.index}
-                            type="button"
-                            className={classes}
-                            disabled={row.option.disabled}
-                            onMouseDown={handleOptionMouseDown}
-                            onClick={() => controller.commitOption(row.option)}
-                            data-select-option
-                            data-select-active={isActive ? "" : undefined}
-                        >
-                            {renderHighlightedLabel(row.option.label, highlightRanges)}
-                        </button>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-function estimateRowSize<TExtra extends object>(
-    rowModel: SelectBoxRowModel<TExtra>,
-    index: number,
-): number {
-    return rowModel.getRowAt(index)?.kind === "header"
-        ? ESTIMATED_HEADER_HEIGHT
-        : ESTIMATED_OPTION_HEIGHT;
-}
-
-function renderHighlightedLabel<TExtra extends object>(
-    label: string,
-    highlightRanges: SelectBoxSnapshot<TExtra>["highlightRanges"],
-): JSX.Element[] {
-    const chunks = TextHighlighter.split(label, highlightRanges(label));
-    return chunks.map((chunk, index) =>
-        chunk.matched ? (
-            <mark key={index} className="select-box-option-match">
-                {chunk.text}
-            </mark>
-        ) : (
-            <span key={index}>{chunk.text}</span>
-        ),
-    );
-}
-
-function useNotifyOnChange<TExtra extends object>(
-    currentValue: string | null,
-    currentOption: SelectOption<TExtra> | null,
-    onChange: ((value: string | null, option: SelectOption<TExtra> | null) => void) | undefined,
-): void {
-    const callbackRef = useRef(onChange);
-    callbackRef.current = onChange;
-    const previousValueRef = useRef<string | null>(currentValue);
-
-    useEffect(() => {
-        if (currentValue === previousValueRef.current) return;
-        previousValueRef.current = currentValue;
-        callbackRef.current?.(currentValue, currentOption);
-    }, [currentValue, currentOption]);
 }
