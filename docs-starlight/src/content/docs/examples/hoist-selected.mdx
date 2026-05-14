@@ -1,0 +1,17 @@
+---
+title: Hoist selected (preview)
+description: Pin the selected option to the top of the popover via @select-box/addon-hoist-selected.
+---
+
+import ReactDemo from "../../../components/demos/hoist-selected/ReactDemo.tsx";
+
+Install [`@select-box/addon-hoist-selected`](/api/) and the currently selected
+option is lifted into a synthetic top-most group whenever the popover renders —
+the user always sees their choice first.
+
+This preview wires only the React wrapper; the addon itself is framework-agnostic
+and works the same in every adapter.
+
+<div className="not-content sb-fwdemo-preview">
+    <ReactDemo client:only="react" />
+</div>

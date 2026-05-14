@@ -44,6 +44,9 @@ importers:
       '@select-box/addon-fuzzy':
         specifier: workspace:*
         version: link:../packages/addon-fuzzy
+      '@select-box/addon-hoist-selected':
+        specifier: workspace:*
+        version: link:../packages/addon-hoist-selected
       '@select-box/core':
         specifier: workspace:*
         version: link:../packages/core
@@ -166,6 +169,31 @@ importers:
       fuse.js:
         specifier: ^7.3.0
         version: 7.3.0
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
+  packages/addon-hoist-selected:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*

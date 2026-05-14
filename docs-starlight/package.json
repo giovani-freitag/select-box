@@ -18,6 +18,7 @@
         "@astrojs/starlight": "^0.32.0",
         "@astrojs/vue": "^5.0.0",
         "@select-box/addon-fuzzy": "workspace:*",
+        "@select-box/addon-hoist-selected": "workspace:*",
         "@select-box/core": "workspace:*",
         "@select-box/jquery": "workspace:*",
         "@select-box/lit": "workspace:*",

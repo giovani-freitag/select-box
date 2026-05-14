@@ -307,14 +307,13 @@ key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
   `extendSnapshot` (for `inputMode: "label" | "search"`) and
   `onKeyDown` (for the typing experience). Config:
   `{ keepQueryOnBlur?: boolean }`.
-- `[wip]` `@select-box/addon-hoist-selected` — pins selected options to the top
-  of the list. Always active while there is at least one selection.
-  Order of pinned items matches the order of the controller's `value`
-  array (stable; the consumer decides via selection order). Config:
+- `[done]` `@select-box/addon-hoist-selected` — pins selected options to the top
+  of the list. Active while there is at least one selection (single mode for now;
+  multi mode generalises naturally). Config:
   `{ separator?: boolean; when?: "always" | "popoverOpen" }`,
   default `when: "always"`. Exposes
-  `snapshot.addons["hoist-selected"].pinnedKeys`. Requires the
-  `transformGroups` hook (not yet wired in core).
+  `snapshot.addons["hoist-selected"]: { pinnedKeys, separator }`. Drives
+  the `transformGroups` hook in core.
 - `[plan]` `@select-box/addon-create-option` — adds an "Add `<query>`" row
   when the query has no match. Requires `interceptCommit` + a snapshot
   flag for the synthetic row.
@@ -532,10 +531,10 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 **M2 — Multi mode + inline UI variant + first-party addons** — `[plan]`
 - `[plan]` `MultiSelectBoxController` extending the same base.
 - `[plan]` Inline chip surface as an alternative trigger render.
-- `[plan]` First-party addon packages (only `@select-box/addon-fuzzy`
-  shipped so far): hoist-selected, clear-button, create-option,
-  remove-button, restore-on-backspace, persist (see §4.6). Each one
-  pulls in the matching controller hook from §4.6.
+- `[plan]` First-party addon packages (shipped: `@select-box/addon-fuzzy`,
+  `@select-box/addon-hoist-selected`). Remaining: clear-button,
+  create-option, remove-button, restore-on-backspace, persist (see §4.6).
+  Each one pulls in the matching controller hook from §4.6.
 
 **M3 — Docs site live** — `[wip]`
 - `[done]` `docs-starlight/` site builds (Astro + Starlight + MDX + TypeDoc).
