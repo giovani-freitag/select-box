@@ -1,0 +1,30 @@
+<!-- #region snippet -->
+<div class="sb-demo multi-demo">
+    <div id="demo-multi-jq"></div>
+    <output id="demo-multi-jq-out"><code>[]</code></output>
+</div>
+
+<script>
+    import jQuery from "jquery";
+    import "@select-box/jquery";
+
+    jQuery("#demo-multi-jq")
+        .selectBox({
+            mode: "multi",
+            options: [
+                { value: "apple", label: "Apple", group: "Pomes" },
+                { value: "pear", label: "Pear", group: "Pomes" },
+                { value: "peach", label: "Peach", group: "Stone fruits" },
+                { value: "plum", label: "Plum", group: "Stone fruits" },
+                { value: "lemon", label: "Lemon" },
+                { value: "orange", label: "Orange" },
+            ],
+            ungroupedLabel: "Citrus",
+            placeholder: "Pick fruits…",
+        })
+        .on("selectbox:change", (_event, _values, options) => {
+            const out = document.querySelector("#demo-multi-jq-out code");
+            if (out) out.textContent = JSON.stringify(options);
+        });
+</script>
+<!-- #endregion snippet -->

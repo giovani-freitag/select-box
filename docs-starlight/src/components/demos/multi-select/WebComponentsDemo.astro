@@ -1,0 +1,30 @@
+<!-- #region snippet -->
+<div class="sb-demo multi-demo">
+    <select-box
+        id="demo-multi-wc"
+        multi
+        placeholder="Pick fruits…"
+        ungrouped-label="Citrus"
+    ></select-box>
+    <output id="demo-multi-wc-out"><code>[]</code></output>
+</div>
+
+<script>
+    import "@select-box/webcomponents/define";
+    import type { SelectBoxElement } from "@select-box/webcomponents";
+
+    const element = document.querySelector<SelectBoxElement>("#demo-multi-wc")!;
+    element.options = [
+        { value: "apple", label: "Apple", group: "Pomes" },
+        { value: "pear", label: "Pear", group: "Pomes" },
+        { value: "peach", label: "Peach", group: "Stone fruits" },
+        { value: "plum", label: "Plum", group: "Stone fruits" },
+        { value: "lemon", label: "Lemon" },
+        { value: "orange", label: "Orange" },
+    ];
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-multi-wc-out code");
+        if (out) out.textContent = JSON.stringify(element.selectedOptions);
+    });
+</script>
+<!-- #endregion snippet -->

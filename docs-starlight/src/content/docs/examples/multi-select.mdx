@@ -1,0 +1,166 @@
+---
+title: Multi-select
+description: A multi-select box built on the same core controller. Commit toggles instead of replacing; the snapshot exposes the full selection.
+---
+
+import Demo from "../../../components/demos/multi-select/Demo.astro";
+
+The same controller drives both single- and multi-select. Switching to
+`mode: "multi"` (or using the `MultiSelectBoxController` sugar class)
+flips `commitOption` from "replace the selection" to "toggle this option
+in or out". The snapshot exposes the full picked list under
+`selectedOptions` and the canonical value list under `value`.
+
+<Demo />
+
+## React: the styled component
+
+The same `<SelectBox />` handles both modes — set `multi` and the trigger
+renders chips inside the input, the popover stays open across picks, and
+the `onChange` signature switches to arrays. Same component, same import,
+same virtualised list under the hood.
+
+```tsx
+import { SelectBox } from "@select-box/react";
+
+const fruits = [
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "lemon", label: "Lemon" },
+];
+
+export function FruitPicker() {
+    return (
+        <SelectBox
+            multi
+            options={fruits}
+            placeholder="Pick fruits…"
+            defaultValue={["apple"]}
+            onChange={(values) => console.log(values)}
+        />
+    );
+}
+```
+
+`onChange` fires whenever the selection content changes. Both arguments
+are stable: the first is the canonical `ReadonlyArray<string>`; the
+second is the same list resolved to full option objects.
+
+## React: the headless hook
+
+When the default trigger doesn't fit (you want chips below the input, an
+inline checkbox list, a tag editor, …), drop to `useSelectBox()` and
+render whatever UI you want against the live snapshot. Pass `mode: "multi"`
+to get the multi-mode types; `useMultiSelectBox` is also exported as a
+shorter alias.
+
+```tsx
+import { useSelectBox } from "@select-box/react";
+
+function FruitPicker() {
+    const { state, controller } = useSelectBox({
+        mode: "multi",
+        options: fruits,
+        initialValue: ["apple"],
+    });
+
+    return (
+        <div>
+            <p>Selected: {state.selectedOptions.map((o) => o.label).join(", ") || "none"}</p>
+            <button onClick={() => controller.toggle()}>
+                {state.open ? "Close" : "Open"}
+            </button>
+            {state.open && (
+                <ul>
+                    {state.filteredGroups.flatMap((group) =>
+                        group.options.map((option) => {
+                            const checked = state.value.includes(option.value);
+                            return (
+                                <li key={option.value}>
+                                    <button onClick={() => controller.commitOption(option)}>
+                                        {checked ? "☑" : "☐"} {option.label}
+                                    </button>
+                                </li>
+                            );
+                        }),
+                    )}
+                </ul>
+            )}
+        </div>
+    );
+}
+```
+
+Snapshot fields are identical to single mode except for cardinality —
+see [Headless vs ready](/guides/headless-vs-ready/) for the full list.
+
+## The controller directly
+
+If you don't want a hook, instantiate `MultiSelectBoxController` and
+subscribe to it the same way you'd subscribe to any other observable:
+
+```ts
+import { MultiSelectBoxController } from "@select-box/core";
+
+const controller = new MultiSelectBoxController({
+    options: fruits,
+    initialValue: ["apple", "pear"],
+});
+
+controller.subscribe(() => {
+    const { value, selectedOptions } = controller.getState();
+    console.log("value:", value);
+    console.log("labels:", selectedOptions.map((o) => o.label));
+});
+
+controller.commitValue(["lemon"]);   // replace the whole selection
+controller.commitOption(fruits[0]);  // toggle "apple" back in
+controller.clear();                  // []
+```
+
+## How it differs from single
+
+A few surface differences flow from the mode flag:
+
+- **`state.value`** is `ReadonlyArray<string>` instead of `string | null`.
+- **`state.selectedOptions`** holds the full list. `state.selectedOption`
+  is still present — it's the first item (or `null`) for code that only
+  wants one option at a time.
+- **`commitOption`** toggles: if the option is already selected, it's
+  removed; otherwise it's appended. `commitActive()` works the same way.
+- **The popover stays open** on commit — multi-select expects you to pick
+  more than one. The driver's `closeOnCommit` is `false` for multi.
+- **`clear()`** returns to `[]` instead of `null`.
+
+Everything else — filtering, virtualization, keyboard nav, ARIA wiring,
+the addon contract — is identical to the single-mode controller, because
+none of it cares about cardinality.
+
+## Runtime mode toggle
+
+`multi` flips at runtime in every wrapper. The current selection is
+preserved through the toggle, mirroring how the browser handles toggling
+the `multiple` attribute on a native `<select>`:
+
+- **multi → single** keeps the first selected option.
+- **single → multi** wraps the held value as a singleton array.
+
+How to flip in each wrapper:
+
+| Wrapper | API |
+|---|---|
+| React | `<SelectBox multi={isMulti} />` — re-render with a different `multi` prop. |
+| Vue | `<SelectBox :multi="isMulti" />` — toggle the reactive prop. |
+| Lit | `element.multi = true` or `element.toggleAttribute("multi")`. |
+| Web Components | `element.setAttribute("multi", "")` / `element.removeAttribute("multi")`. |
+| jQuery | `$('#el').selectBox('setMode', 'multi')`. |
+
+## Status
+
+All five wrappers (React, Vue, Lit, Web Components, jQuery) ship the
+multi-mode styled component — chips inside the input, popover stays open
+across commits, the same shared `SelectionDriver` semantics from the
+core. The framework switcher above renders the same configuration in
+each wrapper.
+
+For single-select, see the [Simple example](/examples/simple/).

@@ -39,6 +39,7 @@ export default defineConfig({
                     label: "Examples",
                     items: [
                         { label: "Simple", link: "/examples/simple/" },
+                        { label: "Multi-select", link: "/examples/multi-select/" },
                         { label: "Option groups", link: "/examples/optgroup/" },
                         { label: "Disabled", link: "/examples/disabled/" },
                         { label: "Search", link: "/examples/search/" },

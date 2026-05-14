@@ -1,0 +1,31 @@
+<!-- #region snippet -->
+<div class="sb-demo multi-demo">
+    <select-box-lit-multi
+        id="demo-multi-lit"
+        multi
+        placeholder="Pick fruits…"
+        ungrouped-label="Citrus"
+    ></select-box-lit-multi>
+    <output id="demo-multi-lit-out"><code>[]</code></output>
+</div>
+
+<script>
+    import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
+
+    defineSelectBoxElement("select-box-lit-multi");
+
+    const element = document.querySelector<SelectBox>("#demo-multi-lit")!;
+    element.options = [
+        { value: "apple", label: "Apple", group: "Pomes" },
+        { value: "pear", label: "Pear", group: "Pomes" },
+        { value: "peach", label: "Peach", group: "Stone fruits" },
+        { value: "plum", label: "Plum", group: "Stone fruits" },
+        { value: "lemon", label: "Lemon" },
+        { value: "orange", label: "Orange" },
+    ];
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-multi-lit-out code");
+        if (out) out.textContent = JSON.stringify(element.selectedOptions);
+    });
+</script>
+<!-- #endregion snippet -->
