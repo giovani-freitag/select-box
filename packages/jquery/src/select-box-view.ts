@@ -2,6 +2,7 @@ import {
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
     SingleSelectBoxController,
+    TextHighlighter,
     type SelectBoxSnapshot,
     type SelectOption,
     type SingleSelectBoxControllerConfig,
@@ -331,10 +332,21 @@ export class SelectBoxView<TExtra extends object = object> {
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
         if (option.disabled) button.disabled = true;
-        button.textContent = option.label;
+        button.append(...this.createLabelNodes(option.label));
         button.addEventListener("mousedown", (event) => event.preventDefault());
         button.addEventListener("click", () => this.controller.commitOption(option));
         return button;
+    }
+
+    private createLabelNodes(label: string): Node[] {
+        const ranges = this.controller.getState().highlightRanges(label);
+        return TextHighlighter.split(label, ranges).map((chunk) => {
+            if (!chunk.matched) return document.createTextNode(chunk.text);
+            const mark = document.createElement("mark");
+            mark.className = "select-box-option-match";
+            mark.textContent = chunk.text;
+            return mark;
+        });
     }
 
     private estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {

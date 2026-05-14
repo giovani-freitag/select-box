@@ -1,8 +1,10 @@
 import {
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    TextHighlighter,
     type OptionFilterStrategy,
     type SelectBoxAddon,
+    type SelectBoxSnapshot,
     type SelectGroup,
     type SelectOption,
 } from "@select-box/core";
@@ -199,6 +201,7 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
                         <VirtualizedList
                             groups={state.filteredGroups}
                             activeIndex={state.activeIndex}
+                            highlightRanges={state.highlightRanges}
                             controller={controller}
                             handleOptionMouseDown={handleOptionMouseDown}
                         />
@@ -212,6 +215,7 @@ export function SelectBox<TExtra extends object = object>(props: SelectBoxProps<
 interface VirtualizedListProps<TExtra extends object> {
     readonly groups: ReadonlyArray<SelectGroup<TExtra>>;
     readonly activeIndex: number;
+    readonly highlightRanges: SelectBoxSnapshot<TExtra>["highlightRanges"];
     readonly controller: ReturnType<typeof useSelectBox<TExtra>>["controller"];
     readonly handleOptionMouseDown: (event: MouseEvent<HTMLButtonElement>) => void;
 }
@@ -219,6 +223,7 @@ interface VirtualizedListProps<TExtra extends object> {
 function VirtualizedList<TExtra extends object>({
     groups,
     activeIndex,
+    highlightRanges,
     controller,
     handleOptionMouseDown,
 }: VirtualizedListProps<TExtra>): JSX.Element {
@@ -315,7 +320,7 @@ function VirtualizedList<TExtra extends object>({
                             data-select-option
                             data-select-active={isActive ? "" : undefined}
                         >
-                            {row.option.label}
+                            {renderHighlightedLabel(row.option.label, highlightRanges)}
                         </button>
                     );
                 })}
@@ -331,6 +336,22 @@ function estimateRowSize<TExtra extends object>(
     return rowModel.getRowAt(index)?.kind === "header"
         ? ESTIMATED_HEADER_HEIGHT
         : ESTIMATED_OPTION_HEIGHT;
+}
+
+function renderHighlightedLabel<TExtra extends object>(
+    label: string,
+    highlightRanges: SelectBoxSnapshot<TExtra>["highlightRanges"],
+): JSX.Element[] {
+    const chunks = TextHighlighter.split(label, highlightRanges(label));
+    return chunks.map((chunk, index) =>
+        chunk.matched ? (
+            <mark key={index} className="select-box-option-match">
+                {chunk.text}
+            </mark>
+        ) : (
+            <span key={index}>{chunk.text}</span>
+        ),
+    );
 }
 
 function useNotifyOnChange<TExtra extends object>(

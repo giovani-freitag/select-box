@@ -2,6 +2,7 @@ import {
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
     SingleSelectBoxController,
+    TextHighlighter,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxSnapshot,
@@ -495,12 +496,24 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             button.classList.add("disabled");
             button.disabled = true;
         }
-        button.textContent = option.label;
+        button.append(...this.createLabelNodes(option.label));
         button.addEventListener("mousedown", (event) => event.preventDefault());
         button.addEventListener("click", () => {
             this.controller?.commitOption(option);
         });
         return button;
+    }
+
+    private createLabelNodes(label: string): Node[] {
+        const ranges = this.controller?.getState().highlightRanges(label) ?? [];
+        return TextHighlighter.split(label, ranges).map((chunk) => {
+            if (!chunk.matched) return document.createTextNode(chunk.text);
+            const mark = document.createElement("mark");
+            mark.className = "option-match";
+            mark.setAttribute("part", "option-match");
+            mark.textContent = chunk.text;
+            return mark;
+        });
     }
 
     private estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {

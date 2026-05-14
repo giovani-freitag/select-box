@@ -1,6 +1,7 @@
 import {
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    TextHighlighter,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectOption,
@@ -402,8 +403,18 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 @mousedown=${(event: Event) => event.preventDefault()}
                 @click=${() => this.controller?.commitOption(row.option)}
             >
-                ${row.option.label}
+                ${this.renderLabel(row.option.label)}
             </button>
         `;
+    }
+
+    private renderLabel(label: string): TemplateResult[] {
+        const state = this.controller?.state;
+        const ranges = state ? state.highlightRanges(label) : [];
+        return TextHighlighter.split(label, ranges).map((chunk) =>
+            chunk.matched
+                ? html`<mark class="select-box-option-match">${chunk.text}</mark>`
+                : html`<span>${chunk.text}</span>`,
+        );
     }
 }

@@ -2,6 +2,8 @@
 import {
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    TextHighlighter,
+    type HighlightChunk,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectOption,
@@ -216,6 +218,10 @@ function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string 
         .filter((value): value is string => value !== null)
         .join(" ");
 }
+
+function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
+    return TextHighlighter.split(label, state.value.highlightRanges(label));
+}
 </script>
 
 <template>
@@ -289,7 +295,13 @@ function optionClasses(option: SelectOption<TExtra>, isActive: boolean): string 
                             @mousedown.prevent
                             @click="controller.commitOption(entry.row.option)"
                         >
-                            {{ entry.row.option.label }}
+                            <template
+                                v-for="(chunk, chunkIndex) in labelChunks(entry.row.option.label)"
+                                :key="chunkIndex"
+                            >
+                                <mark v-if="chunk.matched" class="select-box-option-match">{{ chunk.text }}</mark>
+                                <template v-else>{{ chunk.text }}</template>
+                            </template>
                         </button>
                     </template>
                 </div>
