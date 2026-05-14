@@ -2,6 +2,7 @@ import { SubstringFilterStrategy } from "../filters/index.js";
 import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { Store } from "../store.js";
 import type {
+    AddonTransformContext,
     OptionFilterStrategy,
     SearchMatchRange,
     SelectBoxAddon,
@@ -230,6 +231,10 @@ export class SingleSelectBoxController<TExtra extends object = object> {
     }
 
     private computeFilteredGroups(): ReadonlyArray<SelectGroup<TExtra>> {
+        return this.applyTransformGroups(this.computeFilteredGroupsRaw());
+    }
+
+    private computeFilteredGroupsRaw(): ReadonlyArray<SelectGroup<TExtra>> {
         const result: SelectGroup<TExtra>[] = [];
         for (const group of this.allGroups) {
             const filtered = this.filterStrategy.filter(group.options, this.currentQuery);
@@ -242,6 +247,31 @@ export class SingleSelectBoxController<TExtra extends object = object> {
             });
         }
         return result;
+    }
+
+    private applyTransformGroups(
+        groups: ReadonlyArray<SelectGroup<TExtra>>,
+    ): ReadonlyArray<SelectGroup<TExtra>> {
+        if (this.registeredAddons.length === 0) return groups;
+        const context = this.buildTransformContext();
+        let current = groups;
+        for (const addon of this.registeredAddons) {
+            if (!addon.transformGroups) continue;
+            current = addon.transformGroups(current, context);
+        }
+        return current;
+    }
+
+    private buildTransformContext(): AddonTransformContext<TExtra> {
+        const selectedOption = this.currentValue === null
+            ? null
+            : (this.optionsByValue.get(this.currentValue) ?? null);
+        return {
+            value: this.currentValue,
+            selectedOption,
+            query: this.currentQuery,
+            open: this.currentOpen,
+        };
     }
 
     private flattenSelectable(

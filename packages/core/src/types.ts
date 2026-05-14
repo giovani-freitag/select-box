@@ -64,10 +64,23 @@ export interface SelectBoxSnapshot<TExtra extends object = object> {
 }
 
 /**
- * Read-only context passed to every addon hook.
+ * Read-only context passed to post-snapshot hooks (e.g. `extendSnapshot`).
  */
 export interface AddonHookContext<TExtra extends object = object> {
     readonly snapshot: SelectBoxSnapshot<TExtra>;
+}
+
+/**
+ * Read-only context passed to pre-snapshot hooks (e.g. `transformGroups`).
+ * Carries only the state that is settled before the groups pipeline runs —
+ * `filteredGroups`, `activeIndex`, and `activeOption` are intentionally absent
+ * because the hook is producing (or shifting) them.
+ */
+export interface AddonTransformContext<TExtra extends object = object> {
+    readonly value: string | null;
+    readonly selectedOption: SelectOption<TExtra> | null;
+    readonly query: string;
+    readonly open: boolean;
 }
 
 /**
@@ -91,6 +104,15 @@ export interface SelectBoxAddon<TExtra extends object = object> {
      * overrides providers.
      */
     provideFilter?(): OptionFilterStrategy<TExtra>;
+    /**
+     * Optional pure transformer over the filtered groups, before the snapshot
+     * settles. Multiple addons compose in registration order: the first sees
+     * the raw filter output, each subsequent one sees the previous output.
+     */
+    transformGroups?(
+        groups: ReadonlyArray<SelectGroup<TExtra>>,
+        context: AddonTransformContext<TExtra>,
+    ): ReadonlyArray<SelectGroup<TExtra>>;
     /** Optional snapshot extension; return value lands at `snapshot.addons[name]`. */
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }

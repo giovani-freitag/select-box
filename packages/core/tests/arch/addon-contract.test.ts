@@ -46,11 +46,20 @@ describe("addon contract", () => {
         expect(interfaceMatch, "SelectBoxAddon interface block not found").not.toBeNull();
 
         const memberSource = stripBlockComments(interfaceMatch![1]!);
-        const memberNames = Array.from(memberSource.matchAll(/^\s*(?:readonly\s+)?(\w+)\??\s*[(:]/gm))
+        // Members live at 4-space indent; multi-line signature params live deeper
+        // and must not be counted as members.
+        const memberNames = Array.from(memberSource.matchAll(/^ {4}(?:readonly\s+)?(\w+)\??\s*[(:]/gm))
             .map((match) => match[1])
             .filter((name): name is string => name !== undefined);
 
-        const allowed = new Set(["name", "attach", "detach", "provideFilter", "extendSnapshot"]);
+        const allowed = new Set([
+            "name",
+            "attach",
+            "detach",
+            "provideFilter",
+            "transformGroups",
+            "extendSnapshot",
+        ]);
         for (const member of memberNames) {
             expect(allowed.has(member), `Unexpected addon hook: ${member}`).toBe(true);
         }
@@ -62,7 +71,7 @@ describe("addon contract", () => {
         );
         const memberSource = stripBlockComments(interfaceMatch![1]!);
 
-        expect(memberSource).not.toMatch(/^\s*set[A-Z]\w*\??\s*\(/m);
-        expect(memberSource).not.toMatch(/^\s*use\??\s*\(/m);
+        expect(memberSource).not.toMatch(/^ {4}set[A-Z]\w*\??\s*\(/m);
+        expect(memberSource).not.toMatch(/^ {4}use\??\s*\(/m);
     });
 });

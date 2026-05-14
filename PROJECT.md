@@ -261,7 +261,7 @@ Status key: `[done]` wired in core · `[plan]` typed but not invoked yet.
 |---|---|---|---|
 | `extendSnapshot` | `[done]` | `(ctx) => addonState` | Return the slice to publish under `snapshot.addons[name]` |
 | `provideFilter` | `[done]` | `() => OptionFilterStrategy` | Contribute a filter strategy; last provider wins, explicit `setFilter`/`config.filter` overrides |
-| `transformGroups` | `[plan]` | `(groups, ctx) => groups` | Reorder, inject, hide groups (used by hoist) |
+| `transformGroups` | `[done]` | `(groups, ctx) => groups` | Reorder, inject, hide groups (used by hoist). Composes in registration order; `ctx` is `AddonTransformContext` (settled pre-snapshot state, no `filteredGroups`/`activeIndex`) |
 | `transformOptions` | `[plan]` | `(options, group, ctx) => options` | Reorder/inject within a group |
 | `interceptCommit` | `[plan]` | `(option, ctx) => option \| null` | Replace (return new) or veto (return `null`) a commit |
 | `interceptOpen` / `interceptClose` | `[plan]` | `(ctx) => boolean \| Promise<boolean>` | Async gate (e.g. load options before open) |
@@ -484,11 +484,10 @@ project). Concretely:
   every wrapper (RHF-friendly). The custom-element variants are
   form-associated (`ElementInternals`) so they submit natively.
 - **Addon system** (`.use(new Addon(config))`) wired in the core. Today
-  the active hook surface is `attach`/`detach`/`extendSnapshot`. The
-  larger hook table in §4.6 (`transformGroups`, `interceptCommit`,
-  `interceptOpen/Close`, `onKeyDown`) is forward-looking design and
-  will be added once the first-party addon that needs each one is in
-  flight (`hoist-selected` is the canonical driver for `transformGroups`).
+  the active hook surface is `attach`/`detach`/`provideFilter`/`transformGroups`/`extendSnapshot`.
+  The remaining hooks in §4.6 (`interceptCommit`, `interceptOpen/Close`,
+  `onKeyDown`) are forward-looking design and will be added once the
+  first-party addon that needs each one is in flight.
 
 The internal split mirrors the existing legacy controllers
 (`SingleComboboxController`, `MultiComboboxController` in the consumer
@@ -525,10 +524,10 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
     addon-host ordering + snapshot stability edges.
   - `[wip]` Lift each wrapper's `tests/` from smoke-only to the
     full per-adapter integration checklist.
-- `[wip]` Addon surface: `attach`/`detach`/`extendSnapshot` live.
-  Extra hooks (`transformGroups`, `interceptCommit`,
-  `interceptOpen/Close`, `onKeyDown`) postponed until the first-party
-  addon that needs them is in flight (M2).
+- `[wip]` Addon surface: `attach`/`detach`/`provideFilter`/`transformGroups`/`extendSnapshot` live
+  (the latter two arch-tested in `packages/core/tests/arch/addon-contract.test.ts`).
+  Remaining hooks (`interceptCommit`, `interceptOpen/Close`, `onKeyDown`)
+  postponed until the first-party addon that needs them is in flight (M2).
 
 **M2 — Multi mode + inline UI variant + first-party addons** — `[plan]`
 - `[plan]` `MultiSelectBoxController` extending the same base.
