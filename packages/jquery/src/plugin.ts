@@ -6,11 +6,14 @@ import type {
 } from "@select-box/core";
 import type JQueryStatic from "jquery";
 
-import { SelectBoxView } from "./select-box-view.js";
+import { SelectBoxView, type SelectBoxSurface } from "./select-box-view.js";
+
+export type { SelectBoxSurface };
 
 export interface SelectBoxPluginConfig<TExtra extends object = object>
     extends SelectBoxControllerConfig<TExtra> {
     readonly placeholder?: string;
+    readonly surface?: SelectBoxSurface;
 }
 
 type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller" | "setMode";

@@ -25,7 +25,7 @@
     ];
     element.addEventListener("change", () => {
         const out = document.querySelector("#demo-multi-lit-out code");
-        if (out) out.textContent = JSON.stringify(element.selectedOptions);
+        if (out) out.textContent = JSON.stringify(element.value);
     });
 </script>
 <!-- #endregion snippet -->

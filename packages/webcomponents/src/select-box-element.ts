@@ -24,6 +24,7 @@ const OBSERVED_ATTRIBUTES = [
     "required",
     "readonly",
     "multi",
+    "surface",
 ] as const;
 const ESTIMATED_OPTION_HEIGHT = 36;
 const ESTIMATED_HEADER_HEIGHT = 28;
@@ -111,6 +112,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             this.applyModeToController();
             return;
         }
+        if (name === "surface") {
+            this.handleSnapshotChange();
+            return;
+        }
         if (name === "disabled" || name === "required" || name === "readonly") {
             this.syncValidity();
             this.handleSnapshotChange();
@@ -179,6 +184,19 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     set multi(next: boolean) {
         if (next) this.setAttribute("multi", "");
         else this.removeAttribute("multi");
+    }
+
+    get surface(): "popover" | "inline" {
+        return this.getAttribute("surface") === "inline" ? "inline" : "popover";
+    }
+
+    set surface(next: "popover" | "inline") {
+        if (next === "inline") this.setAttribute("surface", "inline");
+        else this.removeAttribute("surface");
+    }
+
+    private get isInline(): boolean {
+        return this.surface === "inline";
     }
 
     get validity(): ValidityState {
@@ -464,6 +482,11 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             this.setAttribute("mode", snapshot.mode);
         }
 
+        if (this.isInline) {
+            this.paintInlineChips(snapshot, view, isMulti);
+            return;
+        }
+
         const inputValue = view.triggerInputValue;
         if (this.refs.input.value !== inputValue) {
             this.refs.input.value = inputValue;
@@ -487,6 +510,57 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         if (!snapshot.open) return;
 
         this.paintList(snapshot, view, isMulti);
+    }
+
+    /** Renders every option as a toggleable chip into the inline container,
+     * mirroring the docs-starlight light-DOM inline surface. Reuses the
+     * shadow scaffold's `.inline` element. */
+    private paintInlineChips(
+        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
+        view: SelectBoxSnapshotView<TExtra, SelectionValue>,
+        isMulti: boolean,
+    ): void {
+        if (!this.refs) return;
+        this.refs.inline.setAttribute(
+            "aria-multiselectable",
+            isMulti ? "true" : "false",
+        );
+        this.refs.inline.replaceChildren();
+        for (const group of snapshot.filteredGroups) {
+            if (group.label !== "") {
+                const header = this.createHeaderElement(group.label);
+                this.refs.inline.appendChild(header);
+            }
+            for (const option of group.options) {
+                this.refs.inline.appendChild(
+                    this.createInlineChipButton(option, view.isSelected(option.value)),
+                );
+            }
+        }
+    }
+
+    private createInlineChipButton(
+        option: SelectOption<TExtra>,
+        isSelected: boolean,
+    ): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("role", "option");
+        button.setAttribute("aria-selected", String(isSelected));
+        button.setAttribute("aria-pressed", String(isSelected));
+        button.className = ["inline-chip", isSelected ? "selected" : null]
+            .filter((value): value is string => value !== null)
+            .join(" ");
+        button.dataset["selectChip"] = "";
+        button.dataset["selectOption"] = "";
+        if (isSelected) button.dataset["selectSelected"] = "";
+        if (option.disabled) button.disabled = true;
+        button.textContent = option.label;
+        button.addEventListener("click", () => {
+            if (option.disabled) return;
+            this.controller?.commitOption(option);
+        });
+        return button;
     }
 
     private paintChips(

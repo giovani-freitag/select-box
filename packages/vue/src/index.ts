@@ -1,4 +1,5 @@
 export { default as SelectBox } from "./SelectBox.vue";
+export type { SelectBoxProps, SelectBoxSurface } from "./SelectBox.vue";
 export { useSelectBox, type UseSelectBoxResult } from "./use-select-box.js";
 export { useMultiSelectBox, type UseMultiSelectBoxResult } from "./use-multi-select-box.js";
 

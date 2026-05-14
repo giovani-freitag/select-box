@@ -79,12 +79,16 @@ select-box {
     width: 100%;
 }
 
+/* The default trigger styling assumes single mode: an input + caret on the
+ * right. Multi mode overrides what's needed (flex-wrap for chips, input
+ * padding, clear button) without touching the trigger box itself. */
 .select-box-trigger {
     width: 100%;
+    box-sizing: border-box;
+    min-height: 38px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0.875rem;
+    padding: 0.25rem;
     border-radius: 8px;
     border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
     background: var(--sl-color-bg);
@@ -111,35 +115,59 @@ select-box {
     color: var(--sl-color-gray-3);
 }
 
-/* React combobox pattern: an editable input fills the trigger box. */
+/* React combobox pattern: an editable input fills the trigger row. Locked
+ * to the chip's 28px height + line-height 1 so the parent Starlight theme's
+ * generous body line-height doesn't inflate the trigger. Horizontal padding
+ * mirrors the chip's text inset (0.6rem) so the placeholder/typed label
+ * lines up visually with chip labels. */
 .select-box-input {
     flex: 1;
     min-width: 0;
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 0.6rem;
+    line-height: 1;
     border: none;
     background: transparent;
     color: inherit;
     font: inherit;
     outline: none;
-    padding: 0;
 }
 
 .select-box-input::placeholder {
     color: var(--sl-color-gray-3);
 }
 
-.select-box-caret {
-    color: var(--sl-color-gray-3);
-    margin-left: 0.5rem;
-}
-
-/* When the caret is its own button (combobox layout) keep it tidy. */
-button.select-box-caret {
+/* Caret + clear share the trailing-button family with `.select-box-chip-remove`:
+ * 28px tall (matching every other inner primitive), subtle border-left
+ * divider, symbol loose inside the same 0 0.5rem padding. */
+.select-box-caret,
+.select-box-clear {
+    appearance: none;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    min-height: 28px;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
+    padding: 0 0.5rem;
     border: none;
+    border-left: 1px solid color-mix(in srgb, var(--sl-color-hairline) 70%, transparent);
+    border-radius: 4px;
     background: transparent;
-    padding: 0;
-    cursor: pointer;
+    color: var(--sl-color-gray-3);
     font: inherit;
     line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.select-box-caret:hover,
+.select-box-clear:hover {
+    color: var(--sl-color-text);
+    background: color-mix(in srgb, var(--sl-color-accent) 10%, transparent);
 }
 
 .select-box-popover {
@@ -171,9 +199,14 @@ button.select-box-caret {
     overflow-y: auto;
 }
 
+/* Group header and option share the input/chip's horizontal inset (0.6rem)
+ * so the list reads as a vertical continuation of the trigger. Line-height
+ * is pinned so the parent theme's body line-height can't inflate the rows
+ * past the virtualizer's estimated heights (28px header / 36px option). */
 .select-box-group-label {
-    padding: 0.5rem 0.875rem 0.25rem;
+    padding: 0.5rem 0.6rem 0.25rem;
     font-size: 0.7rem;
+    line-height: 1;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -186,8 +219,10 @@ button.select-box-caret {
 .select-box-option {
     display: block;
     width: 100%;
+    box-sizing: border-box;
     text-align: left;
-    padding: 0.5rem 0.875rem;
+    padding: 0.3rem 0.6rem;
+    line-height: 1.2;
     border: none;
     background: transparent;
     color: inherit;
@@ -210,9 +245,10 @@ button.select-box-caret {
 }
 
 .select-box-empty {
-    padding: 1rem;
+    padding: 0.75rem 0.6rem;
     text-align: center;
     color: var(--sl-color-gray-3);
+    line-height: 1.4;
 }
 
 /* ---------- Multi-select (styled <SelectBox multi />) ----------
@@ -224,11 +260,10 @@ button.select-box-caret {
  * to a second line grows it.
  */
 
+/* Multi mode override: chips wrap and the trigger acts as a tag-input row.
+ * Padding, min-height and border stay on the single-mode default. */
 .select-box-multi .select-box-trigger {
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.25rem 0.35rem;
     cursor: text;
 }
 
@@ -236,16 +271,18 @@ button.select-box-caret {
     flex: 1;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 0.35rem;
+    gap: 0.25rem;
     align-items: center;
     min-width: 0;
 }
 
 .select-box-chip {
+    box-sizing: border-box;
+    min-height: 28px;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.15rem 0.25rem 0.55rem;
+    gap: 0.4rem;
+    padding: 0 0 0 0.6rem;
     font-size: 0.85em;
     line-height: 1;
     max-width: 100%;
@@ -254,17 +291,22 @@ button.select-box-caret {
     border-radius: 4px;
     border: 1px solid color-mix(in srgb, var(--sl-color-accent) 30%, var(--sl-color-hairline));
     white-space: nowrap;
+    overflow: hidden;
 }
 
+/* Flat remove affordance: the × sits loose inside its own button area, with
+ * a subtle vertical divider separating it from the chip's label. No circle —
+ * the button's hover background acts as the only affordance. */
 .select-box-chip-remove {
     appearance: none;
-    display: grid;
-    place-items: center;
-    width: 1.3em;
-    height: 1.3em;
-    padding: 0;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
     border: none;
-    border-radius: 100%;
+    border-left: 1px solid color-mix(in srgb, var(--sl-color-accent) 30%, var(--sl-color-hairline));
+    border-radius: 0 3px 3px 0;
     background: transparent;
     color: var(--sl-color-gray-3);
     font: inherit;
@@ -275,38 +317,18 @@ button.select-box-caret {
 
 .select-box-chip-remove:hover {
     color: var(--sl-color-text);
-    background: color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
+    background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
 }
 
+/* Multi-mode override: only `min-width` differs — the base rule already
+ * locks height, padding and line-height to the chip's geometry, so the
+ * search input sits flat in the row alongside chips. */
 .select-box-multi .select-box-input {
     flex: 1;
     min-width: 5rem;
-    padding: 0;
 }
 
-.select-box-clear {
-    appearance: none;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    width: 1.4em;
-    height: 1.4em;
-    padding: 0;
-    margin-left: 0.25rem;
-    border: none;
-    border-radius: 100%;
-    background: transparent;
-    color: var(--sl-color-gray-3);
-    font: inherit;
-    font-size: 1.05em;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.select-box-clear:hover {
-    background: var(--sl-color-accent-low);
-    color: var(--sl-color-text-accent);
-}
+/* `.select-box-clear` shares the trailing-button family above with `.select-box-caret`. */
 
 .select-box-option-tick {
     display: inline-flex;
@@ -486,4 +508,72 @@ button.select-box-caret {
 
 .multi-select-clear:hover {
     background: var(--sl-color-accent-low);
+}
+
+/* Inline surface: every option is a toggleable chip; no popover, no input.
+ * Container mirrors `.select-box-trigger` exactly — same padding, border,
+ * radius — so the rendered footprint equals an empty popover trigger.
+ * Chips use the multi-mode chip sizing so a single row stays at the
+ * trigger's natural height (~42px); wrapping grows it like a multi
+ * trigger with many chips. */
+.select-box-inline {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+}
+
+.select-box-inline .select-box-tags {
+    display: contents;
+}
+
+/* Selectable chip: same dimensions as a multi-mode chip (same font-size,
+ * line-height, padding, border-radius). Default state is the outlined
+ * "not picked" look; selected state matches the multi-mode chip fill
+ * pixel-for-pixel — so a chip in inline+selected reads as the same
+ * primitive as a chip inside the popover-multi trigger. */
+.select-box-chip-selectable {
+    /* Inherits min-height/font/border-radius from `.select-box-chip`. Padding
+     * is overridden symmetric here because there's no remove button hugging
+     * the right edge (so the label needs breathing room on both sides). */
+    appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0 0.6rem;
+    background: transparent;
+    border-color: var(--sl-color-hairline);
+    color: var(--sl-color-text);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.select-box-chip-selectable:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sl-color-accent) 8%, transparent);
+    border-color: color-mix(in srgb, var(--sl-color-accent) 25%, var(--sl-color-hairline));
+}
+
+.select-box-chip-selectable:focus-visible {
+    outline: 2px solid var(--sl-color-text-accent);
+    outline-offset: 2px;
+}
+
+.select-box-chip-selected {
+    background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+    border-color: color-mix(in srgb, var(--sl-color-accent) 30%, var(--sl-color-hairline));
+}
+
+.select-box-chip-selected:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sl-color-accent) 22%, transparent);
+}
+
+.select-box-chip-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }

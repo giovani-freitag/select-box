@@ -5,21 +5,24 @@ import { SelectBox } from "@select-box/react";
 const fruits = [
     { value: "apple", label: "Apple" },
     { value: "pear", label: "Pear" },
-    { value: "grape", label: "Grape" },
-    { value: "lemon", label: "Lemon" },
     { value: "peach", label: "Peach" },
+    { value: "plum", label: "Plum" },
+    { value: "lemon", label: "Lemon" },
 ];
 
 export default function Demo(): React.ReactElement {
-    const [committed, setCommitted] = useState<string | null>(null);
+    const [committed, setCommitted] = useState<ReadonlyArray<string>>([]);
     return (
         <div className="sb-demo">
             <SelectBox
+                multi
+                surface="inline"
                 options={fruits}
-                placeholder="Pick a fruit"
                 onChange={setCommitted}
             />
-            <output><code>{JSON.stringify(committed)}</code></output>
+            <output>
+                <code>{JSON.stringify(committed)}</code>
+            </output>
         </div>
     );
 }

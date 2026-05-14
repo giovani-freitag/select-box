@@ -1,0 +1,32 @@
+---
+title: Inline chips
+description: Render every option as a clickable chip — no popover, no input, no search.
+---
+
+import Demo from "../../../components/demos/inline-select/Demo.astro";
+
+When the option set is small, stable, and worth showing all at once,
+flip `surface` to `"inline"`. Every option lands on the page as a
+clickable chip — no popover to open, no input to focus, no search to
+type. The user sees the choices and picks one.
+
+<Demo />
+
+## When to reach for it
+
+Filter pills, role pickers, segmented controls, small tag editors —
+anywhere seeing every choice at a glance beats a dropdown. For long
+lists, async data, or anything that benefits from search, the default
+popover surface is still the right tool.
+
+## Cardinality stays independent
+
+`surface` decides how the options are painted; `multi` decides what a
+click does to the selection. Switching surfaces never touches the
+selection itself, so `single + inline` reads as a radio-style chip
+group (click replaces) and `multi + inline` as a toggle group (click
+flips each). `onChange` follows `multi`, not `surface`.
+
+The framework switcher above shows the exact opt-in for each wrapper —
+a single prop, attribute, or option on the same `<SelectBox>` that
+drives the popover variant.

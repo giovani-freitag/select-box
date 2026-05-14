@@ -1,0 +1,29 @@
+<!-- #region snippet -->
+<div class="sb-demo">
+    <select-box-lit-inline
+        id="demo-inline-lit"
+        multi
+        surface="inline"
+    ></select-box-lit-inline>
+    <output id="demo-inline-lit-out"><code>[]</code></output>
+</div>
+
+<script>
+    import { SelectBox, defineSelectBoxElement } from "@select-box/lit";
+
+    defineSelectBoxElement("select-box-lit-inline");
+
+    const element = document.querySelector<SelectBox>("#demo-inline-lit")!;
+    element.options = [
+        { value: "apple", label: "Apple" },
+        { value: "pear", label: "Pear" },
+        { value: "peach", label: "Peach" },
+        { value: "plum", label: "Plum" },
+        { value: "lemon", label: "Lemon" },
+    ];
+    element.addEventListener("change", () => {
+        const out = document.querySelector("#demo-inline-lit-out code");
+        if (out) out.textContent = JSON.stringify(element.value);
+    });
+</script>
+<!-- #endregion snippet -->

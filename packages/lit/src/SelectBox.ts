@@ -38,6 +38,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         required: { type: Boolean, reflect: true },
         readOnly: { type: Boolean, reflect: true, attribute: "readonly" },
         multi: { type: Boolean, reflect: true },
+        surface: { type: String, reflect: true },
     } as const;
 
     options?: ReadonlyArray<SelectOption<TExtra>>;
@@ -50,6 +51,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     required = false;
     readOnly = false;
     multi = false;
+    /** Rendering style. `"popover"` (default) shows a combobox dropdown; `"inline"`
+     * renders every option as a toggleable chip with no popover/input/search. */
+    surface: "popover" | "inline" = "popover";
+
+    private get isInline(): boolean {
+        return this.surface === "inline";
+    }
 
     private readonly internals = this.attachInternals();
     private controller: SelectBoxController<TExtra, SelectionValue> | null = null;
@@ -117,6 +125,9 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     override connectedCallback(): void {
         super.connectedCallback();
+        // Popover-only side effects: outside-click closes the popover and the
+        // virtualizer drives the list. Inline surface needs neither.
+        if (this.isInline) return;
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
         this.virtualizer = new SelectBoxListVirtualizer({
             getScrollElement: () => this.listRef.value ?? null,
@@ -343,6 +354,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     override render(): TemplateResult {
         const state = this.controller?.state;
         if (!state) return html``;
+        if (this.isInline) return this.renderInline(state);
         const isMulti = state.mode === "multi";
         const rootClasses = ["select-box", isMulti ? "select-box-multi" : null]
             .filter((value): value is string => value !== null)
@@ -358,6 +370,69 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 ${state.open ? this.renderPopover(state) : nothing}
             </div>
         `;
+    }
+
+    private renderInline(
+        state: SelectBoxSnapshot<TExtra, SelectionValue>,
+    ): TemplateResult {
+        const isMulti = state.mode === "multi";
+        const view = new SelectBoxSnapshotView(state);
+        const rootClasses = [
+            "select-box",
+            "select-box-inline",
+            isMulti ? "select-box-multi" : null,
+        ]
+            .filter((value): value is string => value !== null)
+            .join(" ");
+        return html`
+            <div
+                class=${rootClasses}
+                part="root"
+                role="listbox"
+                aria-multiselectable=${isMulti ? "true" : nothing}
+                data-select-root
+                data-select-mode=${state.mode}
+                data-select-surface="inline"
+            >
+                ${state.filteredGroups.map((group) => html`
+                    ${group.label
+                        ? html`<div class="select-box-group-label" part="group-label" data-select-group-label>${group.label}</div>`
+                        : nothing}
+                    <div class="select-box-tags" data-select-tags>
+                        ${group.options.map((option) => {
+                            const isSelected = view.isSelected(option.value);
+                            const chipClasses = [
+                                "select-box-chip",
+                                "select-box-chip-selectable",
+                                isSelected ? "select-box-chip-selected" : null,
+                                option.disabled ? "select-box-chip-disabled" : null,
+                            ]
+                                .filter((value): value is string => value !== null)
+                                .join(" ");
+                            return html`
+                                <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected=${isSelected}
+                                    aria-pressed=${isSelected}
+                                    class=${chipClasses}
+                                    ?disabled=${option.disabled}
+                                    data-select-chip
+                                    data-select-option
+                                    data-select-selected=${isSelected ? "" : nothing}
+                                    @click=${() => this.commitInlineChip(option)}
+                                >${option.label}</button>
+                            `;
+                        })}
+                    </div>
+                `)}
+            </div>
+        `;
+    }
+
+    private commitInlineChip(option: SelectOption<TExtra>): void {
+        if (option.disabled) return;
+        this.controller?.commitOption(option);
     }
 
     private renderSingleTrigger(

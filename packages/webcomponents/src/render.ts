@@ -6,6 +6,7 @@ export interface SelectBoxShadowRefs {
     readonly clearButton: HTMLButtonElement;
     readonly popover: HTMLDivElement;
     readonly list: HTMLDivElement;
+    readonly inline: HTMLDivElement;
 }
 
 /**
@@ -24,6 +25,7 @@ export function renderSelectBoxShadow(shadowRoot: ShadowRoot): SelectBoxShadowRe
         clearButton: shadowRoot.querySelector<HTMLButtonElement>(".clear")!,
         popover: shadowRoot.querySelector<HTMLDivElement>(".popover")!,
         list: shadowRoot.querySelector<HTMLDivElement>(".list")!,
+        inline: shadowRoot.querySelector<HTMLDivElement>(".inline")!,
     };
 }
 
@@ -71,8 +73,9 @@ const SHADOW_TEMPLATE = `
         align-items: center;
         gap: var(--sb-space-xs);
         width: 100%;
+        min-height: 38px;
         box-sizing: border-box;
-        padding: var(--sb-space-sm) var(--sb-space-md);
+        padding: var(--sb-space-xs);
         background: var(--sb-color-surface);
         color: var(--sb-color-text-primary);
         border: 1px solid var(--sb-color-border);
@@ -111,7 +114,10 @@ const SHADOW_TEMPLATE = `
     .input {
         flex: 1;
         min-width: 0;
-        padding: 0;
+        box-sizing: border-box;
+        height: 28px;
+        padding: 0 0.6rem;
+        line-height: 1;
         border: none;
         background: transparent;
         color: inherit;
@@ -120,44 +126,45 @@ const SHADOW_TEMPLATE = `
     }
 
     :host([mode="multi"]) .input {
+        flex: 1;
         min-width: 5rem;
-        padding: 0;
     }
 
     .input::placeholder {
         color: var(--sb-color-text-secondary);
     }
 
-    .caret {
+    /* Caret + clear share the trailing-button family with .chip-remove:
+     * 28px tall, subtle border-left divider, symbol loose inside its own
+     * padding. Mirrors the docs-starlight light-DOM design. */
+    .caret,
+    .clear {
         all: unset;
-        margin-left: var(--sb-space-sm);
+        flex-shrink: 0;
+        box-sizing: border-box;
+        min-height: 28px;
+        align-self: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: var(--sb-space-xs);
+        padding: 0 0.5rem;
+        border-left: 1px solid var(--sb-color-border);
+        border-radius: 4px;
         color: var(--sb-color-text-secondary);
-        cursor: pointer;
         line-height: 1;
+        cursor: pointer;
+        transition: background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .caret:hover,
+    .clear:hover {
+        color: var(--sb-color-text-primary);
+        background: var(--sb-color-surface-hover);
     }
 
     :host([mode="multi"]) .caret {
         display: none;
-    }
-
-    .clear {
-        all: unset;
-        display: grid;
-        place-items: center;
-        margin-left: var(--sb-space-xs);
-        width: 1.4em;
-        height: 1.4em;
-        font-size: 1.05em;
-        line-height: 1;
-        color: var(--sb-color-text-secondary);
-        cursor: pointer;
-        border-radius: 100%;
-        align-self: center;
-    }
-
-    .clear:hover {
-        color: var(--sb-color-text-primary);
-        background: var(--sb-color-surface-hover);
     }
 
     :host(:not([mode="multi"])) .clear,
@@ -166,30 +173,39 @@ const SHADOW_TEMPLATE = `
     }
 
     .chip {
+        box-sizing: border-box;
+        min-height: 28px;
         display: inline-flex;
         align-items: center;
-        gap: var(--sb-space-xs);
-        padding: 0.25rem 0.15rem 0.25rem 0.55rem;
+        gap: 0.4rem;
+        padding: 0 0 0 0.6rem;
         font-size: 0.85em;
         line-height: 1;
+        max-width: 100%;
         background: var(--sb-color-chip-bg);
         color: var(--sb-color-text-primary);
         border: 1px solid var(--sb-color-chip-border);
         border-radius: var(--sb-radius-chip);
         white-space: nowrap;
+        overflow: hidden;
     }
 
+    /* Flat remove affordance: × sits loose inside its button area with a
+     * subtle vertical divider separating it from the chip's label. No circle. */
     .chip-remove {
         all: unset;
-        display: grid;
-        place-items: center;
-        width: 1.3em;
-        height: 1.3em;
+        align-self: stretch;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.5rem;
+        border-left: 1px solid var(--sb-color-chip-border);
+        border-radius: 0 3px 3px 0;
+        color: var(--sb-color-text-secondary);
         font-size: 1.05em;
         line-height: 1;
-        color: var(--sb-color-text-secondary);
         cursor: pointer;
-        border-radius: 100%;
+        transition: background-color 0.12s ease, color 0.12s ease;
     }
 
     .chip-remove:hover {
@@ -220,13 +236,17 @@ const SHADOW_TEMPLATE = `
         overflow-y: auto;
     }
 
+    /* Group header and option share the trigger's horizontal inset (0.6rem)
+     * and a pinned line-height so the parent line-height can't inflate them
+     * past the virtualizer's estimated row heights. */
     .group-label {
         position: sticky;
         top: 0;
-        padding: var(--sb-space-sm) var(--sb-space-md) var(--sb-space-xs);
+        padding: 0.5rem 0.6rem 0.25rem;
         background: var(--sb-color-surface);
         color: var(--sb-color-text-secondary);
         font-size: var(--sb-font-size-small);
+        line-height: 1;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -239,7 +259,8 @@ const SHADOW_TEMPLATE = `
         gap: var(--sb-space-sm);
         width: 100%;
         box-sizing: border-box;
-        padding: var(--sb-space-sm) var(--sb-space-md);
+        padding: 0.3rem 0.6rem;
+        line-height: 1.2;
         color: var(--sb-color-text-primary);
         font: inherit;
         cursor: pointer;
@@ -271,9 +292,73 @@ const SHADOW_TEMPLATE = `
 
     .empty {
         margin: 0;
-        padding: var(--sb-space-lg);
+        padding: 0.75rem 0.6rem;
         text-align: center;
+        line-height: 1.4;
         color: var(--sb-color-text-secondary);
+    }
+
+    /* Inline surface: every option rendered as a toggleable chip. Mirrors the
+     * docs-starlight light-DOM .select-box-inline. Hidden by default; shown
+     * only when the host has [surface="inline"]. */
+    .inline {
+        display: none;
+        width: 100%;
+        min-height: 38px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--sb-space-xs);
+        padding: var(--sb-space-xs);
+        box-sizing: border-box;
+        border-radius: var(--sb-radius);
+        border: 1px solid var(--sb-color-border);
+        background: var(--sb-color-surface);
+        color: var(--sb-color-text-primary);
+        font: inherit;
+    }
+
+    :host([surface="inline"]) .inline {
+        display: flex;
+    }
+
+    :host([surface="inline"]) .trigger,
+    :host([surface="inline"]) .popover {
+        display: none;
+    }
+
+    .inline-chip {
+        all: unset;
+        box-sizing: border-box;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0 0.6rem;
+        font-size: 0.85em;
+        line-height: 1;
+        max-width: 100%;
+        background: transparent;
+        color: var(--sb-color-text-primary);
+        border: 1px solid var(--sb-color-border);
+        border-radius: var(--sb-radius-chip);
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.12s ease, border-color 0.12s ease;
+    }
+
+    .inline-chip:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--sb-color-text-primary) 8%, transparent);
+    }
+
+    .inline-chip.selected {
+        background: var(--sb-color-chip-bg);
+        border-color: var(--sb-color-chip-border);
+    }
+
+    .inline-chip:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
     }
 </style>
 <div class="trigger" part="trigger" data-select-trigger>
@@ -295,4 +380,5 @@ const SHADOW_TEMPLATE = `
 <div class="popover" part="popover" role="listbox" data-select-popover hidden>
     <div class="list" part="list" data-select-list></div>
 </div>
+<div class="inline" part="inline" role="listbox" data-select-surface="inline" data-select-inline></div>
 `;

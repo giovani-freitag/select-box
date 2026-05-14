@@ -4,24 +4,22 @@ import { ref } from "vue";
 import { SelectBox } from "@select-box/vue";
 
 const fruits = [
-    { value: "apple", label: "Apple", group: "Pomes" },
-    { value: "pear", label: "Pear", group: "Pomes" },
-    { value: "peach", label: "Peach", group: "Stone fruits" },
-    { value: "plum", label: "Plum", group: "Stone fruits" },
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "peach", label: "Peach" },
+    { value: "plum", label: "Plum" },
     { value: "lemon", label: "Lemon" },
-    { value: "orange", label: "Orange" },
 ];
 
 const committed = ref<ReadonlyArray<string>>([]);
 </script>
 
 <template>
-    <div class="sb-demo multi-demo">
+    <div class="sb-demo">
         <SelectBox
             multi
+            surface="inline"
             :options="fruits"
-            ungrouped-label="Citrus"
-            placeholder="Pick fruits…"
             @change-multi="(values) => (committed = values)"
         />
         <output>

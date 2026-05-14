@@ -19,9 +19,9 @@
             ],
             placeholder: "Pick a fruit",
         })
-        .on("change", (_event, _value, option) => {
+        .on("change", (_event, value) => {
             const out = document.querySelector("#demo-simple-jq-out code");
-            if (out) out.textContent = option ? JSON.stringify(option) : "null";
+            if (out) out.textContent = JSON.stringify(value);
         });
 </script>
 <!-- #endregion snippet -->

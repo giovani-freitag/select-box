@@ -27,6 +27,12 @@ import {
 
 import { useSelectBox } from "./use-select-box.js";
 
+/** Rendering style. `"popover"` is the default combobox-with-dropdown surface;
+ * `"inline"` renders every option as a toggleable chip with no popover, no
+ * trigger input, and no search. Orthogonal to `multi` — both surfaces work in
+ * single and multi modes. */
+export type SelectBoxSurface = "popover" | "inline";
+
 export interface SelectBoxProps<TExtra extends object = object> {
     options?: ReadonlyArray<SelectOption<TExtra>>;
     /** Single mode: `string | number | null`. Multi mode: `ReadonlyArray<string | number>`. */
@@ -37,6 +43,8 @@ export interface SelectBoxProps<TExtra extends object = object> {
     filter?: OptionFilterStrategy<TExtra>;
     /** When `true`, switches to multi-select (chips inside the input, popover stays open on commit). */
     multi?: boolean;
+    /** Surface style. Defaults to `"popover"`. */
+    surface?: SelectBoxSurface;
 }
 
 const ESTIMATED_OPTION_HEIGHT = 36;
@@ -46,7 +54,10 @@ const LIST_VIEWPORT_HEIGHT = 240;
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
     defaultValue: null,
     multi: false,
+    surface: "popover",
 });
+
+const isInline = computed(() => props.surface === "inline");
 const emit = defineEmits<{
     /** Single-mode change. Fires only when `multi` is `false`. */
     (event: "change", value: string | null, option: SelectOption<TExtra> | null): void;
@@ -213,11 +224,18 @@ const visibleEntries = computed(() => {
 });
 
 onMounted(() => {
+    // Inline surface has no popover/list/keyboard, so the virtualizer and the
+    // outside-click listener stay dormant — only the popover surface needs them.
+    if (isInline.value) return;
     virtualizer.mount();
     document.addEventListener("mousedown", handleOutsideMouseDown);
 });
 
 onBeforeUnmount(() => {
+    if (isInline.value) {
+        unsubscribeFromVirtualizer();
+        return;
+    }
     document.removeEventListener("mousedown", handleOutsideMouseDown);
     unsubscribeFromVirtualizer();
     virtualizer.dispose();
@@ -285,6 +303,22 @@ function commitFromList(option: SelectOption<TExtra>): void {
     if (isMulti.value) focusInput();
 }
 
+function commitInlineChip(option: SelectOption<TExtra>): void {
+    if (option.disabled) return;
+    controller.commitOption(option);
+}
+
+function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): string {
+    return [
+        "select-box-chip",
+        "select-box-chip-selectable",
+        isSelected ? "select-box-chip-selected" : null,
+        disabled ? "select-box-chip-disabled" : null,
+    ]
+        .filter((value): value is string => value !== null)
+        .join(" ");
+}
+
 function estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {
     return model.getRowAt(index)?.kind === "header"
         ? ESTIMATED_HEADER_HEIGHT
@@ -312,7 +346,48 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
 </script>
 
 <template>
+    <!-- Inline surface: every option is a toggleable chip; no popover, no
+         trigger input. Single mode replaces on click; multi toggles. -->
     <div
+        v-if="isInline"
+        :class="[
+            'select-box',
+            'select-box-inline',
+            isMulti ? 'select-box-multi' : null,
+        ].filter(Boolean).join(' ')"
+        role="listbox"
+        :aria-multiselectable="isMulti ? true : undefined"
+        data-select-root
+        :data-select-mode="isMulti ? 'multi' : 'single'"
+        data-select-surface="inline"
+    >
+        <template v-for="group in state.filteredGroups" :key="group.key">
+            <div
+                v-if="group.label"
+                class="select-box-group-label"
+                data-select-group-label
+            >{{ group.label }}</div>
+            <div class="select-box-tags" data-select-tags>
+                <button
+                    v-for="option in group.options"
+                    :key="option.value"
+                    type="button"
+                    role="option"
+                    :aria-selected="view.isSelected(option.value)"
+                    :aria-pressed="view.isSelected(option.value)"
+                    :disabled="option.disabled"
+                    :class="inlineChipClass(view.isSelected(option.value), option.disabled)"
+                    data-select-chip
+                    data-select-option
+                    :data-select-selected="view.isSelected(option.value) ? '' : undefined"
+                    @click="commitInlineChip(option)"
+                >{{ option.label }}</button>
+            </div>
+        </template>
+    </div>
+
+    <div
+        v-else
         ref="rootEl"
         :class="['select-box', isMulti ? 'select-box-multi' : null].filter(Boolean).join(' ')"
         data-select-root

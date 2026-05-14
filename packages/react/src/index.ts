@@ -3,9 +3,13 @@ export {
     type SelectBoxMultiProps,
     type SelectBoxProps,
     type SelectBoxSingleProps,
+    type SelectBoxSurface,
 } from "./SelectBox.js";
-export { useSelectBox, type UseSelectBoxResult } from "./use-select-box.js";
-export { useMultiSelectBox, type UseMultiSelectBoxResult } from "./use-multi-select-box.js";
+export { useSelectBox, type UseSelectBoxResult } from "./hooks/use-select-box.js";
+export {
+    useMultiSelectBox,
+    type UseMultiSelectBoxResult,
+} from "./hooks/use-multi-select-box.js";
 
 export {
     MultiSelectBoxController,

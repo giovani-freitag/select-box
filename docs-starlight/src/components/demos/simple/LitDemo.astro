@@ -19,9 +19,7 @@
     ];
     element.addEventListener("change", () => {
         const out = document.querySelector("#demo-simple-lit-out code");
-        if (out) out.textContent = element.selectedOption
-            ? JSON.stringify(element.selectedOption)
-            : "null";
+        if (out) out.textContent = JSON.stringify(element.value);
     });
 </script>
 <!-- #endregion snippet -->

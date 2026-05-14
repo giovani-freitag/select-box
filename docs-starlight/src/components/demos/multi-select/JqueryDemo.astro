@@ -22,9 +22,9 @@
             ungroupedLabel: "Citrus",
             placeholder: "Pick fruits…",
         })
-        .on("selectbox:change", (_event, _values, options) => {
+        .on("selectbox:change", (_event, values) => {
             const out = document.querySelector("#demo-multi-jq-out code");
-            if (out) out.textContent = JSON.stringify(options);
+            if (out) out.textContent = JSON.stringify(values);
         });
 </script>
 <!-- #endregion snippet -->

@@ -1,23 +1,23 @@
 <!-- #region snippet -->
 <div class="sb-demo">
-    <select-box id="demo-simple-wc" placeholder="Pick a fruit"></select-box>
-    <output id="demo-simple-wc-out"><code>null</code></output>
+    <select-box id="demo-inline-wc" multi surface="inline"></select-box>
+    <output id="demo-inline-wc-out"><code>[]</code></output>
 </div>
 
 <script>
     import "@select-box/webcomponents/define";
     import type { SelectBoxElement } from "@select-box/webcomponents";
 
-    const element = document.querySelector<SelectBoxElement>("#demo-simple-wc")!;
+    const element = document.querySelector<SelectBoxElement>("#demo-inline-wc")!;
     element.options = [
         { value: "apple", label: "Apple" },
         { value: "pear", label: "Pear" },
-        { value: "grape", label: "Grape" },
-        { value: "lemon", label: "Lemon" },
         { value: "peach", label: "Peach" },
+        { value: "plum", label: "Plum" },
+        { value: "lemon", label: "Lemon" },
     ];
     element.addEventListener("change", () => {
-        const out = document.querySelector("#demo-simple-wc-out code");
+        const out = document.querySelector("#demo-inline-wc-out code");
         if (out) out.textContent = JSON.stringify(element.value);
     });
 </script>

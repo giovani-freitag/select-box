@@ -12,7 +12,7 @@ const fruits = [
 ];
 
 export default function Demo(): React.ReactElement {
-    const [committed, setCommitted] = useState<ReadonlyArray<(typeof fruits)[number]>>([]);
+    const [committed, setCommitted] = useState<ReadonlyArray<string>>([]);
     return (
         <div className="sb-demo multi-demo">
             <SelectBox
@@ -20,7 +20,7 @@ export default function Demo(): React.ReactElement {
                 options={fruits}
                 placeholder="Pick fruits…"
                 ungroupedLabel="Citrus"
-                onChange={(_values, options) => setCommitted(options)}
+                onChange={setCommitted}
             />
             <output>
                 <code>{JSON.stringify(committed)}</code>

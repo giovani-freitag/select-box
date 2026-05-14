@@ -11,7 +11,7 @@ const fruits = [
     { value: "peach", label: "Peach" },
 ];
 
-const committed = ref<(typeof fruits)[number] | null>(null);
+const committed = ref<string | null>(null);
 </script>
 
 <template>
@@ -19,9 +19,9 @@ const committed = ref<(typeof fruits)[number] | null>(null);
         <SelectBox
             :options="fruits"
             placeholder="Pick a fruit"
-            @change="(_value, option) => (committed = option)"
+            @change="(value) => (committed = value)"
         />
-        <output><code>{{ committed ? JSON.stringify(committed) : "null" }}</code></output>
+        <output><code>{{ JSON.stringify(committed) }}</code></output>
     </div>
 </template>
 <!-- #endregion snippet -->

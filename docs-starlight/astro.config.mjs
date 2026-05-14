@@ -40,6 +40,7 @@ export default defineConfig({
                     items: [
                         { label: "Simple", link: "/examples/simple/" },
                         { label: "Multi-select", link: "/examples/multi-select/" },
+                        { label: "Inline chips", link: "/examples/inline-select/" },
                         { label: "Option groups", link: "/examples/optgroup/" },
                         { label: "Disabled", link: "/examples/disabled/" },
                         { label: "Search", link: "/examples/search/" },
