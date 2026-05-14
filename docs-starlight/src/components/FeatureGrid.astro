@@ -1,34 +1,34 @@
 ---
 const features = [
     {
-        icon: "core",
-        title: "One core, every wrapper",
-        body: "SingleSelectBoxController owns state, search, virtualization and keyboard nav. Each wrapper is a thin adapter — zero framework logic in the core.",
+        icon: "speed",
+        title: "10,000 options, still smooth",
+        body: "Drop in a huge list — only the rows on screen render. Search, scroll, pick — no lag, no manual virtualization to wire up.",
     },
     {
-        icon: "snapshot",
-        title: "Same snapshot everywhere",
-        body: "state.open, state.value, state.filteredGroups, state.activeIndex — identical fields across React, Vue, Lit, WC, jQuery. Tests assert against them directly.",
+        icon: "search",
+        title: "Search that just works",
+        body: "Type to filter. Substring match by default, with matched characters highlighted in every row. One extra line swaps it for fuzzy matching.",
     },
     {
-        icon: "matrix",
-        title: "Matrix E2E suite",
-        body: "A single Playwright spec runs against every framework's example. A core regression fails N times at once; a wrapper bug only fails its column.",
+        icon: "a11y",
+        title: "Keyboard and screen-reader ready",
+        body: "Arrow keys, Enter, Escape, focus management, the full set of aria-* attributes — built to the WAI-ARIA combobox spec. Accessibility is the default, not a checklist for later.",
     },
     {
-        icon: "addons",
-        title: "Addons via declaration merging",
-        body: "Opt into hoist-selected, clear-button, create-option via .use(). Snapshots extend through TypeScript module augmentation — typed, no casts.",
+        icon: "form",
+        title: "Plays nice with forms",
+        body: "Submits inside a <form> like a native input. Works with React Hook Form, plain FormData, and the rest. No hidden inputs, no extra glue.",
+    },
+    {
+        icon: "groups",
+        title: "Grouped, disabled, optgroup-style",
+        body: "Bundle options under group headers like native <optgroup>. Keyboard nav skips headers and disabled rows for you. Sticky headers when your CSS wants them.",
     },
     {
         icon: "headless",
-        title: "Headless or ready",
-        body: "Drop in the styled component for the common case, or grab useSelectBox() / the controller class and render whatever UI you need.",
-    },
-    {
-        icon: "aria",
-        title: "ARIA combobox spec",
-        body: "Built against the WAI-ARIA combobox pattern. Keyboard navigation, focus management and aria-* attributes wired in the core, not patched per-framework.",
+        title: "Use ours, or render your own",
+        body: "Drop in the styled component for the common case. Or take just the state and keyboard logic and render any UI you want — same package, same behaviour.",
     },
 ];
 ---
@@ -40,41 +40,36 @@ const features = [
                 <article class="sb-feature">
                     <div class={`sb-feature-icon sb-feature-icon-${feature.icon}`} aria-hidden="true">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            {feature.icon === "core" && (
+                            {feature.icon === "speed" && (
+                                <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+                            )}
+                            {feature.icon === "search" && (
                                 <>
-                                    <circle cx="12" cy="12" r="3" />
-                                    <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" />
+                                    <circle cx="11" cy="11" r="7" />
+                                    <path d="m20 20-3.5-3.5" />
                                 </>
                             )}
-                            {feature.icon === "snapshot" && (
+                            {feature.icon === "a11y" && (
+                                <>
+                                    <rect x="2" y="6" width="20" height="12" rx="2" />
+                                    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
+                                </>
+                            )}
+                            {feature.icon === "form" && (
                                 <>
                                     <rect x="3" y="4" width="18" height="16" rx="2" />
-                                    <path d="M3 10h18M9 4v16" />
+                                    <path d="m8 12 3 3 5-6" />
                                 </>
                             )}
-                            {feature.icon === "matrix" && (
+                            {feature.icon === "groups" && (
                                 <>
-                                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                                    <rect x="3" y="14" width="7" height="7" rx="1" />
-                                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                                </>
-                            )}
-                            {feature.icon === "addons" && (
-                                <>
-                                    <path d="M12 2v20M2 12h20" />
-                                    <circle cx="12" cy="12" r="9" />
+                                    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                    <path d="M7 13h10" />
                                 </>
                             )}
                             {feature.icon === "headless" && (
                                 <>
-                                    <path d="M4 6h16M4 12h10M4 18h16" />
-                                </>
-                            )}
-                            {feature.icon === "aria" && (
-                                <>
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                    <path d="M9 9h6M9 13h4" />
+                                    <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />
                                 </>
                             )}
                         </svg>
