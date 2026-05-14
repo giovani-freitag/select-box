@@ -223,23 +223,6 @@ const fruits: Fruit[] = [
 `<option value>` in HTML); identity comparisons (`defaultValue`, the
 internal `value → option` index, form serialization) use plain `===`.
 
-## Styling
-
-Every wrapper ships **unstyled by default** — you decide how the trigger,
-popover, search input, and options look. The hooks are the same across
-frameworks:
-
-- **DOM-based wrappers** (React, Vue, jQuery) expose semantic class names:
-  `.select-box`, `.select-box-trigger`, `.select-box-popover`,
-  `.select-box-option`, `.select-box-option-active`, etc.
-- **Shadow-DOM wrappers** (Lit, Web Components) expose the same areas as
-  CSS `::part()` slots: `::part(trigger)`, `::part(popover)`,
-  `::part(search)`, and so on.
-
-The [demo stylesheet](https://github.com/giovani-freitag/select-box/blob/main/docs-starlight/src/styles/demo.css)
-this site uses is a reasonable starting point — copy it, then tune the
-tokens to match your design system.
-
 ## Filtering
 
 The default filter is `SubstringFilterStrategy` — case-insensitive

@@ -31,6 +31,7 @@ export default defineConfig({
                     label: "Guide",
                     items: [
                         { label: "Getting started", link: "/guides/getting-started/" },
+                        { label: "Styling", link: "/guides/styling/" },
                         { label: "Headless vs ready", link: "/guides/headless-vs-ready/" },
                     ],
                 },

@@ -1,0 +1,235 @@
+---
+title: Styling
+description: Theme select-box with CSS variables, target individual pieces with parts or class names, and tune everything live in the playground.
+---
+
+import StylingPlayground from "../../../components/StylingPlayground.astro";
+
+Every wrapper ships **unstyled by default**. The defaults are intentionally
+neutral — they pick up your page's text color, system colors, and dark-mode
+preferences out of the box — so you can ship a working picker without
+writing a single line of CSS, then layer your design system on top.
+
+There are three channels to do that, used in this order from least to most invasive:
+
+1. **CSS variables** (`--sb-*`) — design tokens. Colors, radius, spacing.
+2. **Parts** (`::part(...)`) — for the Shadow-DOM wrappers (Lit, Web Components).
+3. **Class names** (`.select-box-*`) — for the DOM-tree wrappers (React, Vue, jQuery).
+
+You almost always want (1). Reach for (2)/(3) only when a structural rule
+(layout, animation, replacing an icon) is beyond what a token can express.
+
+## Try it live
+
+Tweak the tokens — the preview updates in place. The CSS block at the
+bottom is what you'd paste into your stylesheet.
+
+<StylingPlayground />
+
+## The pieces
+
+Every wrapper renders the same anatomy. Names are stable across React,
+Vue, Lit, Web Components, and jQuery — only the way you target them
+differs.
+
+| Piece | What it is | Class (DOM) | Part (Shadow) |
+|---|---|---|---|
+| Root | Outer wrapper element | `.select-box` | _(host: the `<select-box>` element itself)_ |
+| Trigger | The boxed control that opens the popover | `.select-box-trigger` | `::part(trigger)` |
+| Input | The text input inside the trigger | `.select-box-input` | `::part(input)` |
+| Caret | The chevron button on the right | `.select-box-caret` | `::part(caret)` |
+| Popover | The floating panel that contains the list | `.select-box-popover` | `::part(popover)` |
+| List | The scrollable container for options | `.select-box-list` | `::part(list)` |
+| Group label | The sticky header above a group of options | `.select-box-group-label` | `::part(group-label)` |
+| Option | A single option row (button) | `.select-box-option` | `::part(option)` |
+| Active option | The currently highlighted row | `.select-box-option-active` | `::part(option-active)` |
+| Disabled option | A non-selectable option | `.select-box-option-disabled` | `::part(option-disabled)` |
+| Match | A `<mark>` around the search match inside a label | `.select-box-option-match` | `::part(option-match)` |
+| Empty | The "no matches" message | `.select-box-empty` | `::part(empty)` |
+
+The DOM wrappers also tag every piece with a `data-select-*` attribute
+(e.g. `data-select-trigger`, `data-select-popover`) — useful for
+end-to-end tests and for selectors that need to survive a className
+rename.
+
+## CSS variables
+
+Set them on the host element (or any ancestor in light-DOM wrappers).
+Variables cross the shadow boundary, so the same `select-box { --sb-…: … }`
+rule works for Web Components and Lit.
+
+### Colors
+
+| Token | Default | Controls |
+|---|---|---|
+| `--sb-color-surface` | `Canvas` | Trigger, popover, and group-label background |
+| `--sb-color-surface-hover` | `color-mix(in srgb, CanvasText 6%, transparent)` | Background of a hovered option |
+| `--sb-color-text-primary` | `CanvasText` | Trigger, option, and input text |
+| `--sb-color-text-secondary` | `GrayText` | Placeholder, caret, group label, "no matches", disabled rows |
+| `--sb-color-border` | `color-mix(in srgb, CanvasText 14%, transparent)` | Trigger and popover border |
+| `--sb-color-highlight-bg` | `Highlight` | Active option background and search-match highlight |
+| `--sb-color-highlight-text` | `HighlightText` | Active option text |
+
+System colors like `Canvas` and `CanvasText` follow the user's UA theme,
+which is why the defaults look right in both light and dark mode without
+extra effort.
+
+### Spacing
+
+| Token | Default | Controls |
+|---|---|---|
+| `--sb-space-xs` | `0.25rem` | Tight padding (gap below popover, group label bottom) |
+| `--sb-space-sm` | `0.5rem` | Vertical padding inside trigger and options |
+| `--sb-space-md` | `0.875rem` | Horizontal padding inside trigger and options |
+| `--sb-space-lg` | `1rem` | Padding around the "no matches" message |
+
+### Shape and typography
+
+| Token | Default | Controls |
+|---|---|---|
+| `--sb-radius` | `8px` | Border-radius on trigger and popover |
+| `--sb-shadow-popover` | `0 12px 24px -8px color-mix(in srgb, CanvasText 30%, transparent)` | Popover drop shadow |
+| `--sb-font-size` | `inherit` | Base font size — defaults to the host's font |
+| `--sb-font-size-small` | `0.75em` | Group label font size |
+| `--sb-list-max-height` | `240px` | Maximum visible list height before scrolling |
+| `--sb-popover-z-index` | `30` | Popover stacking |
+
+### Setting tokens
+
+In every wrapper the rule is the same — set the variables on the host
+element. The styled component picks them up automatically.
+
+```css
+/* Applies to all <select-box> elements on the page. */
+select-box {
+    --sb-color-surface: #0b1020;
+    --sb-color-text-primary: #f8fafc;
+    --sb-color-border: rgba(148, 163, 184, 0.2);
+    --sb-color-highlight-bg: #3b82f6;
+    --sb-radius: 12px;
+}
+
+/* DOM wrappers (React, Vue, jQuery) — same tokens, target the root class. */
+.select-box {
+    --sb-color-surface: #0b1020;
+    --sb-color-text-primary: #f8fafc;
+    /* … */
+}
+```
+
+## Targeting parts (Lit, Web Components)
+
+The shadow DOM hides the internal elements from your stylesheet, but
+each one is exposed via a `part` attribute. Address them with the
+`::part()` pseudo-element from outside.
+
+```css
+/* The boxed trigger */
+select-box::part(trigger) {
+    border-width: 2px;
+    background: linear-gradient(180deg, #fff, #fafafa);
+}
+
+/* The list itself — change its scroll behaviour */
+select-box::part(list) {
+    scroll-padding-block: 0.5rem;
+}
+
+/* A row when it's the currently highlighted one (composite part) */
+select-box::part(option option-active) {
+    box-shadow: inset 3px 0 0 currentColor;
+}
+
+/* The <mark> that wraps a search match inside a label */
+select-box::part(option-match) {
+    background: rgba(255, 235, 59, 0.4);
+    color: inherit;
+    border-radius: 2px;
+}
+```
+
+`::part()` only accepts simple selectors — you can't combine it with
+descendants like `::part(option) span`. If a structural change really
+needs deeper access, drop down to the [headless layer](/guides/headless-vs-ready/)
+and render the row yourself.
+
+## Targeting classes (React, Vue, jQuery)
+
+DOM-tree wrappers render to the host's light DOM, so plain class
+selectors work like any other element.
+
+```css
+.select-box-trigger {
+    border-width: 2px;
+}
+
+.select-box-trigger:focus-within {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.select-box-popover {
+    border-radius: 12px;
+    box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.4);
+}
+
+.select-box-option:hover:not(.select-box-option-disabled) {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.select-box-option-active {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.select-box-option-match {
+    background: transparent;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+    color: inherit;
+}
+```
+
+Scoping rules vary by wrapper:
+
+- **React** — the styled component forwards `className` to the root, so
+  you can scope: `<SelectBox className="my-select" />` then write
+  `.my-select .select-box-option { … }`.
+- **Vue** — same as React for attribute forwarding. Scoped styles
+  (`<style scoped>`) work as long as your selector matches the rendered
+  DOM (Vue compiles `[data-v-…]` attributes onto the root).
+- **jQuery** — give the host element a class and scope through that:
+  `$("#picker").addClass("my-select").selectBox({ … })`.
+
+## A full themed example
+
+A complete dark theme expressed in tokens only — drop into a stylesheet,
+adjust the swatches, done.
+
+```css
+select-box,
+.select-box {
+    --sb-color-surface: #0b1020;
+    --sb-color-surface-hover: rgba(148, 163, 184, 0.08);
+    --sb-color-text-primary: #f8fafc;
+    --sb-color-text-secondary: #94a3b8;
+    --sb-color-border: rgba(148, 163, 184, 0.2);
+    --sb-color-highlight-bg: linear-gradient(135deg, #3b82f6, #a855f7);
+    --sb-color-highlight-text: #ffffff;
+
+    --sb-radius: 10px;
+    --sb-shadow-popover: 0 18px 40px -16px rgba(2, 6, 23, 0.65);
+}
+```
+
+The [demo stylesheet this site uses](https://github.com/giovani-freitag/select-box/blob/main/docs-starlight/src/styles/demo.css)
+takes the same approach — every override maps a `--sb-*` token to the
+Starlight palette. Copy it, swap the right-hand side for your design
+tokens, and you have a fully themed select-box.
+
+## Next steps
+
+- [Headless vs ready](/guides/headless-vs-ready/) — when the styled
+  component isn't enough and you want to render the rows yourself.
+- [Simple example](/examples/simple/) — the styled component in every
+  wrapper, side by side.

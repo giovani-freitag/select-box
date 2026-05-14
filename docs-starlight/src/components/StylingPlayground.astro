@@ -1,0 +1,379 @@
+---
+const sampleId = "sb-styling-playground-select";
+
+const colorControls = [
+    { token: "--sb-color-surface", label: "Surface", default: "#ffffff" },
+    { token: "--sb-color-text-primary", label: "Text", default: "#0f172a" },
+    { token: "--sb-color-text-secondary", label: "Muted text", default: "#64748b" },
+    { token: "--sb-color-border", label: "Border", default: "#cbd5e1" },
+    { token: "--sb-color-surface-hover", label: "Row hover", default: "#f1f5f9" },
+    { token: "--sb-color-highlight-bg", label: "Active row", default: "#2563eb" },
+    { token: "--sb-color-highlight-text", label: "Active text", default: "#ffffff" },
+];
+
+const rangeControls = [
+    { token: "--sb-radius", label: "Radius", min: 0, max: 24, step: 1, default: 8, unit: "px" },
+];
+---
+
+<div class="sb-pg not-content" data-pg-root>
+    <div class="sb-pg-grid">
+        <div class="sb-pg-preview" data-pg-preview-wrap>
+            <span class="sb-pg-hint">Click to open ↓</span>
+            <select-box id={sampleId} placeholder="Pick a fruit" ungrouped-label="Other"></select-box>
+        </div>
+
+        <div class="sb-pg-controls">
+            <fieldset class="sb-pg-fieldset">
+                <legend>Colors</legend>
+                <div class="sb-pg-fieldset-rows">
+                    {
+                        colorControls.map((control) => (
+                            <label class="sb-pg-control">
+                                <span class="sb-pg-control-label">{control.label}</span>
+                                <span class="sb-pg-control-token">{control.token}</span>
+                                <input
+                                    type="color"
+                                    value={control.default}
+                                    data-pg-input
+                                    data-token={control.token}
+                                />
+                            </label>
+                        ))
+                    }
+                </div>
+            </fieldset>
+
+            <fieldset class="sb-pg-fieldset">
+                <legend>Shape</legend>
+                <div class="sb-pg-fieldset-rows">
+                    {
+                        rangeControls.map((control) => (
+                            <label class="sb-pg-control sb-pg-control--range">
+                                <span class="sb-pg-control-label">{control.label}</span>
+                                <span class="sb-pg-control-token">{control.token}</span>
+                                <input
+                                    type="range"
+                                    min={control.min}
+                                    max={control.max}
+                                    step={control.step}
+                                    value={control.default}
+                                    data-pg-input
+                                    data-token={control.token}
+                                    data-unit={control.unit}
+                                />
+                                <output data-pg-range-out>{control.default}{control.unit}</output>
+                            </label>
+                        ))
+                    }
+                </div>
+            </fieldset>
+
+            <div class="sb-pg-buttons">
+                <button type="button" class="sb-pg-btn" data-pg-reset>Reset</button>
+                <button type="button" class="sb-pg-btn sb-pg-btn--primary" data-pg-copy>Copy CSS</button>
+            </div>
+        </div>
+    </div>
+
+    <pre class="sb-pg-code"><code data-pg-output></code></pre>
+</div>
+
+<script>
+    import "@select-box/webcomponents/define";
+    import type { SelectBoxElement } from "@select-box/webcomponents";
+
+    interface PlaygroundContext {
+        root: HTMLElement;
+        select: SelectBoxElement;
+        inputs: HTMLInputElement[];
+        output: HTMLElement;
+        defaults: Map<string, string>;
+    }
+
+    const SAMPLE_OPTIONS = [
+        { value: "apple", label: "Apple", group: "Pomes" },
+        { value: "pear", label: "Pear", group: "Pomes" },
+        { value: "peach", label: "Peach", group: "Stone fruits" },
+        { value: "plum", label: "Plum", group: "Stone fruits" },
+        { value: "lemon", label: "Lemon" },
+        { value: "orange", label: "Orange" },
+    ];
+
+    function initStylingPlaygrounds(): void {
+        const roots = document.querySelectorAll<HTMLElement>("[data-pg-root]");
+        roots.forEach((root) => {
+            if (root.dataset["wired"] === "true") return;
+            root.dataset["wired"] = "true";
+            wirePlayground(root);
+        });
+    }
+
+    function wirePlayground(root: HTMLElement): void {
+        const select = root.querySelector<SelectBoxElement>("select-box")!;
+        const inputs = Array.from(root.querySelectorAll<HTMLInputElement>("[data-pg-input]"));
+        const output = root.querySelector<HTMLElement>("[data-pg-output]")!;
+        const defaults = new Map<string, string>();
+        inputs.forEach((input) => defaults.set(input.dataset["token"]!, input.value));
+
+        select.options = SAMPLE_OPTIONS;
+
+        const ctx: PlaygroundContext = { root, select, inputs, output, defaults };
+
+        inputs.forEach((input) => {
+            input.addEventListener("input", () => applyInput(ctx, input));
+            applyInput(ctx, input);
+        });
+
+        root.querySelector<HTMLButtonElement>("[data-pg-reset]")!.addEventListener("click", () => {
+            resetPlayground(ctx);
+        });
+        root.querySelector<HTMLButtonElement>("[data-pg-copy]")!.addEventListener("click", () => {
+            copyPlaygroundCss(ctx);
+        });
+
+        renderOutput(ctx);
+    }
+
+    function applyInput(ctx: PlaygroundContext, input: HTMLInputElement): void {
+        const token = input.dataset["token"]!;
+        const unit = input.dataset["unit"] ?? "";
+        const value = `${input.value}${unit}`;
+        ctx.select.style.setProperty(token, value);
+        const rangeOut = input.parentElement?.querySelector<HTMLOutputElement>("[data-pg-range-out]");
+        if (rangeOut) rangeOut.textContent = value;
+        renderOutput(ctx);
+    }
+
+    function resetPlayground(ctx: PlaygroundContext): void {
+        ctx.inputs.forEach((input) => {
+            const token = input.dataset["token"]!;
+            input.value = ctx.defaults.get(token) ?? input.value;
+            applyInput(ctx, input);
+        });
+    }
+
+    function copyPlaygroundCss(ctx: PlaygroundContext): void {
+        const css = ctx.output.textContent ?? "";
+        if (!css) return;
+        void navigator.clipboard?.writeText(css);
+        const button = ctx.root.querySelector<HTMLButtonElement>("[data-pg-copy]");
+        if (!button) return;
+        const previous = button.textContent;
+        button.textContent = "Copied!";
+        window.setTimeout(() => {
+            button.textContent = previous;
+        }, 1200);
+    }
+
+    function renderOutput(ctx: PlaygroundContext): void {
+        const lines = ctx.inputs.map((input) => {
+            const token = input.dataset["token"]!;
+            const unit = input.dataset["unit"] ?? "";
+            return `    ${token}: ${input.value}${unit};`;
+        });
+        ctx.output.textContent = `select-box {\n${lines.join("\n")}\n}\n`;
+    }
+
+    initStylingPlaygrounds();
+    document.addEventListener("astro:page-load", initStylingPlaygrounds);
+</script>
+
+<style>
+    .sb-pg {
+        margin: 1.75rem 0;
+        border-radius: 14px;
+        border: 1px solid var(--sl-color-hairline);
+        background: var(--sl-color-bg-sidebar);
+        overflow: hidden;
+    }
+
+    .sb-pg-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        padding: 1.5rem;
+    }
+
+    @media (min-width: 56rem) {
+        .sb-pg-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+        }
+    }
+
+    .sb-pg-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 2rem 1.5rem;
+        border-radius: 10px;
+        border: 1px dashed var(--sl-color-hairline);
+        background: var(--sl-color-bg);
+        min-height: 220px;
+    }
+
+    .sb-pg-hint {
+        font-size: 0.75rem;
+        text-align: center;
+        color: var(--sl-color-gray-3);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .sb-pg-preview select-box {
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+        font-size: 0.95rem;
+    }
+
+    .sb-pg-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .sb-pg-fieldset {
+        margin: 0;
+        padding: 0.85rem 1rem 1rem;
+        border: 1px solid var(--sl-color-hairline);
+        border-radius: 10px;
+        background: var(--sl-color-bg);
+    }
+
+    .sb-pg-fieldset legend {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--sl-color-text-accent);
+        padding: 0 0.4rem;
+        margin-left: -0.4rem;
+    }
+
+    .sb-pg-fieldset-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-top: 0.35rem;
+    }
+
+    .sb-pg-control {
+        display: grid;
+        grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--sl-color-text);
+    }
+
+    .sb-pg-control-label {
+        font-weight: 500;
+    }
+
+    .sb-pg-control-token {
+        font-family: var(--sl-font-system-mono);
+        font-size: 0.74rem;
+        color: var(--sl-color-gray-3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sb-pg-control input[type="color"] {
+        width: 38px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid var(--sl-color-hairline);
+        border-radius: 6px;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .sb-pg-control input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    .sb-pg-control input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 4px;
+    }
+
+    .sb-pg-control--range {
+        grid-template-columns: 7.5rem minmax(0, 1fr) auto auto;
+    }
+
+    .sb-pg-control input[type="range"] {
+        flex: 1;
+        min-width: 0;
+        accent-color: var(--sl-color-accent);
+    }
+
+    .sb-pg-control output {
+        font-family: var(--sl-font-system-mono);
+        font-size: 0.78rem;
+        color: var(--sl-color-gray-2);
+        min-width: 3rem;
+        text-align: right;
+    }
+
+    .sb-pg-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .sb-pg-btn {
+        appearance: none;
+        padding: 0.5rem 0.9rem;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 1px solid var(--sl-color-hairline-shade, var(--sl-color-hairline));
+        background: var(--sl-color-bg);
+        color: var(--sl-color-text);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+
+    .sb-pg-btn:hover {
+        border-color: var(--sl-color-text-accent);
+        color: var(--sl-color-text-accent);
+    }
+
+    .sb-pg-btn--primary {
+        background: var(--sb-brand-gradient);
+        color: #ffffff;
+        border-color: transparent;
+    }
+
+    .sb-pg-btn--primary:hover {
+        color: #ffffff;
+        filter: brightness(1.06);
+    }
+
+    .sb-pg-code {
+        margin: 0;
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--sl-color-hairline);
+        background: var(--sl-color-bg-nav);
+        font-family: var(--sl-font-system-mono);
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: var(--sl-color-text);
+        white-space: pre;
+        overflow-x: auto;
+    }
+
+    .sb-pg-code code {
+        background: transparent;
+        padding: 0;
+        font-size: inherit;
+    }
+</style>
