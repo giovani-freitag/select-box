@@ -177,8 +177,10 @@ pnpm --filter @select-box/docs-starlight start
 
 Pilot project. The select-box pulled out of `the-origin-app` is the first
 component; conventions and tooling established here become the template for
-future components. Single mode is feature-complete; multi mode and the first
-addons are next.
+future components. Single and multi mode are feature-complete across all five
+wrappers, in both the popover and the inline-chip surface, with `addon-fuzzy`
+and `addon-hoist-selected` shipped. The remaining first-party addons and the
+matrix E2E suite are next.
 
 See [PROJECT.md](./PROJECT.md) for the full architectural spec, milestones, and
 open decisions.
