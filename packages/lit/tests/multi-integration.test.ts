@@ -58,7 +58,6 @@ describe("<select-box multi /> (Lit)", () => {
         const apple = fruits[0]!;
         const pear = fruits[1]!;
 
-        element.controller && void element.controller; // touch getter to silence unused
         const view = element as unknown as { selectedOptions: ReadonlyArray<Fruit> };
 
         const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;

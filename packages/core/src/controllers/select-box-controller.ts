@@ -319,7 +319,7 @@ export class SelectBoxController<
         for (const addon of this.registeredAddons) {
             if (!addon.extendSnapshot) continue;
             (addonSlices as Record<string, unknown>)[addon.name] = addon.extendSnapshot({
-                snapshot: snapshot as SelectBoxSnapshot<TExtra, SelectionValue>,
+                snapshot,
             });
         }
         return { ...snapshot, addons: addonSlices };

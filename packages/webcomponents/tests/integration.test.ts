@@ -1,3 +1,4 @@
+import type { SelectionValue } from "@select-box/core";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBoxElement } from "../src/index.js";
@@ -49,7 +50,7 @@ describe("<select-box> integration", () => {
 
     test("Enter commits the active option and closes the popover", () => {
         const { element, input } = mount();
-        const observed: Array<string | null> = [];
+        const observed: SelectionValue[] = [];
         element.addEventListener("change", (event) => {
             observed.push((event.target as SelectBoxElement).value);
         });

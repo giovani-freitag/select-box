@@ -77,8 +77,8 @@ export function SelectBox<TExtra extends object = object>(
 ): JSX.Element {
     const initialMulti = props.multi === true;
     const initialValue: SelectionValueInput = initialMulti
-        ? ((props.defaultValue as ReadonlyArray<string | number> | undefined) ?? [])
-        : ((props.defaultValue as string | number | null | undefined) ?? null);
+        ? (props.defaultValue ?? [])
+        : (props.defaultValue ?? null);
 
     const controllerConfig: SelectBoxControllerConfig<TExtra> = {
         mode: initialMulti ? "multi" : "single",
@@ -102,17 +102,13 @@ export function SelectBox<TExtra extends object = object>(
     }, [controller, wantMulti]);
 
     useFilterReactivity(controller, props.filter);
-    useNotifyChange(state, props.onChange as SelectBoxProps<TExtra>["onChange"]);
-
-    const typedController = controller as ReturnType<
-        typeof useSelectBox<TExtra>
-    >["controller"];
+    useNotifyChange(state, props.onChange);
 
     if (props.surface === "inline") {
         return (
             <InlineSurface<TExtra>
                 state={state}
-                controller={typedController}
+                controller={controller}
                 className={props.className}
                 ariaLabel={props["aria-label"]}
                 ariaLabelledby={props["aria-labelledby"]}
@@ -123,7 +119,7 @@ export function SelectBox<TExtra extends object = object>(
     return (
         <PopoverSurface<TExtra>
             state={state}
-            controller={typedController}
+            controller={controller}
             placeholder={props.placeholder}
             className={props.className}
             ariaLabel={props["aria-label"]}

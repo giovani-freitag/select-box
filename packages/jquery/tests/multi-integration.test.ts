@@ -19,7 +19,7 @@ function getInput(): HTMLInputElement {
 
 function chipLabels(): string[] {
     return [...document.querySelectorAll("#fruit [data-select-chip]")].map((chip) =>
-        chip.textContent!.replace("×", "").trim(),
+        chip.textContent.replace("×", "").trim(),
     );
 }
 

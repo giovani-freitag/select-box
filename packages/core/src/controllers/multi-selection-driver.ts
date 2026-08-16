@@ -1,3 +1,4 @@
+import { isMultiSelectionInput } from "../selection-value.js";
 import type {
     SelectionDriver,
     SelectionMode,
@@ -22,7 +23,7 @@ export class MultiSelectionDriver implements SelectionDriver<ReadonlyArray<strin
 
     coerce(input: SelectionValueInput): ReadonlyArray<string> {
         if (input === null || input === undefined) return MultiSelectionDriver.EMPTY;
-        if (Array.isArray(input)) {
+        if (isMultiSelectionInput(input)) {
             if (input.length === 0) return MultiSelectionDriver.EMPTY;
             return MultiSelectionDriver.dedupe(input.map((entry) => String(entry)));
         }

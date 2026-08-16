@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { SelectionValue } from "@select-box/core";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBox } from "../src/index.js";
@@ -88,7 +89,7 @@ describe("<SelectBox /> (Lit)", () => {
     test("Enter commits the active option and closes the popover", async () => {
         const element = await mount();
         const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
-        const changes: Array<string | null> = [];
+        const changes: SelectionValue[] = [];
         element.addEventListener("change", () => changes.push(element.value));
 
         input.focus();

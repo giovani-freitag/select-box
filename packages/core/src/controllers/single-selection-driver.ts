@@ -1,3 +1,4 @@
+import { isMultiSelectionInput } from "../selection-value.js";
 import type {
     SelectionDriver,
     SelectionMode,
@@ -18,7 +19,7 @@ export class SingleSelectionDriver implements SelectionDriver<string | null> {
     }
 
     coerce(input: SelectionValueInput): string | null {
-        if (Array.isArray(input)) {
+        if (isMultiSelectionInput(input)) {
             const first = input[0];
             return first === undefined ? null : String(first);
         }

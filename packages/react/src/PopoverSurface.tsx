@@ -1,8 +1,8 @@
 import {
-    SelectBoxKeyDispatcher,
     SelectBoxSnapshotView,
     TextHighlighter,
     type SearchMatchRange,
+    type SelectBoxKeyDispatcher,
     type SelectBoxController,
     type SelectBoxSnapshot,
     type SelectionValue,

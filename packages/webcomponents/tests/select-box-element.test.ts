@@ -1,3 +1,4 @@
+import type { SelectionValue } from "@select-box/core";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBoxElement } from "../src/index.js";
@@ -64,7 +65,7 @@ describe("<select-box>", () => {
         element.options = fruits;
         document.body.append(element);
 
-        const observed: Array<string | null> = [];
+        const observed: SelectionValue[] = [];
         element.addEventListener("change", (event) => {
             observed.push((event.target as SelectBoxElement<FruitExtra>).value);
         });

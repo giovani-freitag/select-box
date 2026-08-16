@@ -20,7 +20,7 @@ function snapshot(
         highlightRanges: () => [],
         addons: {},
         ...overrides,
-    } as SelectBoxSnapshot<object, SelectionValue>;
+    };
 }
 
 describe("SelectBoxSnapshotView.isSelected", () => {

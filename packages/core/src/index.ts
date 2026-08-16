@@ -9,6 +9,7 @@ export { SelectBoxController } from "./controllers/select-box-controller.js";
 export { SingleSelectBoxController } from "./controllers/single-select-box-controller.js";
 export { SingleSelectionDriver } from "./controllers/single-selection-driver.js";
 export { SelectBoxSnapshotView } from "./snapshot-view.js";
+export { isMultiSelection, isMultiSelectionInput } from "./selection-value.js";
 export { AbstractFilterStrategy, SubstringFilterStrategy } from "./filters/index.js";
 export { SelectBoxRowModel } from "./row-model.js";
 export type { SelectBoxRow, SelectBoxRowModelConfig } from "./row-model.js";

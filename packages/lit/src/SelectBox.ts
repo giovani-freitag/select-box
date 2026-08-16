@@ -4,6 +4,7 @@ import {
     SelectBoxRowModel,
     SelectBoxSnapshotView,
     TextHighlighter,
+    isMultiSelection,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxSnapshot,
@@ -223,7 +224,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     private syncFormValue(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {
         const value = snapshot.value;
-        if (Array.isArray(value)) {
+        if (isMultiSelection(value)) {
             // Multi: submit as multiple FormData entries under the same name.
             if (this.name === "" || value.length === 0) {
                 this.internals.setFormValue(null);
@@ -236,7 +237,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.internals.setFormValue(formData);
             return;
         }
-        this.internals.setFormValue((value as string | null) ?? "");
+        this.internals.setFormValue(value ?? "");
     }
 
     private syncValidity(): void {

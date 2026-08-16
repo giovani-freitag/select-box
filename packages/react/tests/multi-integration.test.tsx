@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 
-import { SelectBox } from "../src/SelectBox.js";
+import { SelectBox, type SelectBoxMultiProps } from "../src/SelectBox.js";
 
 const fruits = [
     { value: "apple", label: "Apple" },
@@ -9,7 +9,7 @@ const fruits = [
     { value: "grape", label: "Grape" },
 ];
 
-function mount(props: Partial<React.ComponentProps<typeof SelectBox>> = {}) {
+function mount(props: Partial<Omit<SelectBoxMultiProps, "multi">> = {}) {
     const result = render(
         <SelectBox multi options={fruits} placeholder="Pick fruits" {...props} />,
     );
