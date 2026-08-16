@@ -2,6 +2,7 @@
     "name": "@select-box/webcomponents",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Web Components wrapper for the select-box library — exports SelectBoxElement and defineSelectBoxElement.",
     "type": "module",
     "main": "./dist/index.cjs",

@@ -2,6 +2,7 @@
     "name": "@select-box/tsconfig",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Shared TypeScript configuration presets.",
     "files": [
         "base.json",

@@ -2,6 +2,7 @@
     "name": "@select-box/vue",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Vue 3 wrapper for the select-box library.",
     "type": "module",
     "main": "./dist/index.cjs",

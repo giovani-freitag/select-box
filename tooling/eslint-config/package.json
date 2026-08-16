@@ -2,6 +2,7 @@
     "name": "@select-box/eslint-config",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Shared ESLint flat config preset.",
     "type": "module",
     "main": "./index.mjs",

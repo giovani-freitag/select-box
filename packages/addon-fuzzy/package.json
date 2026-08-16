@@ -2,6 +2,7 @@
     "name": "@select-box/addon-fuzzy",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Fuzzy (bitap) filter strategy for select-box, backed by fuse.js.",
     "type": "module",
     "main": "./dist/index.cjs",

@@ -2,6 +2,7 @@
     "name": "@select-box/react",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "React wrapper for the select-box library.",
     "type": "module",
     "main": "./dist/index.cjs",

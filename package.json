@@ -2,6 +2,7 @@
     "name": "select-box",
     "version": "0.0.0",
     "private": true,
+    "license": "UNLICENSED",
     "description": "Framework-agnostic combobox/select-box core and per-framework wrappers.",
     "type": "module",
     "engines": {

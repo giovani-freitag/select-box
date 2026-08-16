@@ -694,7 +694,9 @@ should be resolved in a follow-up:
 
 - Package scope on npm (`@select-box`, `@giovani-freitag/...`, or
   private GitHub Packages?). Affects the `name` in every `package.json`.
-- License — MIT? Internal? UNLICENSED?
+- ~~License~~ — **resolved: private**. Every `package.json` declares
+  `"license": "UNLICENSED"` alongside `"private": true`. Revisit only if the
+  library is ever opened up.
 - Repository hosting (GitHub org + repo name).
 - CI provider details (GitHub Actions assumed; confirm).
 - Whether the consumer (`the-origin-app`) takes the lib via
