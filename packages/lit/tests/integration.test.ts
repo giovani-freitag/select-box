@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { SelectionValue } from "@select-box/core";
-import { afterEach, beforeAll, describe, expect, test } from "vitest";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { defineSelectBoxElement, type SelectBox } from "../src/index.js";
 
@@ -144,5 +144,21 @@ describe("<SelectBox /> (Lit)", () => {
         await element.updateComplete;
 
         expect(input.value).toBe("Apple");
+    });
+
+    // The virtualizer resolves a row's index from its `data-index` attribute at
+    // measure time. A row whose ref commits before that attribute is silently
+    // dropped from measurement, so variable row heights stop working with no
+    // failing assertion anywhere.
+    test("rows carry data-index by the time the virtualizer measures them", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        const element = await mount();
+        const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
+        input.focus();
+        await element.updateComplete;
+
+        expect(warn).not.toHaveBeenCalled();
+        warn.mockRestore();
     });
 });

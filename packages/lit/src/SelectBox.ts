@@ -598,8 +598,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         if (row.kind === "header") {
             return html`
                 <div
-                    ${ref(this.handleRowRef)}
                     data-index=${rowIndex}
+                    ${ref(this.handleRowRef)}
                     class="select-box-group-label"
                     part="group-label"
                     data-select-group-label
@@ -612,8 +612,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         const isSelected = view.isSelected(row.option.value);
         return html`
             <button
-                ${ref(this.handleRowRef)}
                 data-index=${rowIndex}
+                ${ref(this.handleRowRef)}
                 type="button"
                 role="option"
                 aria-selected=${isSelected}
