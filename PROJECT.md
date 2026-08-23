@@ -838,6 +838,16 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 
 ## 10. Open risks
 
+0. **Controller teardown under React StrictMode** — `[resolved]` The
+   controller lives in `useState`, and StrictMode mounts, unmounts and
+   remounts in a single commit while keeping that state. Destroying
+   straight from the effect cleanup therefore strips the addons off a
+   live instance. `useControllerTeardown` defers the decision by a
+   microtask: a StrictMode remount raises the flag again before it
+   fires, a real unmount never does. Both failure directions are
+   tested — the naive cleanup fails the StrictMode test in
+   `packages/react/tests/integration.test.tsx`, and no teardown at all
+   fails the parity scenario that asserts `detach` runs.
 1. **jQuery wrapper architecture stress** — `[resolved]` jQuery is
    imperative; users expect chainable API + plugin pattern. Shipped with
    `$.fn.selectBox(config)` + `.selectBox('controller'|'open'|...)`
