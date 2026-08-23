@@ -59,6 +59,7 @@ export class SelectBoxView<TExtra extends object = object> {
         | undefined;
     private readonly placeholder: string;
     private readonly formMirror: HTMLSelectElement | null;
+    private readonly inlineSurface: HTMLDivElement | null;
 
     private readonly listVirtualizer: SelectBoxListVirtualizer | null;
     private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
@@ -96,13 +97,12 @@ export class SelectBoxView<TExtra extends object = object> {
         this.root.dataset["selectRoot"] = "";
         this.root.dataset["selectMode"] = this.multi ? "multi" : "single";
         this.root.className = this.computeRootClassName();
-        if (this.surface === "inline") {
-            this.root.dataset["selectSurface"] = "inline";
-            this.root.setAttribute("role", "listbox");
-            if (this.multi) this.root.setAttribute("aria-multiselectable", "true");
-        }
 
         if (this.surface === "inline") {
+            this.inlineSurface = document.createElement("div");
+            this.inlineSurface.className = "select-box-inline";
+            this.inlineSurface.setAttribute("role", "listbox");
+            this.inlineSurface.dataset["selectSurface"] = "inline";
             this.trigger = null;
             this.tagsContainer = null;
             this.input = null;
@@ -111,12 +111,14 @@ export class SelectBoxView<TExtra extends object = object> {
             this.popover = null;
             this.list = null;
             this.listVirtualizer = null;
+            this.root.append(this.inlineSurface);
             if (this.formMirror) this.root.append(this.formMirror);
             this.listen();
             this.paint(this.controller.getState());
             return;
         }
 
+        this.inlineSurface = null;
         this.trigger = this.createTrigger();
         this.tagsContainer = this.trigger.querySelector<HTMLDivElement>(".select-box-tags")!;
         this.input = this.trigger.querySelector<HTMLInputElement>(".select-box-input")!;
@@ -144,7 +146,6 @@ export class SelectBoxView<TExtra extends object = object> {
     private computeRootClassName(): string {
         return [
             "select-box",
-            this.surface === "inline" ? "select-box-inline" : null,
             this.multi ? "select-box-multi" : null,
         ]
             .filter((value): value is string => value !== null)
@@ -500,12 +501,14 @@ export class SelectBoxView<TExtra extends object = object> {
         view: SelectBoxSnapshotView<TExtra, SelectionValue>,
         isMulti: boolean,
     ): void {
-        if (isMulti) this.root.setAttribute("aria-multiselectable", "true");
-        else this.root.removeAttribute("aria-multiselectable");
-        this.root.replaceChildren();
+        if (!this.inlineSurface) return;
+        const surface = this.inlineSurface;
+        if (isMulti) surface.setAttribute("aria-multiselectable", "true");
+        else surface.removeAttribute("aria-multiselectable");
+        surface.replaceChildren();
         for (const group of snapshot.filteredGroups) {
             if (group.label !== "") {
-                this.root.appendChild(this.createHeaderElement(group.label));
+                surface.appendChild(this.createHeaderElement(group.label));
             }
             const tags = document.createElement("div");
             tags.className = "select-box-tags";
@@ -515,7 +518,7 @@ export class SelectBoxView<TExtra extends object = object> {
                     this.createInlineChipButton(option, view.isSelected(option.value)),
                 );
             }
-            this.root.appendChild(tags);
+            surface.appendChild(tags);
         }
     }
 

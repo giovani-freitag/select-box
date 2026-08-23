@@ -417,6 +417,14 @@ export function describeParitySuite(adapter: ParityAdapter): void {
                 ).toBe(false);
             });
 
+            test("keeps the surface as a child of the root, never the root itself", async () => {
+                await mountInline({ multi: false });
+
+                const root = document.querySelector("[data-select-root]")!;
+                expect(root.hasAttribute("data-select-surface")).toBe(false);
+                expect(root.querySelector("[data-select-surface='inline']")).not.toBeNull();
+            });
+
             test("marks itself as the inline surface", async () => {
                 const mounted = await mountInline({ multi: false });
 

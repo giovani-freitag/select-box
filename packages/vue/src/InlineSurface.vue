@@ -45,18 +45,19 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
 <template>
     <div
         ref="rootEl"
-        :class="[
-            'select-box',
-            'select-box-inline',
-            isMulti ? 'select-box-multi' : null,
-        ].filter(Boolean).join(' ')"
-        role="listbox"
-        :aria-multiselectable="isMulti ? true : undefined"
+        :class="['select-box', isMulti ? 'select-box-multi' : null].filter(Boolean).join(' ')"
         data-select-root
         :data-select-mode="state.mode"
-        data-select-surface="inline"
     >
         <FormMirror :state="state" :controller="controller" :name="name" :required="required" />
+        <!-- The surface is a child of the root in every wrapper, so the root
+             never doubles as a listbox and one selector addresses either. -->
+        <div
+            class="select-box-inline"
+            role="listbox"
+            :aria-multiselectable="isMulti ? true : undefined"
+            data-select-surface="inline"
+        >
         <template v-for="group in state.filteredGroups" :key="group.key">
             <div
                 v-if="group.label"
@@ -80,5 +81,6 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
                 >{{ option.label }}</button>
             </div>
         </template>
+        </div>
     </div>
 </template>

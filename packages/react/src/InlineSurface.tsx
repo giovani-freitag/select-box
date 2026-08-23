@@ -44,7 +44,6 @@ export function InlineSurface<TExtra extends object>({
 
     const rootClassName = [
         "select-box",
-        "select-box-inline",
         isMulti ? "select-box-multi" : null,
         className,
     ]
@@ -60,15 +59,20 @@ export function InlineSurface<TExtra extends object>({
         <div
             ref={rootRef}
             className={rootClassName}
-            role="listbox"
-            aria-multiselectable={isMulti ? true : undefined}
-            aria-label={ariaLabel}
-            aria-labelledby={ariaLabelledby}
             data-select-root
             data-select-mode={state.mode}
-            data-select-surface="inline"
         >
             <FormMirror state={state} controller={controller} name={name} required={required} />
+            {/* The surface is a child of the root in every wrapper, so the root
+                never doubles as a listbox and one selector addresses either. */}
+            <div
+                className="select-box-inline"
+                role="listbox"
+                aria-multiselectable={isMulti ? true : undefined}
+                aria-label={ariaLabel}
+                aria-labelledby={ariaLabelledby}
+                data-select-surface="inline"
+            >
             {state.filteredGroups.map((group) => (
                 <Fragment key={group.key}>
                     {group.label ? (
@@ -111,6 +115,7 @@ export function InlineSurface<TExtra extends object>({
                     </div>
                 </Fragment>
             ))}
+            </div>
         </div>
     );
 }
