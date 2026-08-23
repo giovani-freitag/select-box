@@ -719,6 +719,34 @@ export function describeParitySuite(adapter: ParityAdapter): void {
                     ),
                 ).toEqual(["Pomes", "Berries"]);
             });
+
+            test("gives each group its own chip row, so headers own a line", async () => {
+                const mounted = await mountInline({ multi: false, grouped: true });
+
+                const rows = [
+                    ...mounted
+                        .queryScope()
+                        .querySelectorAll("[data-select-surface='inline'] [data-select-tags]"),
+                ];
+
+                expect(rows).toHaveLength(2);
+                expect(
+                    rows.map((row) => row.querySelectorAll("[data-select-chip]").length),
+                ).toEqual([2, 1]);
+            });
+
+            test("keeps the ungrouped list in a single chip row", async () => {
+                const mounted = await mountInline({ multi: false });
+
+                const rows = mounted
+                    .queryScope()
+                    .querySelectorAll("[data-select-surface='inline'] [data-select-tags]");
+
+                expect(rows).toHaveLength(1);
+                expect(rows[0]!.querySelectorAll("[data-select-chip]")).toHaveLength(
+                    PARITY_FRUITS.length,
+                );
+            });
         });
     });
 }
