@@ -563,15 +563,28 @@ box.destroy();
 
 Two doors, both reaching the same instance:
 
-| Door | Shape |
-|---|---|
-| The call | `$(el).selectBox(config)` returns the `SelectBoxView` |
-| The element | `el.selectBox`, i.e. `$(el).prop('selectBox')` |
+| Door | Shape | Typed as |
+|---|---|---|
+| The call | `$(el).selectBox(config)` | `SelectBoxView<TExtra>` — everything |
+| The element | `el.selectBox`, i.e. `$(el).prop('selectBox')` | `SelectBoxElementHandle` — the `TExtra`-free members |
 
 The element property is the Selectize convention — the instance hangs off
 the node it was built on, so code that never held the return value can
 still reach it. It is cleared the moment the view is destroyed, whichever
 door did it.
+
+The two doors are the same object at runtime and differ only in type. A
+global `HTMLElement` property cannot carry a type parameter, so the element
+door publishes `SelectBoxElementHandle`: `root`, `open`, `close`, `toggle`,
+`clear`, `setMode`, `destroy` — every member whose signature never mentions
+`TExtra`. `controller` and `setOptions` are deliberately absent, because at
+`TExtra = object` they would accept option lists the typed door rejects and
+hand back options missing fields the consumer declared as required. A
+consumer who wants them states the type they know:
+
+```ts
+(el.selectBox as SelectBoxView<FruitExtra>).controller.commitValue('pear');
+```
 
 Consequences worth stating:
 
@@ -584,9 +597,33 @@ Consequences worth stating:
   the first; the rest are reached through their own `element.selectBox`.
 - **Re-initialising destroys the previous view first**, then advertises the
   new one — the order the `onDestroy` bookkeeping relies on.
+- **A legacy method-string call throws** `LegacyMethodCallError` naming the
+  method that moved. Types alone cannot stop an untyped caller, and spreading
+  a string as a config would silently tear down the live widget and mount an
+  empty one over it.
+
+The mirrored `<select>` carries the widget into a form, and a form reset
+reaches the controller through a document-level `reset` listener rather than
+one on the form: the view is built before its root is in the tree, so the
+mirror has no form owner yet and a listener placed on it would attach to
+nothing. The listener filters by asking the resetting form whether the mirror
+is one of the controls it owns — the precise question, and immune to a
+cross-realm identity check.
 
 `SelectBoxView` carries `root` and `controller` as getters, so §5.2 reads
 the same in jQuery as everywhere else.
+
+### 5.5 Form reset is not native reset
+
+Every wrapper answers a form reset by calling `controller.reset()`, which
+**empties** the selection. A native `<select>` would come back to its
+preselected option instead. The divergence is uniform across all five and
+pinned by tests, so it is a decision on record rather than an accident — but
+it is a decision: a consumer who mounts with `initialValue: 'apple'`, picks
+`pear`, then resets the form ends up with nothing selected, where a native
+control would show `apple` again.
+
+Changing it means changing core's `reset()` for all five wrappers at once.
 
 ## 6. Testing strategy
 
