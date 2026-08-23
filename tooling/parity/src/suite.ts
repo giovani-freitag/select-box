@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "vitest";
 
 import {
     PARITY_FRUITS,
+    PARITY_FRUITS_WITH_DISABLED,
     PARITY_GROUPED_FRUITS,
     PARITY_PLACEHOLDER,
     PARITY_SWAPPED_FRUITS,
@@ -244,6 +245,34 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
             return handle;
         }
+
+        test("renders a disabled option as a disabled control, so a click cannot reach it", async () => {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS_WITH_DISABLED,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+            });
+            const mounted = handle;
+            await mounted.focusInput();
+
+            const row = optionByLabel(mounted, "Pear");
+
+            expect(row).toBeInstanceOf(HTMLButtonElement);
+            expect((row as HTMLButtonElement).disabled).toBe(true);
+            await mounted.clickElement(row);
+            expect(input(mounted).value).toBe("");
+        });
+
+        test("reports an empty state when the query matches nothing", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.typeIntoInput("zzz");
+
+            expect(optionLabels(mounted)).toEqual([]);
+            expect(mounted.queryScope().querySelector("[data-select-empty]")).not.toBeNull();
+        });
 
         test("a disabled control refuses to open", async () => {
             const mounted = await mountWithFlags({ disabled: true });

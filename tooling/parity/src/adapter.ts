@@ -7,6 +7,7 @@ export interface ParityOption {
     readonly value: string;
     readonly label: string;
     readonly group?: string;
+    readonly disabled?: boolean;
 }
 
 export type ParitySurface = "popover" | "inline";
@@ -69,6 +70,13 @@ export interface ParityAdapter {
 export const PARITY_FRUITS: ReadonlyArray<ParityOption> = [
     { value: "apple", label: "Apple" },
     { value: "pear", label: "Pear" },
+    { value: "grape", label: "Grape" },
+];
+
+/** Same fruits with one disabled leaf, so refusal can be asserted. */
+export const PARITY_FRUITS_WITH_DISABLED: ReadonlyArray<ParityOption> = [
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear", disabled: true },
     { value: "grape", label: "Grape" },
 ];
 
