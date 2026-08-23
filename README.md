@@ -32,11 +32,11 @@ framework-specific logic in the core, no behavioural drift across wrappers.
 
 - **Framework-agnostic core** — pure TypeScript, observer pattern à la TanStack. Drives every wrapper.
 - **Identical public API** — `useSelectBox()` / `<select-box>` / `$.fn.selectBox()` all take the same config shape and surface the same `state` fields (`open`, `value`, `query`, `filteredGroups`, `activeIndex`, `isEmpty`, `selectedOption`).
-- **Two API tiers per wrapper** — drop-in component plus one shared stylesheet for the common case, or the headless controller / hook when you need custom UI.
+- **Two API tiers per wrapper** — drop-in component plus one shared stylesheet for the common case, or the headless controller / hook when you need custom UI. Every wrapper offers `disabled`, `readOnly`, `name` and `required`, and reaches a form natively.
 - **ARIA combobox spec built-in** — keyboard nav, focus management, `aria-*` wiring lives in the core. Not patched per-framework.
 - **Option groups** — flat-with-`group` or nested `groups`; filtered snapshot exposes `filteredGroups` so wrappers render headers; nav skips disabled rows and headers.
 - **Addon system** — opt-in `.use(new Addon(config))` chain. Hooks are pure transformers (reentrancy structurally impossible). Snapshot extension is typed via TypeScript declaration merging.
-- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 29 behavioural scenarios per wrapper in Vitest; `e2e/` runs 30 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility, keyboard and focus, popover layout, virtualization over 10k options, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
+- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 38 behavioural scenarios per wrapper in Vitest; `e2e/` runs 39 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
 
 ## Quick start
 

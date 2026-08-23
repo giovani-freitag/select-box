@@ -399,6 +399,38 @@ consumer code reads whichever shape it prefers without narrowing.
 
 **Tests assert on these field names directly.**
 
+### 5.0 Form-control capabilities
+
+Every wrapper offers what a vanilla input offers: `disabled`, `readOnly`,
+`name` and `required`.
+
+Interaction refusal lives in the controller, not in the wrappers. One
+`setInteractivity({ disabled, readOnly })` gate guards `open`, `setQuery`,
+`moveActive`, every commit path and `clear`, so no wrapper repeats the check
+and none can forget it — the per-handler guards this replaced had already
+drifted apart. `disabled` and `readOnly` both refuse interaction; they differ
+outside the controller exactly as the native attributes do, in whether the
+control is focusable and whether it submits. `reset()` deliberately bypasses
+the gate, because a form reset is not a user interaction and the platform
+resets read-only and disabled controls too.
+
+Reaching a form splits by wrapper kind, with the same observable result:
+
+| Wrappers | Mechanism |
+|---|---|
+| Web Components, Lit | form-associated via `ElementInternals` |
+| React, Vue, jQuery | a real `<select>`, visually hidden, mirroring the selection |
+
+The mirror is the pattern Radix UI ships for this: `aria-hidden`,
+`tabindex="-1"`, real `<option>` children, hidden with the Bootstrap
+visually-hidden values rather than `display: none` — a control removed from
+layout cannot be focused, and the browser then refuses a failed constraint
+validation without showing anything. Nothing about submission or validation is
+reimplemented; the browser sees a native control, so submit, `required`
+blocking, `form.reset()` and autofill all behave natively. Unlike Radix, the
+mirror also handles `multiple`, which is what makes multi-mode submit one entry
+per selection like a native `<select multiple>`.
+
 ### 5.1 Root and host
 
 Two words, two nodes, and they are not interchangeable:
@@ -416,6 +448,10 @@ rather than a naming choice:
 |---|---|---|
 | The element *is* the root | Web Components, Lit | Both render into themselves, no wrapper div, so `root` returns the element |
 | We render the root | React, Vue, jQuery | The root is a div we create; jQuery puts it inside the host the consumer selected |
+
+Either way the root is only ever the root: both surfaces are children of it, so
+`[data-select-surface]` never lands on the same element as `[data-select-root]`
+and one selector addresses either surface in any wrapper.
 
 `host` therefore stays a jQuery-side term (plus Lit's framework-mandated
 `ReactiveControllerHost` and the CSS `:host` selector, neither of which
@@ -530,6 +566,16 @@ What this layer cannot see: anything that depends on real CSS. A rule
 that outranks `[hidden]`, a popover positioned off-screen, a focus ring
 that never lands — all invisible in JSDOM, and the reason §6.3 is still
 worth building.
+
+### 6.2.2 Stylesheet contract — `packages/styles/tests/arch/`
+
+The shipped stylesheet and the markup the wrappers render have to describe the
+same component, and both directions have drifted before:
+`select-box-option-match` and `select-box-multi` were emitted by all five
+wrappers with no rule at all, so a search highlight fell back to the browser's
+yellow mark. A Vitest arch test parses the sheet, collects the class names the
+five packages emit, and asserts set equality both ways plus that no `--sb-*`
+token is declared without being read.
 
 ### 6.3 Matrix E2E — `e2e/` (Playwright)
 
@@ -705,7 +751,7 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
     suites are in place for all five; arrow-key navigation and unmount
     cleanup are the remaining gaps.
   - `[done]` Shared cross-wrapper parity suite in `tooling/parity/`
-    (§6.2.1), 29 scenarios per wrapper across both surfaces. Closed the
+    (§6.2.1), 38 scenarios per wrapper across both surfaces. Closed the
     click-outside gap in the Vue and Lit suites, brought the
     `data-select-*` contract to 17/17 attributes in all five wrappers,
     and gave every wrapper `root` + `controller` accessors (§5.2) verified
@@ -760,7 +806,7 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` Spec set covers what JSDOM can't simulate: real-CSS
   visibility, arrow navigation and focus, popover layout and paint
   order, virtualization over 10k options, teardown and runtime surface
-  switching. 30 specs × 5 wrappers.
+  switching, form submission and appearance. 39 specs × 5 wrappers.
 - `[done]` CI runs one job per wrapper with `fail-fast: false`, browsers
   cached, report uploaded on failure.
 - `[plan]` Paths-filter so per-wrapper PRs run only that wrapper's
