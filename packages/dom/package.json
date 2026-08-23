@@ -1,9 +1,9 @@
 {
-    "name": "@select-box/webcomponents",
+    "name": "@select-box/dom",
     "version": "0.0.0",
     "private": true,
     "license": "UNLICENSED",
-    "description": "Web Components wrapper for the select-box library \u2014 exports SelectBoxElement and defineSelectBoxElement.",
+    "description": "Imperative light-DOM painters shared by the wrappers that build their own markup (jQuery, web components).",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -13,20 +13,12 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs"
-        },
-        "./define": {
-            "types": "./dist/define.d.ts",
-            "import": "./dist/define.js",
-            "require": "./dist/define.cjs"
         }
     },
     "files": [
         "dist"
     ],
-    "sideEffects": [
-        "./dist/define.js",
-        "./dist/define.cjs"
-    ],
+    "sideEffects": false,
     "scripts": {
         "build": "tsup",
         "typecheck": "tsc --noEmit",
@@ -36,16 +28,12 @@
         "clean": "rm -rf dist .turbo"
     },
     "peerDependencies": {
-        "@select-box/core": "workspace:*",
-        "@select-box/dom": "workspace:*"
+        "@select-box/core": "workspace:*"
     },
     "devDependencies": {
         "@select-box/core": "workspace:*",
-        "@select-box/dom": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
-        "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
-        "element-internals-polyfill": "^3.0.2",
         "eslint": "^9.17.0",
         "happy-dom": "^15.11.7",
         "tsup": "^8.3.5",

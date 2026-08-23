@@ -320,11 +320,41 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
+  packages/dom:
+    devDependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      happy-dom:
+        specifier: ^15.11.7
+        version: 15.11.7
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
   packages/jquery:
     devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
+      '@select-box/dom':
+        specifier: workspace:*
+        version: link:../dom
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -509,6 +539,9 @@ importers:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
+      '@select-box/dom':
+        specifier: workspace:*
+        version: link:../dom
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config

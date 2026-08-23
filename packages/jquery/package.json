@@ -32,10 +32,12 @@
     },
     "peerDependencies": {
         "@select-box/core": "workspace:*",
+        "@select-box/dom": "workspace:*",
         "jquery": "^3.7.0"
     },
     "devDependencies": {
         "@select-box/core": "workspace:*",
+        "@select-box/dom": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
         "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
