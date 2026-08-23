@@ -29,6 +29,24 @@ export class EmptySelectionError extends Error {
 }
 
 /**
+ * Raised when the plugin is called the old way, with a method name.
+ *
+ * The methods moved onto the instance the plugin returns. Without this the
+ * string would be spread as a config object, quietly tearing down the live
+ * widget and mounting an empty one in its place.
+ */
+export class LegacyMethodCallError extends Error {
+    constructor(method: string) {
+        super(
+            `selectBox("${method}") is no longer supported. Keep the instance the `
+            + `plugin returns and call .${method}() on it, or reach it through `
+            + `element.selectBox.`,
+        );
+        this.name = "LegacyMethodCallError";
+    }
+}
+
+/**
  * Registers `$.fn.selectBox` on the supplied jQuery instance; idempotent.
  *
  * @param jq - The jQuery instance to extend.
@@ -40,6 +58,9 @@ export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
         this: JQuery,
         config: SelectBoxPluginConfig<TExtra>,
     ): SelectBoxView<TExtra> {
+        // Untyped callers reach here with a method name; the types alone cannot
+        // stop them, and spreading a string yields an empty config.
+        if (typeof config === "string") throw new LegacyMethodCallError(config);
         const views = this.get().map((host) => mount<TExtra>(host, config, jq));
         const first = views[0];
         if (first === undefined) throw new EmptySelectionError();
@@ -77,6 +98,6 @@ function mount<TExtra extends object>(
     host.replaceChildren(view.root);
     // The element is the handle, the way Selectize hangs its instance off the
     // input: `$(el).prop("selectBox")` reaches it without keeping a variable.
-    host.selectBox = view as unknown as SelectBoxView;
+    host.selectBox = view;
     return view;
 }

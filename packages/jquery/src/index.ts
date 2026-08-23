@@ -1,14 +1,15 @@
 import jQuery from "jquery";
 
 import { registerSelectBoxPlugin, type SelectBoxPluginConfig } from "./plugin.js";
-import type { SelectBoxView } from "./select-box-view.js";
+import type { SelectBoxElementHandle, SelectBoxView } from "./select-box-view.js";
 
 export {
     EmptySelectionError,
+    LegacyMethodCallError,
     registerSelectBoxPlugin,
     type SelectBoxPluginConfig,
 } from "./plugin.js";
-export { SelectBoxView } from "./select-box-view.js";
+export { SelectBoxView, type SelectBoxElementHandle } from "./select-box-view.js";
 
 export {
     MultiSelectBoxController,
@@ -53,9 +54,11 @@ declare global {
          * The select box mounted on this element, if any.
          *
          * Reachable as `$(el).prop("selectBox")` or `$(el)[0].selectBox`, and
-         * cleared the moment the view is destroyed.
+         * cleared the moment the view is destroyed. Narrowed to the members a
+         * global property can type: cast to `SelectBoxView<TExtra>` to reach the
+         * controller or replace the options.
          */
-        selectBox?: SelectBoxView;
+        selectBox?: SelectBoxElementHandle;
     }
 }
 
