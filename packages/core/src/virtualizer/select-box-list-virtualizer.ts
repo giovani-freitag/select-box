@@ -75,7 +75,16 @@ export class SelectBoxListVirtualizer {
         });
     }
 
-    /** Wires up scroll/resize observers. Must be called after the scroll element is in the DOM. */
+    /**
+     * Wires up scroll/resize observers. Must be called after the scroll element
+     * is in the DOM.
+     *
+     * The re-entry guard is defensive and deliberately untested: TanStack's
+     * `_didMount` is itself idempotent for the scroll listener and the
+     * `ResizeObserver`, so removing the guard has no observable consequence to
+     * assert against. It stays because that idempotence is not part of TanStack's
+     * contract.
+     */
     mount(): void {
         if (this.cleanupMount !== null) return;
         this.virtualizer._willUpdate();
@@ -103,12 +112,16 @@ export class SelectBoxListVirtualizer {
      */
     syncCount(): void {
         const nextCount = this.config.getCount();
-        if (this.virtualizer.options.count !== nextCount) {
-            this.virtualizer.setOptions({
-                ...this.virtualizer.options,
-                count: nextCount,
-            });
-        }
+        if (this.virtualizer.options.count === nextCount) return;
+        this.virtualizer.setOptions({
+            ...this.virtualizer.options,
+            count: nextCount,
+        });
+        // TanStack's `setOptions` assigns without emitting, so subscribers that
+        // paint from `getVirtualItems()` would keep rendering the old window —
+        // which truncates the list for any wrapper that repaints on notification
+        // rather than on its own render pass.
+        this.handleChange(true);
     }
 
     dispose(): void {
