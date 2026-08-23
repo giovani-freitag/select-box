@@ -23,7 +23,7 @@ function mount(options: { multi?: boolean } = {}): SelectBoxElement {
 }
 
 function chips(element: SelectBoxElement): HTMLButtonElement[] {
-    return [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>("[data-select-chip]")];
+    return [...element.querySelectorAll<HTMLButtonElement>("[data-select-chip]")];
 }
 
 function pressedStates(element: SelectBoxElement): Array<string | null> {
@@ -39,7 +39,7 @@ describe("<select-box surface=\"inline\"> integration", () => {
         const element = mount();
 
         expect(chips(element)).toHaveLength(fruits.length);
-        expect(element.shadowRoot!.querySelector("[data-select-surface='inline']")).not.toBeNull();
+        expect(element.querySelector("[data-select-surface='inline']")).not.toBeNull();
     });
 
     test("single mode replaces selection on chip click", () => {

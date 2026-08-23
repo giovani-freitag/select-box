@@ -18,7 +18,7 @@ function mount(): { element: SelectBoxElement; input: HTMLInputElement } {
     element.setAttribute("placeholder", "Pick a fruit");
     element.options = fruits;
     document.body.append(element);
-    const input = element.shadowRoot!.querySelector<HTMLInputElement>(".input")!;
+    const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
     return { element, input };
 }
 
@@ -32,7 +32,7 @@ describe("<select-box> integration", () => {
 
         input.focus();
 
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(false);
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(false);
     });
 
     test("typing into the input filters the option list", () => {
@@ -42,7 +42,7 @@ describe("<select-box> integration", () => {
         input.value = "ear";
         input.dispatchEvent(new Event("input", { bubbles: true }));
 
-        const labels = [...element.shadowRoot!.querySelectorAll(".option")].map(
+        const labels = [...element.querySelectorAll("[data-select-option]")].map(
             (option) => option.textContent,
         );
         expect(labels).toEqual(["Pear"]);
@@ -59,7 +59,7 @@ describe("<select-box> integration", () => {
         input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 
         expect(observed).toEqual(["apple"]);
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(true);
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(true);
     });
 
     test("Escape closes the popover without firing change", () => {
@@ -72,25 +72,25 @@ describe("<select-box> integration", () => {
         input.focus();
         input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
 
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(true);
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(true);
         expect(changes).toBe(0);
     });
 
     test("click outside the element closes the popover", () => {
         const { element, input } = mount();
         input.focus();
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(false);
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(false);
 
         document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
 
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(true);
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(true);
     });
 
     test("after committing, the input shows the selected option label when popover is closed", () => {
         const { element, input } = mount();
         input.focus();
 
-        const grape = [...element.shadowRoot!.querySelectorAll<HTMLButtonElement>(".option")]
+        const grape = [...element.querySelectorAll<HTMLButtonElement>("[data-select-option]")]
             .find((option) => option.textContent === "Grape")!;
         grape.click();
 

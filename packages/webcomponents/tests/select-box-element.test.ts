@@ -25,8 +25,8 @@ describe("<select-box>", () => {
         element.options = fruits;
         document.body.append(element);
 
-        const trigger = element.shadowRoot!.querySelector(".trigger");
-        const input = element.shadowRoot!.querySelector<HTMLInputElement>(".input");
+        const trigger = element.querySelector("[data-select-trigger]");
+        const input = element.querySelector<HTMLInputElement>("[data-select-input]");
 
         expect(trigger).not.toBeNull();
         expect(input).not.toBeNull();
@@ -42,14 +42,14 @@ describe("<select-box>", () => {
         element.setAttribute("ungrouped-label", "Other");
         document.body.append(element);
 
-        const caret = element.shadowRoot!.querySelector<HTMLButtonElement>(".caret");
+        const caret = element.querySelector<HTMLButtonElement>("[data-select-caret]");
         caret?.click();
 
-        const popover = element.shadowRoot!.querySelector<HTMLDivElement>(".popover");
-        const groupLabels = [...element.shadowRoot!.querySelectorAll(".group-label")].map(
+        const popover = element.querySelector<HTMLDivElement>("[data-select-popover]");
+        const groupLabels = [...element.querySelectorAll("[data-select-group-label]")].map(
             (node) => node.textContent,
         );
-        const options = [...element.shadowRoot!.querySelectorAll(".option")].map(
+        const options = [...element.querySelectorAll("[data-select-option]")].map(
             (node) => node.textContent,
         );
 
@@ -70,8 +70,8 @@ describe("<select-box>", () => {
             observed.push((event.target as SelectBoxElement<FruitExtra>).value);
         });
 
-        element.shadowRoot!.querySelector<HTMLButtonElement>(".caret")?.click();
-        const firstOption = element.shadowRoot!.querySelector<HTMLButtonElement>(".option");
+        element.querySelector<HTMLButtonElement>("[data-select-caret]")?.click();
+        const firstOption = element.querySelector<HTMLButtonElement>("[data-select-option]");
         firstOption?.click();
 
         expect(observed).toHaveLength(1);

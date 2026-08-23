@@ -21,7 +21,7 @@ function mount(options: { multi?: boolean } = {}): {
     if (options.multi) element.setAttribute("multi", "");
     element.options = fruits;
     document.body.append(element);
-    const input = element.shadowRoot!.querySelector<HTMLInputElement>(".input")!;
+    const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
     return { element, input };
 }
 
@@ -41,13 +41,13 @@ describe("<select-box multi> integration", () => {
         input.focus();
 
         const appleButton = [
-            ...element.shadowRoot!.querySelectorAll<HTMLButtonElement>(".option"),
+            ...element.querySelectorAll<HTMLButtonElement>("[data-select-option]"),
         ].find((option) => option.textContent?.includes("Apple"))!;
         appleButton.click();
 
         expect(element.value).toEqual(["apple"]);
-        expect(element.shadowRoot!.querySelector<HTMLDivElement>(".popover")?.hidden).toBe(false);
-        const chips = element.shadowRoot!.querySelectorAll(".chip");
+        expect(element.querySelector<HTMLDivElement>("[data-select-popover]")?.hidden).toBe(false);
+        const chips = element.querySelectorAll("[data-select-chip]");
         expect(chips).toHaveLength(1);
     });
 
@@ -56,7 +56,7 @@ describe("<select-box multi> integration", () => {
         element.value = ["pear", "grape"];
         input.focus();
 
-        const removeButton = element.shadowRoot!.querySelector<HTMLButtonElement>(".chip-remove")!;
+        const removeButton = element.querySelector<HTMLButtonElement>("[data-select-chip-remove]")!;
         removeButton.click();
 
         expect(element.value).toEqual(["grape"]);
@@ -71,7 +71,7 @@ describe("<select-box multi> integration", () => {
 
         expect(element.getAttribute("mode")).toBe("single");
         expect(element.value).toBe("pear");
-        expect(element.shadowRoot!.querySelectorAll(".chip")).toHaveLength(0);
+        expect(element.querySelectorAll("[data-select-chip]")).toHaveLength(0);
     });
 
     test("setting the multi attribute wraps the held value as a singleton chip", () => {
@@ -83,7 +83,7 @@ describe("<select-box multi> integration", () => {
 
         expect(element.getAttribute("mode")).toBe("multi");
         expect(element.value).toEqual(["apple"]);
-        const chips = [...element.shadowRoot!.querySelectorAll(".chip")];
+        const chips = [...element.querySelectorAll("[data-select-chip]")];
         expect(chips).toHaveLength(1);
         expect(chips[0]?.textContent).toContain("Apple");
     });
