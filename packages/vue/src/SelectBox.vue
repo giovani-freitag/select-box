@@ -39,6 +39,10 @@ export interface SelectBoxProps<TExtra extends object = object> {
     disabled?: boolean;
     /** Refuses changes while staying focusable and submitted, like a readonly input. */
     readOnly?: boolean;
+    /** Field name under which the selection is submitted. Omit to stay out of the form. */
+    name?: string;
+    /** Blocks submission while nothing is selected, natively. */
+    required?: boolean;
 }
 
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
@@ -133,6 +137,8 @@ defineExpose({
         ref="surface"
         :state="state"
         :controller="controller"
+        :name="name"
+        :required="required"
     />
     <PopoverSurface
         v-else
@@ -140,5 +146,7 @@ defineExpose({
         :state="state"
         :controller="controller"
         :placeholder="placeholder"
+        :name="name"
+        :required="required"
     />
 </template>

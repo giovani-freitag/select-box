@@ -21,6 +21,8 @@ defineExpose({ toggleSurface });
         :placeholder="config.placeholder"
         :multi="config.multi"
         :surface="surface"
+        :name="config.name"
+        :required="config.required"
         @change="(value: unknown) => reportChange(value)"
         @change-multi="(values: unknown) => reportChange(values)"
     />

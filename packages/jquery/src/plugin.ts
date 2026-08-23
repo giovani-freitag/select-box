@@ -14,6 +14,10 @@ export interface SelectBoxPluginConfig<TExtra extends object = object>
     extends SelectBoxControllerConfig<TExtra> {
     readonly placeholder?: string;
     readonly surface?: SelectBoxSurface;
+    /** Field name under which the selection is submitted. Omit to stay out of the form. */
+    readonly name?: string;
+    /** Blocks submission while nothing is selected, natively. */
+    readonly required?: boolean;
 }
 
 /** Extra argument a method may carry: a mode for `setMode`, a list for `options`. */

@@ -6,11 +6,14 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
+import FormMirror from "./FormMirror.vue";
 import { computed, useTemplateRef } from "vue";
 
 const props = defineProps<{
     state: SelectBoxSnapshot<TExtra, SelectionValue>;
     controller: SelectBoxController<TExtra, SelectionValue>;
+    name: string | undefined;
+    required: boolean | undefined;
 }>();
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
@@ -53,6 +56,7 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
         :data-select-mode="state.mode"
         data-select-surface="inline"
     >
+        <FormMirror :state="state" :controller="controller" :name="name" :required="required" />
         <template v-for="group in state.filteredGroups" :key="group.key">
             <div
                 v-if="group.label"

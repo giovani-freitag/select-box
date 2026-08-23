@@ -58,6 +58,7 @@ export class SelectBoxView<TExtra extends object = object> {
           ) => void)
         | undefined;
     private readonly placeholder: string;
+    private readonly formMirror: HTMLSelectElement | null;
 
     private readonly listVirtualizer: SelectBoxListVirtualizer | null;
     private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
@@ -70,6 +71,8 @@ export class SelectBoxView<TExtra extends object = object> {
         config: SelectBoxControllerConfig<TExtra> & {
             readonly placeholder?: string;
             readonly surface?: SelectBoxSurface;
+            readonly name?: string;
+            readonly required?: boolean;
             readonly onValueChange?: (
                 value: string | null,
                 option: SelectOption<TExtra> | null,
@@ -84,6 +87,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.keyDispatcher = new SelectBoxKeyDispatcher(this.controller);
         this.previousValueKey = SelectBoxSnapshotView.valueKey(this.controller.getState().value);
         this.placeholder = config.placeholder ?? "Select…";
+        this.formMirror = SelectBoxView.createFormMirror(config.name, config.required === true);
         this.onSingleChange = config.onValueChange;
         this.onMultiChange = config.onMultiValueChange;
         this.surface = config.surface ?? "popover";
@@ -107,6 +111,7 @@ export class SelectBoxView<TExtra extends object = object> {
             this.popover = null;
             this.list = null;
             this.listVirtualizer = null;
+            if (this.formMirror) this.root.append(this.formMirror);
             this.listen();
             this.paint(this.controller.getState());
             return;
@@ -121,6 +126,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.list = this.popover.querySelector<HTMLDivElement>(".select-box-list")!;
 
         this.root.append(this.trigger, this.popover);
+        if (this.formMirror) this.root.append(this.formMirror);
         this.list.style.maxHeight = `${LIST_VIEWPORT_HEIGHT}px`;
         this.list.style.overflowY = "auto";
         this.listVirtualizer = new SelectBoxListVirtualizer({
@@ -181,6 +187,58 @@ export class SelectBoxView<TExtra extends object = object> {
      */
     setOptions(options: ReadonlyArray<SelectOption<TExtra>>): void {
         this.controller.setOptions(options);
+    }
+
+    /**
+     * Builds the visually hidden native control that carries the widget into a form.
+     *
+     * Nothing about submission or constraint validation is reimplemented: the
+     * browser sees a real `<select>` with a `name`, `required` and the selected
+     * options, so submission, `required` blocking, `form.reset()` and autofill
+     * all behave natively.
+     *
+     * @param name - Field name; a nameless control stays out of the form data.
+     * @param required - Whether an empty selection blocks submission.
+     * @returns The control, or null when there is no name to submit under.
+     */
+    private static createFormMirror(
+        name: string | undefined,
+        required: boolean,
+    ): HTMLSelectElement | null {
+        if (name === undefined || name === "") return null;
+        const mirror = document.createElement("select");
+        mirror.className = "select-box-form-mirror";
+        mirror.dataset["selectFormMirror"] = "";
+        mirror.setAttribute("aria-hidden", "true");
+        mirror.tabIndex = -1;
+        mirror.name = name;
+        mirror.required = required;
+        return mirror;
+    }
+
+    /** Mirrors the snapshot into the native control the form reads. */
+    private paintFormMirror(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {
+        if (!this.formMirror) return;
+        const isMulti = snapshot.mode === "multi";
+        const selected = new Set(snapshot.selectedOptions.map((option) => option.value));
+        this.formMirror.multiple = isMulti;
+        this.formMirror.disabled = snapshot.disabled;
+        const entries = [
+            // The empty entry is what lets `required` fail while nothing is selected.
+            ...(isMulti ? [] : [{ value: "", label: "" }]),
+            ...snapshot.filteredGroups.flatMap((group) =>
+                group.options.map((option) => ({ value: option.value, label: option.label })),
+            ),
+        ];
+        this.formMirror.replaceChildren(
+            ...entries.map((entry) => {
+                const option = document.createElement("option");
+                option.value = entry.value;
+                option.textContent = entry.label;
+                option.selected = selected.has(entry.value);
+                return option;
+            }),
+        );
     }
 
     private createTrigger(): HTMLDivElement {
@@ -248,6 +306,7 @@ export class SelectBoxView<TExtra extends object = object> {
 
     private listen(): void {
         this.unsubscribeFromStore = this.controller.subscribe(this.handleSnapshotChange);
+        this.formMirror?.form?.addEventListener("reset", this.handleFormReset);
         if (this.surface === "inline") return;
         this.input!.addEventListener("input", this.handleInputChange);
         this.input!.addEventListener("focus", this.handleInputFocus);
@@ -266,6 +325,7 @@ export class SelectBoxView<TExtra extends object = object> {
     private unlisten(): void {
         this.unsubscribeFromStore?.();
         this.unsubscribeFromStore = null;
+        this.formMirror?.form?.removeEventListener("reset", this.handleFormReset);
         if (this.surface === "inline") return;
         this.input?.removeEventListener("input", this.handleInputChange);
         this.input?.removeEventListener("focus", this.handleInputFocus);
@@ -278,6 +338,10 @@ export class SelectBoxView<TExtra extends object = object> {
         this.clearButton?.removeEventListener("click", this.handleClearClick);
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
+
+    private readonly handleFormReset = (): void => {
+        this.controller.reset();
+    };
 
     private readonly handleInputChange = (event: Event): void => {
         const input = event.currentTarget as HTMLInputElement;
@@ -373,6 +437,7 @@ export class SelectBoxView<TExtra extends object = object> {
             this.root.classList.remove("select-box-multi");
         }
         this.root.dataset["selectMode"] = snapshot.mode;
+        this.paintFormMirror(snapshot);
 
         if (this.surface === "inline") {
             this.paintInline(snapshot, view, isMulti);

@@ -15,6 +15,8 @@ function mount(): void {
         placeholder: config.placeholder,
         mode: config.multi ? "multi" : "single",
         surface,
+        name: config.name,
+        required: config.required,
     });
     host.on("change", (_event: unknown, value: unknown) => reportChange(value));
     host.on("selectbox:change", (_event: unknown, values: unknown) => reportChange(values));

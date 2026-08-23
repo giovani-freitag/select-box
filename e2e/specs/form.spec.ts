@@ -11,7 +11,9 @@ import { expect, test } from "../lib/fixtures.js";
  * `formResetCallback` — which is exactly how this whole surface went unobserved.
  */
 
-const FORM_ASSOCIATED = ["lit", "webcomponents", "react"];
+// Every wrapper now reaches a form: the two custom elements through
+// `ElementInternals`, the three DOM-tree ones through a mirrored native select.
+const FORM_ASSOCIATED = ["lit", "webcomponents", "react", "vue", "jquery"];
 
 test.beforeEach(({ framework }) => {
     test.skip(!FORM_ASSOCIATED.includes(framework), "not a form-associated wrapper");

@@ -8,6 +8,7 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
+import FormMirror from "./FormMirror.vue";
 import { computed, useTemplateRef } from "vue";
 
 import { useClickOutsideClose } from "./composables/use-click-outside-close.js";
@@ -22,6 +23,8 @@ const props = defineProps<{
     state: SelectBoxSnapshot<TExtra, SelectionValue>;
     controller: SelectBoxController<TExtra, SelectionValue>;
     placeholder: string | undefined;
+    name: string | undefined;
+    required: boolean | undefined;
 }>();
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
@@ -168,6 +171,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
         data-select-root
         :data-select-mode="isMulti ? 'multi' : 'single'"
     >
+        <FormMirror :state="state" :controller="controller" :name="name" :required="required" />
         <!-- Multi-mode trigger: chips inside the input, click anywhere opens -->
         <div
             v-if="isMulti"
