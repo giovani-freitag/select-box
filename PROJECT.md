@@ -64,6 +64,7 @@ select-box/
 │   │   │   ├── types.ts           # SelectOption / SelectGroup / addon contract
 │   │   │   └── index.ts
 │   │   └── tests/                 # Vitest unit tests (+ tests/arch for the addon contract)
+│   ├── dom/                       # @select-box/dom — imperative light-DOM painters
 │   ├── webcomponents/             # @select-box/webcomponents — <select-box>
 │   ├── react/                     # @select-box/react — useSelectBox()
 │   ├── vue/                       # @select-box/vue — useSelectBox()
@@ -355,8 +356,8 @@ key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
   `FuzzyFilterStrategy` (drop into the `filter` slot directly) and `FuzzyAddon`
   (registers the strategy through the `provideFilter` hook).
 - `[done]` `@select-box/addon-hoist-selected` — pins selected options to the top
-  of the list. Active while there is at least one selection (single mode for now;
-  multi mode generalises naturally). Config:
+  of the list. Active while there is at least one selection; multi mode pins
+  every selected option, in selection order. Config:
   `{ separator?: boolean; when?: "always" | "popoverOpen" }`,
   default `when: "always"`. Exposes
   `snapshot.addons["hoist-selected"]: { pinnedKeys, separator }`. Drives
@@ -511,6 +512,40 @@ node dangles outside the tree. React is also the only wrapper that cannot
 name the members on an object it already owns, so its `ref` carries a
 `SelectBoxHandle` rather than the root element itself.
 
+### 5.3 Shared painters for the imperative wrappers
+
+React, Vue and Lit paint from a template their framework reconciles.
+The web component and the jQuery plugin build their own DOM by hand, and
+were doing it twice: two copies of the option row, the chip, the group
+header, the highlight chunking and the whole virtualized list paint —
+around 300 lines that had already drifted apart in two places.
+
+`@select-box/dom` owns that markup once, split by what changes for what
+reason:
+
+| Class | Owns |
+|---|---|
+| `SelectBoxNodeFactory` | One node each: option row, group header, selected chip, selectable chip, empty state. Wires their listeners. |
+| `SelectBoxListPainter` | The virtualized popover list — row model, virtualizer lifecycle, padding, active-row scrolling. |
+| `SelectBoxChipPainter` | The trigger's selected chips and the inline surface. |
+
+The wrappers keep everything that is genuinely theirs: attribute
+plumbing, form association, the key dispatcher, the surface toggle.
+They dropped six state fields each (row model, virtualizer, wrapper
+element, scroll bookkeeping) to the painters.
+
+Two divergences died with the extraction, both real and both in the
+web component: its inline surface rendered chips as bare siblings of the
+group headers where the other four wrap each group in a
+`[data-select-tags]` row, and its inline chips ignored `disabled` /
+`readOnly` entirely, so a disabled control still took clicks. §6.2.1
+now pins the row structure for all five.
+
+The painters take no framework types and hold no reference to a host —
+a `getController` accessor and a `refocus` callback are the whole
+contract — so they are tested directly against a controller with no
+wrapper in the picture at all.
+
 ## 6. Testing strategy
 
 Layered, from cheap-and-fast to expensive-and-thorough. We follow
@@ -541,6 +576,8 @@ exercise the lifecycle of that binding using idiomatic tooling:
 - `@select-box/webcomponents` → Vitest + JSDOM, asserting on the
   rendered light DOM + form-associated internals.
 - `@select-box/jquery` → Vitest + JSDOM, jQuery against a host element.
+- `@select-box/dom` → Vitest + happy-dom, the shared painters driven by a
+  real controller with no wrapper around them (§5.3).
 
 These suites cover what is *specific* to each binding: the idiomatic
 surface (props, emits, attributes, plugin methods), lifecycle, and
@@ -771,7 +808,7 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
     suites are in place for all five; arrow-key navigation and unmount
     cleanup are the remaining gaps.
   - `[done]` Shared cross-wrapper parity suite in `tooling/parity/`
-    (§6.2.1), 48 scenarios per wrapper across both surfaces, including addons
+    (§6.2.1), 56 scenarios per wrapper across both surfaces, including addons
     passed through each wrapper's own door and the full ARIA wiring. Closed the
     click-outside gap in the Vue and Lit suites, brought the
     `data-select-*` contract to 17/17 attributes in all five wrappers,
