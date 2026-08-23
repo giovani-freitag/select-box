@@ -23,9 +23,8 @@ export type SelectBoxSurface = "popover" | "inline";
  * and both `popover` and `inline` surfaces via the `surface` flag.
  */
 export class SelectBoxView<TExtra extends object = object> {
-    readonly root: HTMLDivElement;
-
-    private readonly controller: SelectBoxController<TExtra, SelectionValue>;
+    private readonly rootElement: HTMLDivElement;
+    private readonly coreController: SelectBoxController<TExtra, SelectionValue>;
     private readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
     private readonly surface: SelectBoxSurface;
     private readonly trigger: HTMLDivElement | null;
@@ -38,14 +37,40 @@ export class SelectBoxView<TExtra extends object = object> {
 
     /** Live mode flag — reflects the controller's current selection mode. */
     private get multi(): boolean {
-        return this.controller.mode === "multi";
+        return this.coreController.mode === "multi";
     }
 
-    /** Adds or removes the multi-mode marker on the root. */
+    /**
+     * The element this view owns, which every wrapper marks `data-select-root`.
+     *
+     * A getter rather than a captured node: switching surfaces builds a
+     * different root, and a held reference would dangle outside the tree.
+     */
+    get root(): HTMLDivElement {
+        return this.rootElement;
+    }
+
+    /**
+     * The controller driving this view.
+     *
+     * The escape hatch behind the styled tier: it is the same instance the
+     * view renders from, so a call through it repaints like any other change.
+     */
+    get controller(): SelectBoxController<TExtra, SelectionValue> {
+        return this.coreController;
+    }
+
+    /**
+     * Switches between single and multi selection in place.
+     *
+     * @param nextMode - Selection mode to move to.
+     */
     setMode(nextMode: "single" | "multi"): void {
-        this.controller.setMode(nextMode);
+        this.coreController.setMode(nextMode);
     }
 
+    private readonly onDestroy: (() => void) | undefined;
+    private destroyed = false;
     private unsubscribeFromStore: (() => void) | null = null;
     private previousValueKey: string;
     private readonly onSingleChange:
@@ -84,29 +109,32 @@ export class SelectBoxView<TExtra extends object = object> {
                 values: ReadonlyArray<string>,
                 options: ReadonlyArray<SelectOption<TExtra>>,
             ) => void;
+            /** Fires once the view has torn itself down, so an owner can drop its handle. */
+            readonly onDestroy?: () => void;
         },
     ) {
-        this.controller = new SelectBoxController<TExtra, SelectionValue>(config);
-        this.keyDispatcher = new SelectBoxKeyDispatcher(this.controller);
-        this.previousValueKey = SelectBoxSnapshotView.valueKey(this.controller.getState().value);
+        this.coreController = new SelectBoxController<TExtra, SelectionValue>(config);
+        this.keyDispatcher = new SelectBoxKeyDispatcher(this.coreController);
+        this.previousValueKey = SelectBoxSnapshotView.valueKey(this.coreController.getState().value);
         this.placeholder = config.placeholder ?? "Select…";
         this.formMirror = SelectBoxView.createFormMirror(config.name, config.required === true);
         this.ariaLabel = config.ariaLabel;
         this.ariaLabelledby = config.ariaLabelledby;
         this.onSingleChange = config.onValueChange;
         this.onMultiChange = config.onMultiValueChange;
+        this.onDestroy = config.onDestroy;
         this.surface = config.surface ?? "popover";
         this.nodeFactory = new SelectBoxNodeFactory<TExtra>({
             instanceId: this.instanceId,
-            getController: () => this.controller,
+            getController: () => this.coreController,
             refocus: () => this.input?.focus({ preventScroll: true }),
         });
         this.chipPainter = new SelectBoxChipPainter<TExtra>({ factory: this.nodeFactory });
 
-        this.root = document.createElement("div");
-        this.root.dataset["selectRoot"] = "";
-        this.root.dataset["selectMode"] = this.multi ? "multi" : "single";
-        this.root.className = this.computeRootClassName();
+        this.rootElement = document.createElement("div");
+        this.rootElement.dataset["selectRoot"] = "";
+        this.rootElement.dataset["selectMode"] = this.multi ? "multi" : "single";
+        this.rootElement.className = this.computeRootClassName();
 
         if (this.surface === "inline") {
             this.inlineSurface = document.createElement("div");
@@ -121,10 +149,10 @@ export class SelectBoxView<TExtra extends object = object> {
             this.popover = null;
             this.list = null;
             this.listPainter = null;
-            this.root.append(this.inlineSurface);
-            if (this.formMirror) this.root.append(this.formMirror);
+            this.rootElement.append(this.inlineSurface);
+            if (this.formMirror) this.rootElement.append(this.formMirror);
             this.listen();
-            this.paint(this.controller.getState());
+            this.paint(this.coreController.getState());
             return;
         }
 
@@ -137,8 +165,8 @@ export class SelectBoxView<TExtra extends object = object> {
         this.popover = this.createPopover();
         this.list = this.popover.querySelector<HTMLDivElement>(".select-box-list")!;
 
-        this.root.append(this.trigger, this.popover);
-        if (this.formMirror) this.root.append(this.formMirror);
+        this.rootElement.append(this.trigger, this.popover);
+        if (this.formMirror) this.rootElement.append(this.formMirror);
         this.listPainter = new SelectBoxListPainter<TExtra>({
             factory: this.nodeFactory,
             getListElement: () => this.list,
@@ -148,7 +176,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.list.style.overflowY = "auto";
         this.listPainter.mount();
         this.listen();
-        this.paint(this.controller.getState());
+        this.paint(this.coreController.getState());
     }
 
     private computeRootClassName(): string {
@@ -160,31 +188,39 @@ export class SelectBoxView<TExtra extends object = object> {
             .join(" ");
     }
 
+    /**
+     * Tears the view down and takes its markup out of the document.
+     *
+     * Safe to call more than once; the second call is a no-op.
+     */
     destroy(): void {
+        if (this.destroyed) return;
+        this.destroyed = true;
         this.unlisten();
         this.listPainter?.dispose();
-        this.controller.destroy();
-        this.root.remove();
+        this.coreController.destroy();
+        this.rootElement.remove();
+        this.onDestroy?.();
     }
 
-    getController(): SelectBoxController<TExtra, SelectionValue> {
-        return this.controller;
-    }
-
+    /** Opens the popover. */
     open(): void {
-        this.controller.open();
+        this.coreController.open();
     }
 
+    /** Closes the popover. */
     close(): void {
-        this.controller.close();
+        this.coreController.close();
     }
 
+    /** Opens the popover when closed, closes it when open. */
     toggle(): void {
-        this.controller.toggle();
+        this.coreController.toggle();
     }
 
+    /** Drops the current selection. */
     clear(): void {
-        this.controller.clear();
+        this.coreController.clear();
     }
 
     /**
@@ -193,7 +229,7 @@ export class SelectBoxView<TExtra extends object = object> {
      * @param options - The new flat option list.
      */
     setOptions(options: ReadonlyArray<SelectOption<TExtra>>): void {
-        this.controller.setOptions(options);
+        this.coreController.setOptions(options);
     }
 
     /**
@@ -245,7 +281,7 @@ export class SelectBoxView<TExtra extends object = object> {
         if (this.ariaLabelledby !== undefined) {
             combobox.setAttribute("aria-labelledby", this.ariaLabelledby);
         }
-        const active = this.controller.getState().activeOption;
+        const active = this.coreController.getState().activeOption;
         if (active === null) combobox.removeAttribute("aria-activedescendant");
         else {
             combobox.setAttribute(
@@ -341,7 +377,7 @@ export class SelectBoxView<TExtra extends object = object> {
     }
 
     private listen(): void {
-        this.unsubscribeFromStore = this.controller.subscribe(this.handleSnapshotChange);
+        this.unsubscribeFromStore = this.coreController.subscribe(this.handleSnapshotChange);
         this.formMirror?.form?.addEventListener("reset", this.handleFormReset);
         if (this.surface === "inline") return;
         this.input!.addEventListener("input", this.handleInputChange);
@@ -376,21 +412,21 @@ export class SelectBoxView<TExtra extends object = object> {
     }
 
     private readonly handleFormReset = (): void => {
-        this.controller.reset();
+        this.coreController.reset();
     };
 
     private readonly handleInputChange = (event: Event): void => {
         const input = event.currentTarget as HTMLInputElement;
-        if (!this.controller.getState().open) this.controller.open();
-        this.controller.setQuery(input.value);
+        if (!this.coreController.getState().open) this.coreController.open();
+        this.coreController.setQuery(input.value);
     };
 
     private readonly handleInputFocus = (): void => {
-        if (!this.controller.getState().open) this.controller.open();
+        if (!this.coreController.getState().open) this.coreController.open();
     };
 
     private readonly handleInputClick = (): void => {
-        if (!this.controller.getState().open) this.controller.open();
+        if (!this.coreController.getState().open) this.coreController.open();
     };
 
     private readonly handleCaretMouseDown = (event: Event): void => {
@@ -398,34 +434,34 @@ export class SelectBoxView<TExtra extends object = object> {
     };
 
     private readonly handleCaretClick = (): void => {
-        if (this.controller.getState().open) {
-            this.controller.close();
+        if (this.coreController.getState().open) {
+            this.coreController.close();
         } else {
-            this.controller.open();
+            this.coreController.open();
             this.input?.focus({ preventScroll: true });
         }
     };
 
     private readonly handleTriggerMouseDown = (event: MouseEvent): void => {
-        if (this.controller.getState().mode !== "multi") return;
+        if (this.coreController.getState().mode !== "multi") return;
         if (event.target === this.input) return;
         if (event.target instanceof Element &&
             event.target.closest("[data-select-chip-remove], [data-select-clear]")) return;
         event.preventDefault();
-        if (!this.controller.getState().open) this.controller.open();
+        if (!this.coreController.getState().open) this.coreController.open();
         this.input?.focus({ preventScroll: true });
     };
 
     private readonly handleClearMouseDown = (event: Event): void => {
-        if (this.controller.getState().mode !== "multi") return;
+        if (this.coreController.getState().mode !== "multi") return;
         event.preventDefault();
         event.stopPropagation();
     };
 
     private readonly handleClearClick = (event: Event): void => {
-        if (this.controller.getState().mode !== "multi") return;
+        if (this.coreController.getState().mode !== "multi") return;
         event.stopPropagation();
-        this.controller.clear();
+        this.coreController.clear();
         this.input?.focus({ preventScroll: true });
     };
 
@@ -436,14 +472,14 @@ export class SelectBoxView<TExtra extends object = object> {
     };
 
     private readonly handleOutsideMouseDown = (event: MouseEvent): void => {
-        if (!this.controller.getState().open) return;
+        if (!this.coreController.getState().open) return;
         if (!(event.target instanceof Node)) return;
-        if (this.root.contains(event.target)) return;
-        this.controller.close();
+        if (this.rootElement.contains(event.target)) return;
+        this.coreController.close();
     };
 
     private readonly handleSnapshotChange = (): void => {
-        const snapshot = this.controller.getState();
+        const snapshot = this.coreController.getState();
         this.paint(snapshot);
         const currentKey = SelectBoxSnapshotView.valueKey(snapshot.value);
         if (currentKey !== this.previousValueKey) {
@@ -468,11 +504,11 @@ export class SelectBoxView<TExtra extends object = object> {
 
         // Keep host-level mode markers in sync so consumer CSS can branch on them.
         if (isMulti) {
-            this.root.classList.add("select-box-multi");
+            this.rootElement.classList.add("select-box-multi");
         } else {
-            this.root.classList.remove("select-box-multi");
+            this.rootElement.classList.remove("select-box-multi");
         }
-        this.root.dataset["selectMode"] = snapshot.mode;
+        this.rootElement.dataset["selectMode"] = snapshot.mode;
         this.paintFormMirror(snapshot);
 
         if (this.surface === "inline") {

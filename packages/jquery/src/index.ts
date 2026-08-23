@@ -1,9 +1,13 @@
-import type { SelectBoxController, SelectionValue, SelectOption } from "@select-box/core";
 import jQuery from "jquery";
 
 import { registerSelectBoxPlugin, type SelectBoxPluginConfig } from "./plugin.js";
+import type { SelectBoxView } from "./select-box-view.js";
 
-export { registerSelectBoxPlugin, type SelectBoxPluginConfig } from "./plugin.js";
+export {
+    EmptySelectionError,
+    registerSelectBoxPlugin,
+    type SelectBoxPluginConfig,
+} from "./plugin.js";
 export { SelectBoxView } from "./select-box-view.js";
 
 export {
@@ -30,20 +34,28 @@ export {
 export const packageName = "@select-box/jquery" as const;
 
 declare global {
-    interface JQuery<TElement = HTMLElement> {
+    interface JQuery {
+        /**
+         * Builds a select box over every element in the collection.
+         *
+         * @param config - Options, mode, surface and form wiring.
+         * @returns The view built over the first element; the rest are reached
+         * through their own `element.selectBox`.
+         * @throws EmptySelectionError when the collection is empty.
+         */
         selectBox<TExtra extends object = object>(
             config: SelectBoxPluginConfig<TExtra>,
-        ): JQuery<TElement>;
-        selectBox(method: "open" | "close" | "toggle" | "clear" | "destroy"): JQuery<TElement>;
-        selectBox(method: "setMode", mode: "single" | "multi"): JQuery<TElement>;
-        selectBox<TExtra extends object = object>(
-            method: "controller",
-        ): SelectBoxController<TExtra, SelectionValue> | undefined;
-        selectBox(method: "root"): HTMLElement | undefined;
-        selectBox<TExtra extends object = object>(
-            method: "options",
-            options: ReadonlyArray<SelectOption<TExtra>>,
-        ): JQuery<TElement>;
+        ): SelectBoxView<TExtra>;
+    }
+
+    interface HTMLElement {
+        /**
+         * The select box mounted on this element, if any.
+         *
+         * Reachable as `$(el).prop("selectBox")` or `$(el)[0].selectBox`, and
+         * cleared the moment the view is destroyed.
+         */
+        selectBox?: SelectBoxView;
     }
 }
 
