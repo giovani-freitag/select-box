@@ -239,12 +239,12 @@ internal `value → option` index, form serialization) use plain `===`.
 ## Filtering
 
 The default filter is `SubstringFilterStrategy` — case-insensitive
-substring match on `label`. Swap it for fuzzy subsequence matching (every
-query character must appear in `label` in order, with consecutive and
-word-start bonuses) by passing the strategy explicitly:
+substring match on `label`. Swap it for bitap fuzzy matching, which tolerates
+typos and transposed characters rather than only gaps, by passing the strategy
+explicitly:
 
 ```ts
-import { FuzzyFilterStrategy } from "@select-box/core";
+import { FuzzyFilterStrategy } from "@select-box/addon-fuzzy";
 
 <SelectBox
     options={fruits}

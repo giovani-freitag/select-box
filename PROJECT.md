@@ -350,7 +350,8 @@ key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
   `extendSnapshot` (for `inputMode: "label" | "search"`) and
   `onKeyDown` (for the typing experience). Config:
   `{ keepQueryOnBlur?: boolean }`.
-- `[done]` `@select-box/addon-fuzzy` — subsequence fuzzy matching. Ships both
+- `[done]` `@select-box/addon-fuzzy` — bitap fuzzy matching backed by fuse.js
+  (tolerates typos and transpositions, not just gaps). Ships both
   `FuzzyFilterStrategy` (drop into the `filter` slot directly) and `FuzzyAddon`
   (registers the strategy through the `provideFilter` hook).
 - `[done]` `@select-box/addon-hoist-selected` — pins selected options to the top
@@ -674,7 +675,11 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` pnpm workspaces + Turborepo + ESLint flat + tsconfig presets.
 - `[done]` `packages/core` + `packages/react` (plus vue/lit/wc/jquery) on
   the build pipeline.
-- `[done]` CI: lint + typecheck + vitest on push (`.github/workflows/ci.yml`).
+- `[done]` CI: lint + typecheck + vitest on push, plus the Playwright matrix as
+  one job per wrapper (`.github/workflows/ci.yml`). `docs-starlight` is linted
+  and built but not type-checked: `astro check` cannot resolve Starlight's
+  build-time `virtual:starlight/*` modules, so the run reports eight errors that
+  are not defects.
 
 **M1 — Core + every wrapper, single mode** — `[wip]`
 - `[done]` Unified `SelectBoxController` (option coercion, value→option

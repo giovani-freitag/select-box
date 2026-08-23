@@ -1,4 +1,5 @@
 import eslintJs from "@eslint/js";
+import reactHooks from "eslint-plugin-react-hooks";
 import tsEslint from "typescript-eslint";
 import globals from "globals";
 
@@ -24,7 +25,21 @@ export default tsEslint.config(
         },
     },
     {
-        files: ["**/tests/**/*.ts", "**/*.test.ts"],
+        // A conditional hook or a stale dependency array is a correctness bug the
+        // type checker cannot see, so both are errors rather than warnings.
+        files: ["**/*.tsx"],
+        plugins: { "react-hooks": reactHooks },
+        rules: {
+            "react-hooks/rules-of-hooks": "error",
+            "react-hooks/exhaustive-deps": "error",
+        },
+    },
+    {
+        files: [
+            "**/tests/**/*.{ts,tsx}",
+            "**/*.{test,spec}.{ts,tsx}",
+            "**/specs/**/*.ts",
+        ],
         rules: {
             "@typescript-eslint/no-unsafe-assignment": "off",
             "@typescript-eslint/no-unsafe-member-access": "off",

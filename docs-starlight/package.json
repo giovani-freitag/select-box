@@ -10,7 +10,8 @@
         "build": "pnpm run typedoc && astro build",
         "preview": "astro preview",
         "astro": "astro",
-        "typedoc": "typedoc --options typedoc.json && node scripts/typedoc-frontmatter.mjs"
+        "typedoc": "typedoc --options typedoc.json && node scripts/typedoc-frontmatter.mjs",
+        "lint": "eslint src --ext .ts,.tsx"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.4",
