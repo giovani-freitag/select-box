@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="TExtra extends object = object">
 import {
+    optionElementId,
     SelectBoxSnapshotView,
     TextHighlighter,
     type HighlightChunk,
@@ -9,7 +10,7 @@ import {
     type SelectOption,
 } from "@select-box/core";
 import FormMirror from "./FormMirror.vue";
-import { computed, useTemplateRef } from "vue";
+import { computed, useId, useTemplateRef } from "vue";
 
 import { useClickOutsideClose } from "./composables/use-click-outside-close.js";
 import { useSelectBoxKeyDispatcher } from "./composables/use-select-box-key-dispatcher.js";
@@ -28,6 +29,15 @@ const props = defineProps<{
     ariaLabelText: string | undefined;
     ariaLabelledbyRef: string | undefined;
 }>();
+
+const instanceId = useId();
+// The combobox points at the highlighted row by id; both sides derive it from
+// the same snapshot rather than passing an index between components.
+const activeDescendant = computed(() =>
+    props.state.activeOption === null
+        ? undefined
+        : optionElementId(instanceId, props.state.activeOption.value),
+);
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
 
@@ -182,6 +192,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
             role="combobox"
             :aria-label="ariaLabelText"
             :aria-labelledby="ariaLabelledbyRef"
+                :aria-activedescendant="activeDescendant"
             aria-haspopup="listbox"
             :aria-expanded="state.open"
             @mousedown="handleControlMouseDown"
@@ -241,6 +252,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 role="combobox"
                 :aria-label="ariaLabelText"
                 :aria-labelledby="ariaLabelledbyRef"
+                :aria-activedescendant="activeDescendant"
                 aria-haspopup="listbox"
                 aria-autocomplete="list"
                 :aria-expanded="state.open"
@@ -307,6 +319,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                             :class="optionClasses(entry.isActive, entry.isSelected, entry.row.option.disabled)"
                             :disabled="entry.row.option.disabled"
                             tabindex="-1"
+                            :id="optionElementId(instanceId, entry.row.option.value)"
                             data-select-option
                             :data-select-active="entry.isActive ? '' : undefined"
                             :data-select-selected="entry.isSelected ? '' : undefined"

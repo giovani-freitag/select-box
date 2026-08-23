@@ -3,6 +3,8 @@ import {
     SelectBoxKeyDispatcher,
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    nextSelectBoxId,
+    optionElementId,
     SelectBoxSnapshotView,
     TextHighlighter,
     type SelectBoxControllerConfig,
@@ -60,6 +62,7 @@ export class SelectBoxView<TExtra extends object = object> {
     private readonly placeholder: string;
     private readonly formMirror: HTMLSelectElement | null;
     private readonly inlineSurface: HTMLDivElement | null;
+    private readonly instanceId = nextSelectBoxId();
     private readonly ariaLabel: string | undefined;
     private readonly ariaLabelledby: string | undefined;
 
@@ -244,6 +247,14 @@ export class SelectBoxView<TExtra extends object = object> {
         if (this.ariaLabel !== undefined) combobox.setAttribute("aria-label", this.ariaLabel);
         if (this.ariaLabelledby !== undefined) {
             combobox.setAttribute("aria-labelledby", this.ariaLabelledby);
+        }
+        const active = this.controller.getState().activeOption;
+        if (active === null) combobox.removeAttribute("aria-activedescendant");
+        else {
+            combobox.setAttribute(
+                "aria-activedescendant",
+                optionElementId(this.instanceId, active.value),
+            );
         }
 
         other.removeAttribute("aria-expanded");
@@ -710,6 +721,7 @@ export class SelectBoxView<TExtra extends object = object> {
         if (option.disabled) classes.push("select-box-option-disabled");
         button.className = classes.join(" ");
         button.tabIndex = -1;
+        button.id = optionElementId(this.instanceId, option.value);
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
         if (isSelected) button.dataset["selectSelected"] = "";

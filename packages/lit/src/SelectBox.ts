@@ -2,6 +2,8 @@ import {
     SelectBoxKeyDispatcher,
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
+    nextSelectBoxId,
+    optionElementId,
     SelectBoxSnapshotView,
     TextHighlighter,
     isMultiSelection,
@@ -63,6 +65,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     private readonly internals = this.attachInternals();
     private reactiveController: SelectBoxController<TExtra, SelectionValue> | null = null;
+    private readonly instanceId = nextSelectBoxId();
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
@@ -388,6 +391,14 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             .join(" ");
     }
 
+    /** Element id of the highlighted row, or null when nothing is highlighted. */
+    private activeDescendantId(
+        state: SelectBoxSnapshot<TExtra, SelectionValue>,
+    ): string | null {
+        if (state.activeOption === null) return null;
+        return optionElementId(this.instanceId, state.activeOption.value);
+    }
+
     override render(): TemplateResult {
         const state = this.reactiveController?.state;
         if (!state) return html``;
@@ -473,6 +484,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     aria-readonly=${this.readOnly}
                     aria-label=${this.getAttribute("aria-label") ?? nothing}
                     aria-labelledby=${this.getAttribute("aria-labelledby") ?? nothing}
+                    aria-activedescendant=${this.activeDescendantId(state) ?? nothing}
                     ?disabled=${this.disabled}
                     ?readonly=${this.readOnly}
                     placeholder=${placeholderText}
@@ -509,6 +521,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 aria-expanded=${state.open}
                 aria-label=${this.getAttribute("aria-label") ?? nothing}
                 aria-labelledby=${this.getAttribute("aria-labelledby") ?? nothing}
+                aria-activedescendant=${this.activeDescendantId(state) ?? nothing}
                 data-select-trigger
                 @mousedown=${this.handleControlMouseDown}
             >
@@ -637,6 +650,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 class=${this.optionClasses(isActive, isSelected, row.option.disabled, isMulti)}
                 ?disabled=${row.option.disabled}
                 tabindex="-1"
+                id=${optionElementId(this.instanceId, row.option.value)}
                 data-select-option
                 data-select-active=${isActive ? "" : nothing}
                 data-select-selected=${isSelected ? "" : nothing}

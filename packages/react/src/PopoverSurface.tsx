@@ -1,4 +1,5 @@
 import {
+    optionElementId,
     SelectBoxSnapshotView,
     TextHighlighter,
     type SearchMatchRange,
@@ -9,6 +10,7 @@ import {
     type SelectOption,
 } from "@select-box/core";
 import {
+    useId,
     useMemo,
     useRef,
     type ChangeEvent,
@@ -58,6 +60,12 @@ export function PopoverSurface<TExtra extends object>({
     ariaLabel,
     ariaLabelledby,
 }: PopoverSurfaceProps<TExtra>): JSX.Element {
+    const instanceId = useId();
+    // The combobox points at the highlighted row by id, and both sides derive it
+    // from the same snapshot rather than passing an index between components.
+    const activeDescendant = state.activeOption === null
+        ? undefined
+        : optionElementId(instanceId, state.activeOption.value);
     const rootRef = useRef<HTMLDivElement>(null);
     const setRootNode = useMergedRefs(rootRef, forwardedRootRef);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +103,7 @@ export function PopoverSurface<TExtra extends object>({
                     placeholder={placeholder}
                     ariaLabel={ariaLabel}
                     ariaLabelledby={ariaLabelledby}
+                    activeDescendant={activeDescendant}
                     onFocusInput={focusInput}
                 />
             ) : (
@@ -106,6 +115,7 @@ export function PopoverSurface<TExtra extends object>({
                     placeholder={placeholder}
                     ariaLabel={ariaLabel}
                     ariaLabelledby={ariaLabelledby}
+                    activeDescendant={activeDescendant}
                 />
             )}
 
@@ -113,6 +123,7 @@ export function PopoverSurface<TExtra extends object>({
                 <PopoverListbox
                     state={state}
                     controller={controller}
+                    instanceId={instanceId}
                     onAfterCommit={isMulti ? focusInput : undefined}
                 />
             ) : null}
@@ -130,6 +141,7 @@ interface SingleTriggerProps<TExtra extends object> {
     readonly placeholder: string | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
+    readonly activeDescendant: string | undefined;
 }
 
 function SingleTrigger<TExtra extends object>({
@@ -140,6 +152,7 @@ function SingleTrigger<TExtra extends object>({
     placeholder,
     ariaLabel,
     ariaLabelledby,
+    activeDescendant,
 }: SingleTriggerProps<TExtra>): JSX.Element {
     const view = new SelectBoxSnapshotView(state);
 
@@ -189,6 +202,7 @@ function SingleTrigger<TExtra extends object>({
                 aria-autocomplete="list"
                 aria-label={ariaLabel}
                 aria-labelledby={ariaLabelledby}
+                aria-activedescendant={activeDescendant}
                 placeholder={placeholderText}
                 value={view.triggerInputValue}
                 onChange={handleInputChange}
@@ -225,6 +239,7 @@ interface MultiTriggerProps<TExtra extends object> {
     readonly placeholder: string | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
+    readonly activeDescendant: string | undefined;
     readonly onFocusInput: () => void;
 }
 
@@ -236,6 +251,7 @@ function MultiTrigger<TExtra extends object>({
     placeholder,
     ariaLabel,
     ariaLabelledby,
+    activeDescendant,
     onFocusInput,
 }: MultiTriggerProps<TExtra>): JSX.Element {
     function handleControlMouseDown(event: MouseEvent<HTMLDivElement>): void {
@@ -284,6 +300,7 @@ function MultiTrigger<TExtra extends object>({
             aria-haspopup="listbox"
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledby}
+            aria-activedescendant={activeDescendant}
             onMouseDown={handleControlMouseDown}
         >
             <div className="select-box-tags" data-select-tags>
@@ -341,12 +358,14 @@ function MultiTrigger<TExtra extends object>({
 interface PopoverListboxProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
+    readonly instanceId: string;
     readonly onAfterCommit: (() => void) | undefined;
 }
 
 function PopoverListbox<TExtra extends object>({
     state,
     controller,
+    instanceId,
     onAfterCommit,
 }: PopoverListboxProps<TExtra>): JSX.Element {
     const isMulti = state.mode === "multi";
@@ -377,6 +396,7 @@ function PopoverListbox<TExtra extends object>({
             <VirtualizedOptionList
                 state={state}
                 controller={controller}
+                instanceId={instanceId}
                 onAfterCommit={onAfterCommit}
             />
         </div>
@@ -386,6 +406,7 @@ function PopoverListbox<TExtra extends object>({
 function VirtualizedOptionList<TExtra extends object>({
     state,
     controller,
+    instanceId,
     onAfterCommit,
 }: PopoverListboxProps<TExtra>): JSX.Element {
     const isMulti = state.mode === "multi";
@@ -448,6 +469,7 @@ function VirtualizedOptionList<TExtra extends object>({
                     return (
                         <button
                             key={row.option.value}
+                            id={optionElementId(instanceId, row.option.value)}
                             ref={measureRef}
                             data-index={virtualRow.index}
                             type="button"

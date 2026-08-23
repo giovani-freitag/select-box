@@ -343,6 +343,31 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             return handle;
         }
 
+        test("points the combobox at the highlighted row by id", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.pressKey("ArrowDown");
+
+            const combobox = mounted.queryScope().querySelector("[role='combobox']")!;
+            const pointed = combobox.getAttribute("aria-activedescendant");
+            const active = mounted.queryScope().querySelector("[data-select-active]");
+
+            // Without this a screen reader announces nothing while the arrow keys
+            // move the highlight, since focus never leaves the combobox.
+            expect(pointed).not.toBeNull();
+            expect(active).not.toBeNull();
+            expect(active!.id).toBe(pointed);
+        });
+
+        test("drops aria-activedescendant when nothing is highlighted", async () => {
+            const mounted = await mountSingle();
+
+            const combobox = mounted.queryScope().querySelector("[role='combobox']")!;
+
+            expect(combobox.getAttribute("aria-activedescendant")).toBeNull();
+        });
+
         test("names the combobox with the label a consumer asked for", async () => {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,

@@ -1,3 +1,4 @@
+export { nextSelectBoxId, optionElementId } from "./instance-id.js";
 export { AbstractAddon } from "./addons/index.js";
 export {
     SelectBoxKeyDispatcher,

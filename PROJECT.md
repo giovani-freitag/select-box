@@ -431,6 +431,26 @@ blocking, `form.reset()` and autofill all behave natively. Unlike Radix, the
 mirror also handles `multiple`, which is what makes multi-mode submit one entry
 per selection like a native `<select multiple>`.
 
+### 5.0.1 ARIA
+
+Focus never leaves the combobox while the arrow keys move the highlight, so
+`aria-activedescendant` is the only thing a screen reader has to follow. Every
+wrapper stamps an id on each option row and points the combobox at the
+highlighted one, keyed by the option's **value** rather than its row index —
+the combobox and the rows sit in different components in every framework, and
+value-keying lets both derive the same id from the same snapshot instead of
+threading an index between them.
+
+The instance prefix comes from the framework's own id hook where one exists
+(React's and Vue's `useId`, which survive server rendering) and from the core's
+`nextSelectBoxId()` counter in the three that have none.
+
+The combobox role itself is painted per mode, not fixed at construction: it
+moves between the trigger and the input when `multi` flips, and the node it
+leaves has to stop announcing `aria-expanded` or a screen reader hears two
+expandable controls. §6.2.1 asserts exactly one node claims the role, exactly
+one announces expansion, and that the two are the same node.
+
 ### 5.1 Root and host
 
 Two words, two nodes, and they are not interchangeable:
@@ -751,7 +771,8 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
     suites are in place for all five; arrow-key navigation and unmount
     cleanup are the remaining gaps.
   - `[done]` Shared cross-wrapper parity suite in `tooling/parity/`
-    (§6.2.1), 38 scenarios per wrapper across both surfaces. Closed the
+    (§6.2.1), 48 scenarios per wrapper across both surfaces, including addons
+    passed through each wrapper's own door and the full ARIA wiring. Closed the
     click-outside gap in the Vue and Lit suites, brought the
     `data-select-*` contract to 17/17 attributes in all five wrappers,
     and gave every wrapper `root` + `controller` accessors (§5.2) verified

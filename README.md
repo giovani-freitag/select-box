@@ -36,7 +36,7 @@ framework-specific logic in the core, no behavioural drift across wrappers.
 - **ARIA combobox spec built-in** — keyboard nav, focus management, `aria-*` wiring lives in the core. Not patched per-framework.
 - **Option groups** — flat-with-`group` or nested `groups`; filtered snapshot exposes `filteredGroups` so wrappers render headers; nav skips disabled rows and headers.
 - **Addon system** — opt-in `.use(new Addon(config))` chain. Hooks are pure transformers (reentrancy structurally impossible). Snapshot extension is typed via TypeScript declaration merging.
-- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 38 behavioural scenarios per wrapper in Vitest; `e2e/` runs 39 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
+- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 48 behavioural scenarios per wrapper in Vitest; `e2e/` runs 39 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
 
 ## Quick start
 

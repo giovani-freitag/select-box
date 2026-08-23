@@ -6,6 +6,8 @@ import {
     SelectBoxSnapshotView,
     TextHighlighter,
     isMultiSelection,
+    nextSelectBoxId,
+    optionElementId,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxSnapshot,
@@ -47,6 +49,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private readonly internals: ElementInternals;
 
     private coreController: SelectBoxController<TExtra, SelectionValue> | null = null;
+    private readonly instanceId = nextSelectBoxId();
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private unsubscribeFromStore: (() => void) | null = null;
     private refs: SelectBoxRefs | null = null;
@@ -562,6 +565,16 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         // The host is what a consumer labels, but the input is what carries
         // role="combobox", so the label has to travel inward to be announced.
         SelectBoxElement.mirrorLabel(this, this.refs.input);
+        // The combobox points at the highlighted row by id; focus never leaves it,
+        // so this is the only thing a screen reader has to follow.
+        const combobox = isMulti ? this.refs.trigger : this.refs.input;
+        if (snapshot.activeOption === null) combobox.removeAttribute("aria-activedescendant");
+        else {
+            combobox.setAttribute(
+                "aria-activedescendant",
+                optionElementId(this.instanceId, snapshot.activeOption.value),
+            );
+        }
         this.refs.input.disabled = this.disabled;
         this.refs.input.readOnly = this.readOnly;
 
@@ -777,6 +790,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         button.setAttribute("role", "option");
         button.setAttribute("aria-selected", String(isSelected));
         button.tabIndex = -1;
+        button.id = optionElementId(this.instanceId, option.value);
         if (isSelected && isMulti) button.classList.add("select-box-option-selected");
         button.dataset["selectOption"] = "";
         if (isActive) {
