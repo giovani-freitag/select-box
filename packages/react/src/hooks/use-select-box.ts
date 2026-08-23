@@ -6,7 +6,7 @@ import {
     type SelectionValue,
     type SingleSelectBoxControllerConfig,
 } from "@select-box/core";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 export interface UseSelectBoxResult<
     TExtra extends object = object,
@@ -21,6 +21,28 @@ export interface UseSelectBoxResult<
  * on first render only. Defaults to single mode; pass `mode: "multi"` for
  * multi-select semantics — the snapshot's `value` type narrows accordingly.
  */
+/**
+ * Detaches the controller's addons when the component really goes away.
+ *
+ * The check is deferred by a microtask on purpose. StrictMode mounts, unmounts
+ * and remounts in the same commit while keeping the controller in state, so
+ * destroying straight from the cleanup would leave the remounted component
+ * holding a controller whose addons are already gone. A real unmount never
+ * comes back, so by the microtask the flag is still down.
+ */
+function useControllerTeardown(controller: SelectBoxController<object, SelectionValue>): void {
+    const mounted = useRef(false);
+    useEffect(() => {
+        mounted.current = true;
+        return () => {
+            mounted.current = false;
+            queueMicrotask(() => {
+                if (!mounted.current) controller.destroy();
+            });
+        };
+    }, [controller]);
+}
+
 export function useSelectBox<TExtra extends object = object>(
     config: SingleSelectBoxControllerConfig<TExtra> & { mode?: "single" },
 ): UseSelectBoxResult<TExtra, string | null>;
@@ -33,6 +55,7 @@ export function useSelectBox<TExtra extends object = object>(
     const [controller] = useState(
         () => new SelectBoxController<TExtra, SelectionValue>(config),
     );
+    useControllerTeardown(controller);
 
     const subscribe = useCallback(
         (listener: () => void) => controller.subscribe(listener),

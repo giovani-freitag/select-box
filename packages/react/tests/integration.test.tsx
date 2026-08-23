@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, StrictMode } from "react";
 import { describe, expect, test, vi } from "vitest";
 
 import { SelectBox, type SelectBoxHandle } from "../src/SelectBox.js";
@@ -17,6 +17,36 @@ function mount() {
 }
 
 describe("<SelectBox /> (React)", () => {
+    test("keeps its addons attached through a StrictMode remount", async () => {
+        let detached = 0;
+        const addon = {
+            name: "probe",
+            detach: () => {
+                detached += 1;
+            },
+        };
+
+        const view = render(
+            <StrictMode>
+                <SelectBox options={fruits} addons={[addon]} />
+            </StrictMode>,
+        );
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        // StrictMode mounts, unmounts and remounts in one commit while keeping the
+        // controller in state, so a naive cleanup would strip a live instance.
+        expect(detached).toBe(0);
+
+        view.unmount();
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(detached).toBe(1);
+    });
+
     test("the ref hands over the root element and the live controller", () => {
         const ref = createRef<SelectBoxHandle>();
 

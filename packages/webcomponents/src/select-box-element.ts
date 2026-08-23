@@ -300,7 +300,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
     set value(next: SelectionValueInput) {
         this.pendingValue = next;
-        this.rebuildControllerIfConnected();
+        // Committed through the controller so the interaction gate applies: a
+        // rebuild would seed `initialValue` and let a disabled control take one.
+        if (this.coreController) this.coreController.commitValue(next);
+        else this.rebuildControllerIfConnected();
     }
 
     /** First selected option (or `null`). Same as the snapshot field. */

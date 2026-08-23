@@ -61,6 +61,8 @@ export interface ParityAddon {
         readonly options: ReadonlyArray<ParityOption>;
     }>;
     extendSnapshot?(): unknown;
+    attach?(): void;
+    detach?(): void;
 }
 
 /**

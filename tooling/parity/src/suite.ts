@@ -333,6 +333,47 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(isOpen(mounted)).toBe(false);
         });
 
+        test("a read-only control refuses a keyboard commit", async () => {
+            const mounted = await mountWithFlags({ readOnly: true });
+
+            await mounted.pressKey("ArrowDown");
+            await mounted.pressKey("Enter");
+
+            expect(input(mounted).value).toBe("");
+            expect(mounted.reportedChanges()).toEqual([]);
+        });
+
+        test("a disabled control refuses a value set through its own API", async () => {
+            const mounted = await mountWithFlags({ disabled: true });
+
+            await mounted.setValue("grape");
+
+            expect(input(mounted).value).toBe("");
+        });
+
+        test("detaches its addons when the instance goes away", async () => {
+            let detached = 0;
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+                addons: [
+                    {
+                        name: "probe",
+                        detach: () => {
+                            detached += 1;
+                        },
+                    },
+                ],
+            });
+
+            await handle.unmount();
+            handle = null;
+
+            expect(detached).toBe(1);
+        });
+
         test("swapping the options renders the new list", async () => {
             const mounted = await mountSingle();
             await mounted.focusInput();
