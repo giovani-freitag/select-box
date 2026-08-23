@@ -22,6 +22,8 @@ describeParitySuite({
         if (config.multi) element.multi = true;
         if (config.disabled === true) element.disabled = true;
         if (config.readOnly === true) element.readOnly = true;
+        const reported: unknown[] = [];
+        element.addEventListener("change", () => reported.push(element.value));
         document.body.append(element);
         await element.updateComplete;
 
@@ -33,6 +35,10 @@ describeParitySuite({
             setMulti: (multi) => {
                 element.multi = multi;
             },
+            setValue: (value) => {
+                element.value = value;
+            },
+            reportedChanges: () => reported,
             publicRoot: () => element.root,
             publicController: () => element.controller,
             settle: async () => {

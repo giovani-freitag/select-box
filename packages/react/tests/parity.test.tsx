@@ -22,6 +22,7 @@ function createReactHandle(
     handleRef: RefObject<SelectBoxHandle | null>,
     rerenderWith: (options: ReadonlyArray<ParityOption>) => void,
     rerenderMulti: (multi: boolean) => void,
+    reported: ReadonlyArray<unknown>,
 ): ParityHandle {
     function input(): HTMLInputElement {
         return result.container.querySelector<HTMLInputElement>("[data-select-input]")!;
@@ -46,6 +47,13 @@ function createReactHandle(
             act(() => rerenderMulti(multi));
             await flush();
         },
+
+        async setValue(value: string | ReadonlyArray<string> | null): Promise<void> {
+            act(() => handleRef.current!.controller.commitValue(value));
+            await flush();
+        },
+
+        reportedChanges: () => reported,
 
         async focusInput(): Promise<void> {
             act(() => {
@@ -87,6 +95,7 @@ describeParitySuite({
 
     mount(config: ParityMountConfig): Promise<ParityHandle> {
         const handleRef = createRef<SelectBoxHandle>();
+        const reported: unknown[] = [];
         const element = (
             options: ReadonlyArray<ParityOption>,
             multi: boolean = config.multi,
@@ -102,6 +111,7 @@ describeParitySuite({
                     aria-label={config.ariaLabel}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
+                    onChange={(values) => reported.push(values)}
                 />
             ) : (
                 <SelectBox
@@ -113,6 +123,7 @@ describeParitySuite({
                     aria-label={config.ariaLabel}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
+                    onChange={(value) => reported.push(value)}
                 />
             );
         const result = render(element(config.options));
@@ -127,6 +138,7 @@ describeParitySuite({
                 (multi) => {
                     result.rerender(element(config.options, multi));
                 },
+                reported,
             ),
         );
     },

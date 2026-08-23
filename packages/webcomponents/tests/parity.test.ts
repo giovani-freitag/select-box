@@ -26,6 +26,8 @@ describeParitySuite({
         element.options = config.options;
         if (config.addons !== undefined) element.addons = config.addons;
         if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
+        const reported: unknown[] = [];
+        element.addEventListener("change", () => reported.push(element.value));
         document.body.append(element);
 
         return Promise.resolve(
@@ -37,6 +39,10 @@ describeParitySuite({
                 setMulti: (multi) => {
                     element.multi = multi;
                 },
+                setValue: (value) => {
+                    element.value = value;
+                },
+                reportedChanges: () => reported,
                 publicRoot: () => element.root,
                 publicController: () => element.controller,
                 settle: () => Promise.resolve(),

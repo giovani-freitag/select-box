@@ -33,6 +33,7 @@ export interface ParityMountConfig {
  */
 export interface ParityController {
     open(): void;
+    commitValue(value: string | ReadonlyArray<string> | null): void;
     getState(): {
         readonly open: boolean;
         readonly addons: Readonly<Record<string, unknown>>;
@@ -85,6 +86,10 @@ export interface ParityHandle {
     setOptions(options: ReadonlyArray<ParityOption>): Promise<void>;
     /** Flips selection cardinality on a live instance. */
     setMulti(multi: boolean): Promise<void>;
+    /** Sets the selection programmatically, through the wrapper's own door. */
+    setValue(value: string | ReadonlyArray<string> | null): Promise<void>;
+    /** Every value this wrapper has reported since mount. */
+    reportedChanges(): ReadonlyArray<unknown>;
     focusInput(): Promise<void>;
     typeIntoInput(text: string): Promise<void>;
     clickElement(element: Element): Promise<void>;
@@ -132,6 +137,8 @@ interface DomHandleConfig {
     readonly queryScope: () => ParentNode;
     readonly setOptions: (options: ReadonlyArray<ParityOption>) => void;
     readonly setMulti: (multi: boolean) => void;
+    readonly setValue: (value: string | ReadonlyArray<string> | null) => void;
+    readonly reportedChanges: () => ReadonlyArray<unknown>;
     readonly publicRoot: () => Element | null;
     readonly publicController: () => ParityController | null;
     readonly settle: () => Promise<void>;
@@ -165,6 +172,13 @@ export function createDomHandle(config: DomHandleConfig): ParityHandle {
             config.setMulti(multi);
             await config.settle();
         },
+
+        async setValue(value: string | ReadonlyArray<string> | null): Promise<void> {
+            config.setValue(value);
+            await config.settle();
+        },
+
+        reportedChanges: config.reportedChanges,
 
         async focusInput(): Promise<void> {
             input().focus();

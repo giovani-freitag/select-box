@@ -30,6 +30,7 @@ describeParitySuite({
             },
             attachTo: mountPoint,
         });
+
         await nextTick();
         const exposed = (
             wrapper.vm.$ as unknown as {
@@ -45,6 +46,14 @@ describeParitySuite({
             setMulti: (multi) => {
                 void wrapper.setProps({ multi });
             },
+            setValue: (value) => {
+                exposed?.controller.commitValue(value);
+            },
+            reportedChanges: () =>
+                [
+                    ...(wrapper.emitted("change") ?? []),
+                    ...(wrapper.emitted("change-multi") ?? []),
+                ].map((payload) => (payload as ReadonlyArray<unknown>)[0]),
             publicRoot: () => exposed?.root ?? null,
             publicController: () => exposed?.controller ?? null,
             settle: () => nextTick(),

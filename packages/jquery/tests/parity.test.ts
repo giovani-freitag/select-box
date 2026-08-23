@@ -16,6 +16,11 @@ describeParitySuite({
         const mountPoint = document.createElement("div");
         document.body.append(mountPoint);
 
+        const reported: unknown[] = [];
+        jQuery(mountPoint).on("change", (_event: unknown, value: unknown) => reported.push(value));
+        jQuery(mountPoint).on("selectbox:change", (_event: unknown, values: unknown) =>
+            reported.push(values),
+        );
         jQuery(mountPoint).selectBox({
             options: config.options,
             placeholder: config.placeholder,
@@ -36,6 +41,10 @@ describeParitySuite({
                 setMulti: (multi) => {
                     jQuery(mountPoint).selectBox("setMode", multi ? "multi" : "single");
                 },
+                setValue: (value) => {
+                    jQuery(mountPoint).selectBox("controller")?.commitValue(value);
+                },
+                reportedChanges: () => reported,
                 publicRoot: () => jQuery(mountPoint).selectBox("root") ?? null,
                 publicController: () => jQuery(mountPoint).selectBox("controller") ?? null,
                 settle: () => Promise.resolve(),

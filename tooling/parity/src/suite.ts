@@ -154,6 +154,36 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             return handle;
         }
 
+        test("respects an explicitly empty placeholder", async () => {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: "",
+                multi: false,
+                surface: "popover",
+            });
+
+            // A wrapper that treats "" as absent falls back to its own default,
+            // which a consumer cannot then turn off.
+            expect(input(handle).placeholder).toBe("");
+        });
+
+        test("accepts a selection set through its own public API", async () => {
+            const mounted = await mountSingle();
+
+            await mounted.setValue("grape");
+
+            expect(input(mounted).value).toBe("Grape");
+        });
+
+        test("reports a commit to whatever the wrapper calls its change hook", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.clickElement(optionByLabel(mounted, "Pear"));
+
+            expect(mounted.reportedChanges()).toContain("pear");
+        });
+
         test("renders the placeholder with an empty input", async () => {
             const mounted = await mountSingle();
 

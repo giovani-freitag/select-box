@@ -12,6 +12,7 @@ import {
     type SelectBoxController as CoreSelectBoxController,
     type SelectBoxSnapshot,
     type SelectionValue,
+    type SelectionValueInput,
     type SelectOption,
 } from "@select-box/core";
 import { html, LitElement, nothing, type PropertyValues, type TemplateResult } from "lit";
@@ -48,7 +49,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     options?: ReadonlyArray<SelectOption<TExtra>>;
     addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
     filter?: OptionFilterStrategy<TExtra>;
-    placeholder = "";
+    placeholder: string | undefined = undefined;
     ungroupedLabel = "";
     name = "";
     disabled = false;
@@ -66,6 +67,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private readonly internals = this.attachInternals();
     private reactiveController: SelectBoxController<TExtra, SelectionValue> | null = null;
     private readonly instanceId = nextSelectBoxId();
+    private pendingValue: SelectionValueInput = null;
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
@@ -100,6 +102,17 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     get value(): SelectionValue {
         return this.reactiveController?.state.value ?? null;
+    }
+
+    /**
+     * Sets the selection, matching the getter every other wrapper pairs with one.
+     *
+     * Committed through the controller rather than by rebuilding, so the value is
+     * pruned against the current options the same way any other commit is.
+     */
+    set value(next: SelectionValueInput) {
+        if (this.reactiveController) this.reactiveController.core.commitValue(next);
+        else this.pendingValue = next;
     }
 
     /** First selected option (or `null`). Same as the snapshot field. */
@@ -249,6 +262,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             ungroupedLabel: this.ungroupedLabel,
             disabled: this.disabled,
             readOnly: this.readOnly,
+            initialValue: this.pendingValue,
         });
         this.keyDispatcher = new SelectBoxKeyDispatcher(this.reactiveController.core);
         this.previousValueKey = SelectBoxSnapshotView.valueKey(this.reactiveController.state.value);
@@ -470,7 +484,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         const inputValue = view.triggerInputValue;
         const placeholderText = state.open && state.selectedOption
             ? state.selectedOption.label
-            : (this.placeholder || "Select…");
+            : (this.placeholder ?? "Select…");
         return html`
             <div class="select-box-trigger" data-select-trigger>
                 <input
@@ -512,7 +526,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         state: SelectBoxSnapshot<TExtra, SelectionValue>,
     ): TemplateResult {
         const hasSelection = state.selectedOptions.length > 0;
-        const placeholderText = hasSelection ? "" : (this.placeholder || "Select…");
+        const placeholderText = hasSelection ? "" : (this.placeholder ?? "Select…");
         return html`
             <div
                 class="select-box-trigger"
