@@ -10,14 +10,33 @@ neutral — they pick up your page's text color, system colors, and dark-mode
 preferences out of the box — so you can ship a working picker without
 writing a single line of CSS, then layer your design system on top.
 
-There are three channels to do that, used in this order from least to most invasive:
+Every wrapper renders the same markup into the light DOM, so there are two
+channels, used in this order from least to most invasive:
 
 1. **CSS variables** (`--sb-*`) — design tokens. Colors, radius, spacing.
-2. **Parts** (`::part(...)`) — for the Shadow-DOM wrappers (Lit, Web Components).
-3. **Class names** (`.select-box-*`) — for the DOM-tree wrappers (React, Vue, jQuery).
+2. **Class names** (`.select-box-*`) — the same names in all five wrappers.
 
-You almost always want (1). Reach for (2)/(3) only when a structural rule
+You almost always want (1). Reach for (2) only when a structural rule
 (layout, animation, replacing an icon) is beyond what a token can express.
+
+:::caution
+Wrappers take a part away by flagging it `hidden` — the caret in multi mode, the
+clear button with nothing selected, the trigger on the inline surface. That
+attribute only resolves to `display: none` through the user-agent stylesheet, so
+any `display` you set on those classes silently outranks it. Keep a guard:
+
+```css
+.select-box-trigger[hidden],
+.select-box-inline[hidden],
+.select-box-popover[hidden],
+.select-box-caret[hidden],
+.select-box-clear[hidden] {
+    display: none;
+}
+```
+
+The shipped stylesheet already carries it.
+:::
 
 ## Try it live
 
@@ -32,20 +51,20 @@ Every wrapper renders the same anatomy. Names are stable across React,
 Vue, Lit, Web Components, and jQuery — only the way you target them
 differs.
 
-| Piece | What it is | Class (DOM) | Part (Shadow) |
-|---|---|---|---|
-| Root | Outer wrapper element | `.select-box` | _(host: the `<select-box>` element itself)_ |
-| Trigger | The boxed control that opens the popover | `.select-box-trigger` | `::part(trigger)` |
-| Input | The text input inside the trigger | `.select-box-input` | `::part(input)` |
-| Caret | The chevron button on the right | `.select-box-caret` | `::part(caret)` |
-| Popover | The floating panel that contains the list | `.select-box-popover` | `::part(popover)` |
-| List | The scrollable container for options | `.select-box-list` | `::part(list)` |
-| Group label | The sticky header above a group of options | `.select-box-group-label` | `::part(group-label)` |
-| Option | A single option row (button) | `.select-box-option` | `::part(option)` |
-| Active option | The currently highlighted row | `.select-box-option-active` | `::part(option-active)` |
-| Disabled option | A non-selectable option | `.select-box-option-disabled` | `::part(option-disabled)` |
-| Match | A `<mark>` around the search match inside a label | `.select-box-option-match` | `::part(option-match)` |
-| Empty | The "no matches" message | `.select-box-empty` | `::part(empty)` |
+| Piece | What it is | Class |
+|---|---|---|
+| Root | Outermost element we render | `.select-box`, or `[data-select-root]` |
+| Trigger | The boxed control that opens the popover | `.select-box-trigger` |
+| Input | The text input inside the trigger | `.select-box-input` |
+| Caret | The chevron button on the right | `.select-box-caret` |
+| Popover | The floating panel that contains the list | `.select-box-popover` |
+| List | The scrollable container for options | `.select-box-list` |
+| Group label | The sticky header above a group of options | `.select-box-group-label` |
+| Option | A single option row (button) | `.select-box-option` |
+| Active option | The currently highlighted row | `.select-box-option-active` |
+| Disabled option | A non-selectable option | `.select-box-option-disabled` |
+| Match | A `<mark>` around the search match inside a label | `.select-box-option-match` |
+| Empty | The "no matches" message | `.select-box-empty` |
 
 The DOM wrappers also tag every piece with a `data-select-*` attribute
 (e.g. `data-select-trigger`, `data-select-popover`) — useful for
@@ -54,9 +73,8 @@ rename.
 
 ## CSS variables
 
-Set them on the host element (or any ancestor in light-DOM wrappers).
-Variables cross the shadow boundary, so the same `select-box { --sb-…: … }`
-rule works for Web Components and Lit.
+Set them on the root element or any ancestor. Inheritance does the rest,
+so a single rule on a page wrapper themes every select box under it.
 
 ### Colors
 
@@ -117,46 +135,11 @@ select-box {
 }
 ```
 
-## Targeting parts (Lit, Web Components)
+## Targeting classes
 
-The shadow DOM hides the internal elements from your stylesheet, but
-each one is exposed via a `part` attribute. Address them with the
-`::part()` pseudo-element from outside.
-
-```css
-/* The boxed trigger */
-select-box::part(trigger) {
-    border-width: 2px;
-    background: linear-gradient(180deg, #fff, #fafafa);
-}
-
-/* The list itself — change its scroll behaviour */
-select-box::part(list) {
-    scroll-padding-block: 0.5rem;
-}
-
-/* A row when it's the currently highlighted one (composite part) */
-select-box::part(option option-active) {
-    box-shadow: inset 3px 0 0 currentColor;
-}
-
-/* The <mark> that wraps a search match inside a label */
-select-box::part(option-match) {
-    background: rgba(255, 235, 59, 0.4);
-    color: inherit;
-    border-radius: 2px;
-}
-```
-
-`::part()` only accepts simple selectors — you can't combine it with
-descendants like `::part(option) span`. If a structural change really
-needs deeper access, drop down to the [headless layer](/guides/headless-vs-ready/)
-and render the row yourself.
-
-## Targeting classes (React, Vue, jQuery)
-
-DOM-tree wrappers render to the host's light DOM, so plain class
-selectors work like any other element.
+Every wrapper renders to the light DOM, so plain class selectors work
+like any other element — the same rule reaches React, Vue, Lit,
+`<select-box>` and jQuery alike.
 
 ```css
 .select-box-trigger {
@@ -198,6 +181,8 @@ Scoping rules vary by wrapper:
 - **Vue** — same as React for attribute forwarding. Scoped styles
   (`<style scoped>`) work as long as your selector matches the rendered
   DOM (Vue compiles `[data-v-…]` attributes onto the root).
+- **Lit** — the custom element is itself the root, so scope through the
+  tag or a class on it: `select-box-lit .select-box-option { … }`.
 - **jQuery** — give the host element a class and scope through that:
   `$("#picker").addClass("my-select").selectBox({ … })`.
 
@@ -222,10 +207,11 @@ select-box,
 }
 ```
 
-The [demo stylesheet this site uses](https://github.com/giovani-freitag/select-box/blob/main/docs-starlight/src/styles/demo.css)
-takes the same approach — every override maps a `--sb-*` token to the
-Starlight palette. Copy it, swap the right-hand side for your design
-tokens, and you have a fully themed select-box.
+This site is built exactly that way: it imports the shipped stylesheet
+and layers [a theme file](https://github.com/giovani-freitag/select-box/blob/main/docs-starlight/src/styles/demo.css)
+that does nothing but map `--sb-*` tokens onto the Starlight palette.
+Every demo you have seen on these pages is the default stylesheet with
+its colors swapped — no structural CSS of its own.
 
 ## Next steps
 

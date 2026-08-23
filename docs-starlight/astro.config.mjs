@@ -15,7 +15,12 @@ export default defineConfig({
             description:
                 "Framework-agnostic select-box. One core, every framework — React, Vue, Lit, Web Components, jQuery.",
             logo: { src: "./src/assets/logo.svg", replacesTitle: false },
-            customCss: ["./src/styles/brand.css", "./src/styles/demo.css"],
+            customCss: [
+                "./src/styles/brand.css",
+                // Base component stylesheet first: demo.css is the Starlight theme on top.
+                "@select-box/styles/select-box.css",
+                "./src/styles/demo.css",
+            ],
             social: {
                 github: "https://github.com/giovani-freitag/select-box",
             },

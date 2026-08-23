@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <em>Same snapshot fields. Same behaviour. Same Playwright matrix proves them all.</em>
+  <em>Same snapshot fields. Same behaviour. One shared suite proves it across all five.</em>
 </p>
 
 ---
@@ -32,11 +32,11 @@ framework-specific logic in the core, no behavioural drift across wrappers.
 
 - **Framework-agnostic core** — pure TypeScript, observer pattern à la TanStack. Drives every wrapper.
 - **Identical public API** — `useSelectBox()` / `<select-box>` / `$.fn.selectBox()` all take the same config shape and surface the same `state` fields (`open`, `value`, `query`, `filteredGroups`, `activeIndex`, `isEmpty`, `selectedOption`).
-- **Two API tiers per wrapper** — drop-in styled component for the common case, or the headless controller / hook when you need custom UI.
+- **Two API tiers per wrapper** — drop-in component plus one shared stylesheet for the common case, or the headless controller / hook when you need custom UI.
 - **ARIA combobox spec built-in** — keyboard nav, focus management, `aria-*` wiring lives in the core. Not patched per-framework.
 - **Option groups** — flat-with-`group` or nested `groups`; filtered snapshot exposes `filteredGroups` so wrappers render headers; nav skips disabled rows and headers.
 - **Addon system** — opt-in `.use(new Addon(config))` chain. Hooks are pure transformers (reentrancy structurally impossible). Snapshot extension is typed via TypeScript declaration merging.
-- **Matrix E2E** — a single Playwright spec runs against every framework's example. A core regression fails N times at once; a wrapper regression fails only its column.
+- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 29 behavioural scenarios per wrapper in Vitest; `e2e/` runs 30 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility, keyboard and focus, popover layout, virtualization over 10k options, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
 
 ## Quick start
 
@@ -89,9 +89,18 @@ export function App() {
 
 For Vue, Lit and jQuery, the API mirrors the same shape. See the [components page](#documentation) for every wrapper side-by-side.
 
+## Reaching inside
+
+The styled component hands over two things on every wrapper, under the same
+names: `root` (the outermost element) and `controller` (the core controller
+driving it). React exposes them through `ref`, Vue through a template ref,
+the two custom elements as getters, jQuery as `$el.selectBox('controller')`.
+Enough for most escape hatches without leaving the styled tier.
+
 ## Headless mode
 
-When the styled component doesn't fit, grab the hook or the controller directly:
+When even that doesn't fit, build your own markup on the hook or the
+controller directly:
 
 ```tsx
 import { useSelectBox } from "@select-box/react";
@@ -161,7 +170,8 @@ Each wrapper publishes:
 ```bash
 pnpm install                            # install all workspaces
 pnpm build                              # build packages + both docs (turbo)
-pnpm test                               # vitest unit tests across packages
+pnpm test                               # vitest across packages (unit + parity)
+pnpm e2e                                # playwright matrix, all five wrappers
 pnpm typecheck                          # tsc --noEmit across packages
 pnpm lint                               # eslint
 ```
@@ -171,7 +181,12 @@ Per-package or per-doc:
 ```bash
 pnpm --filter @select-box/core test
 pnpm --filter @select-box/docs-starlight start
+pnpm --filter @select-box/e2e exec playwright test --project=vue   # one column
+pnpm --filter @select-box/e2e exec playwright test --headed        # watch it run
 ```
+
+`pnpm e2e` builds first on purpose: the fixtures import the built packages, so
+the browser exercises what a consumer installs rather than the source tree.
 
 ## Status
 
@@ -179,8 +194,9 @@ Pilot project. The select-box pulled out of `the-origin-app` is the first
 component; conventions and tooling established here become the template for
 future components. Single and multi mode are feature-complete across all five
 wrappers, in both the popover and the inline-chip surface, with `addon-fuzzy`
-and `addon-hoist-selected` shipped. The remaining first-party addons and the
-matrix E2E suite are next.
+and `addon-hoist-selected` shipped. Two matrix suites pin the same behaviour
+on every wrapper — one in Vitest, one in a real browser. Packages stay
+private for now; the remaining first-party addons are next.
 
 See [PROJECT.md](./PROJECT.md) for the full architectural spec, milestones, and
 open decisions.

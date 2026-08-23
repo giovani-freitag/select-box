@@ -24,6 +24,7 @@
         "@select-box/jquery": "workspace:*",
         "@select-box/lit": "workspace:*",
         "@select-box/react": "workspace:*",
+        "@select-box/styles": "workspace:*",
         "@select-box/vue": "workspace:*",
         "@select-box/webcomponents": "workspace:*",
         "astro": "^5.1.0",

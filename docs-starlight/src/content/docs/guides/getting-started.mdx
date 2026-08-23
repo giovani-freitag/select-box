@@ -61,6 +61,19 @@ Tested against jQuery 3.x.
   </TabItem>
 </Tabs>
 
+## Add the stylesheet
+
+Every wrapper renders the same markup, so one stylesheet covers all of them.
+Import it once, anywhere in your app:
+
+```js
+import "@select-box/styles/select-box.css";
+```
+
+Colors default to CSS system colors, so it follows the reader's light/dark
+preference untouched. Retheme it with the `--sb-*` tokens or your own rules —
+see [Styling](/guides/styling/).
+
 ## Your first select
 
 Copy a snippet, drop it into your app, and you should see a working picker
