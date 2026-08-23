@@ -1,3 +1,4 @@
+import type { SelectBoxView } from "@select-box/jquery";
 import "@select-box/jquery";
 import "@select-box/styles/select-box.css";
 import jQuery from "jquery";
@@ -9,8 +10,8 @@ const config = readFixtureConfig();
 const host = jQuery("#mount");
 let surface = config.surface;
 
-function mount(): void {
-    host.selectBox({
+function mount(): SelectBoxView {
+    const view = host.selectBox({
         options: config.options,
         placeholder: config.placeholder,
         mode: config.multi ? "multi" : "single",
@@ -20,15 +21,16 @@ function mount(): void {
     });
     host.on("change", (_event: unknown, value: unknown) => reportChange(value));
     host.on("selectbox:change", (_event: unknown, values: unknown) => reportChange(values));
+    return view;
 }
 
-mount();
+let box = mount();
 
 wireControls({
-    destroy: () => host.selectBox("destroy"),
+    destroy: () => box.destroy(),
     toggleSurface: () => {
         surface = surface === "inline" ? "popover" : "inline";
-        host.selectBox("destroy");
-        mount();
+        box.destroy();
+        box = mount();
     },
 });

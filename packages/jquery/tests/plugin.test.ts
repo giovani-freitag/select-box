@@ -1,7 +1,11 @@
 import jQuery from "jquery";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { packageName } from "../src/index.js";
+import {
+    EmptySelectionError,
+    packageName,
+    SelectBoxView,
+} from "../src/index.js";
 
 interface FruitExtra {
     readonly id: number;
@@ -37,8 +41,7 @@ describe("$.fn.selectBox", () => {
     });
 
     test("calling open() shows the popover and lists every option", () => {
-        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
-        jQuery("#fruit").selectBox("open");
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits }).open();
 
         const popover = document.querySelector<HTMLDivElement>("#fruit [data-select-popover]");
         const options = [...document.querySelectorAll("#fruit [data-select-option]")].map(
@@ -50,7 +53,7 @@ describe("$.fn.selectBox", () => {
     });
 
     test("committing an option triggers the change event with the new value and option", () => {
-        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
         const events: Array<{ value: string | null; name: string | undefined }> = [];
         jQuery("#fruit").on(
             "change",
@@ -58,7 +61,7 @@ describe("$.fn.selectBox", () => {
                 events.push({ value, name: option?.name });
             },
         );
-        jQuery("#fruit").selectBox("open");
+        box.open();
 
         const firstOption = document.querySelector<HTMLButtonElement>("#fruit [data-select-option]");
         firstOption?.click();
@@ -69,9 +72,130 @@ describe("$.fn.selectBox", () => {
     });
 
     test("destroy() tears the rendered select box down", () => {
-        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
-        jQuery("#fruit").selectBox("destroy");
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits }).destroy();
 
         expect(document.querySelector("#fruit [data-select-trigger]")).toBeNull();
+    });
+});
+
+describe("the instance the plugin hands back", () => {
+    test("initialising returns the view, not the jQuery collection", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(box.root).toBe(document.querySelector("#fruit [data-select-root]"));
+        expect(box.controller.getState().mode).toBe("single");
+    });
+
+    test("drives the component through its own methods", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        box.open();
+        expect(document.querySelector<HTMLDivElement>("#fruit [data-select-popover]")?.hidden)
+            .toBe(false);
+
+        box.close();
+        expect(document.querySelector<HTMLDivElement>("#fruit [data-select-popover]")?.hidden)
+            .toBe(true);
+    });
+
+    test("replaces the option list at runtime", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+        box.open();
+
+        box.setOptions([{ value: "fig", label: "Fig", id: 9, name: "fig" }]);
+
+        expect(
+            [...document.querySelectorAll("#fruit [data-select-option]")].map(
+                (option) => option.textContent,
+            ),
+        ).toEqual(["Fig"]);
+    });
+
+    test("hands over the same controller the component renders from", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        box.controller.commitValue("pear");
+
+        expect(
+            document.querySelector<HTMLInputElement>("#fruit [data-select-input]")?.value,
+        ).toBe("Pear");
+    });
+
+    test("refuses an empty collection instead of returning nothing", () => {
+        expect(() => jQuery("#nowhere").selectBox({ options: fruits })).toThrow(
+            EmptySelectionError,
+        );
+    });
+
+    test("builds one view per element and returns the first", () => {
+        document.body.innerHTML = `<div class="host"></div><div class="host"></div>`;
+        const hosts = [...document.querySelectorAll<HTMLElement>(".host")];
+
+        const box = jQuery(".host").selectBox({ options: fruits });
+
+        expect(box).toBe(hosts[0]!.selectBox);
+        expect(hosts[1]!.selectBox).toBeDefined();
+        expect(hosts[1]!.selectBox).not.toBe(box);
+    });
+});
+
+describe("reaching the instance through the element", () => {
+    test("the element carries the view, Selectize-style", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBe(box);
+    });
+
+    test("jQuery's prop() reaches the same instance", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        const reached = jQuery("#fruit").prop("selectBox") as SelectBoxView<FruitExtra>;
+
+        expect(reached).toBe(box);
+        reached.open();
+        expect(box.controller.getState().open).toBe(true);
+    });
+
+    test("an element with no select box advertises none", () => {
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBeUndefined();
+    });
+
+    test("destroying through the instance clears the element property", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        box.destroy();
+
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBeUndefined();
+    });
+
+    test("re-initialising swaps the advertised instance for the new one", () => {
+        const first = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        const second = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(second).not.toBe(first);
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBe(second);
+        expect(document.querySelectorAll("#fruit [data-select-root]")).toHaveLength(1);
+    });
+
+    test("destroying twice is harmless and notifies the owner once", () => {
+        const onDestroy = vi.fn();
+        const view = new SelectBoxView<FruitExtra>({ options: fruits, onDestroy });
+        view.destroy();
+
+        expect(() => view.destroy()).not.toThrow();
+        expect(onDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    test("re-initialising tears the previous instance down, not just its markup", () => {
+        const detach = vi.fn();
+        jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            addons: [{ name: "probe", detach }],
+        });
+
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(detach).toHaveBeenCalledTimes(1);
     });
 });

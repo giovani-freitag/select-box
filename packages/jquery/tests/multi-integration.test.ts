@@ -106,16 +106,20 @@ describe("$.fn.selectBox multi integration", () => {
     });
 
     test("setMode('single') brings the caret back and drops the clear button", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits, initialValue: ["apple"] });
+        const box = jQuery("#fruit").selectBox({
+            mode: "multi",
+            options: fruits,
+            initialValue: ["apple"],
+        });
 
-        jQuery("#fruit").selectBox("setMode", "single");
+        box.setMode("single");
 
         expect(caret()).not.toBeNull();
         expect(clearButton()).toBeNull();
     });
 
     test("setMode('single') preserves the first selected option", () => {
-        jQuery("#fruit").selectBox({
+        const box = jQuery("#fruit").selectBox({
             mode: "multi",
             options: fruits,
             initialValue: ["pear", "apple"],
@@ -123,7 +127,7 @@ describe("$.fn.selectBox multi integration", () => {
 
         expect(chipLabels()).toEqual(["Pear", "Apple"]);
 
-        jQuery("#fruit").selectBox("setMode", "single");
+        box.setMode("single");
 
         expect(document.querySelector("#fruit [data-select-mode='single']")).not.toBeNull();
         expect(chipLabels()).toEqual([]);
@@ -132,21 +136,25 @@ describe("$.fn.selectBox multi integration", () => {
     });
 
     test("setMode('multi') wraps the held value as a singleton chip", () => {
-        jQuery("#fruit").selectBox({
+        const box = jQuery("#fruit").selectBox({
             options: fruits,
             initialValue: "apple",
         });
 
-        jQuery("#fruit").selectBox("setMode", "multi");
+        box.setMode("multi");
 
         expect(document.querySelector("#fruit [data-select-mode='multi']")).not.toBeNull();
         expect(chipLabels()).toEqual(["Apple"]);
     });
 
     test("setMode is a no-op when already in the requested mode", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits, initialValue: ["apple"] });
+        const box = jQuery("#fruit").selectBox({
+            mode: "multi",
+            options: fruits,
+            initialValue: ["apple"],
+        });
 
-        jQuery("#fruit").selectBox("setMode", "multi");
+        box.setMode("multi");
 
         expect(chipLabels()).toEqual(["Apple"]);
     });

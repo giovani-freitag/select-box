@@ -21,7 +21,7 @@ describeParitySuite({
         jQuery(mountPoint).on("selectbox:change", (_event: unknown, values: unknown) =>
             reported.push(values),
         );
-        jQuery(mountPoint).selectBox({
+        const box = jQuery(mountPoint).selectBox({
             options: config.options,
             placeholder: config.placeholder,
             mode: config.multi ? "multi" : "single",
@@ -36,20 +36,22 @@ describeParitySuite({
             createDomHandle({
                 queryScope: () => mountPoint,
                 setOptions: (options) => {
-                    jQuery(mountPoint).selectBox("options", options);
+                    box.setOptions(options);
                 },
                 setMulti: (multi) => {
-                    jQuery(mountPoint).selectBox("setMode", multi ? "multi" : "single");
+                    box.setMode(multi ? "multi" : "single");
                 },
                 setValue: (value) => {
-                    jQuery(mountPoint).selectBox("controller")?.commitValue(value);
+                    box.controller.commitValue(value);
                 },
                 reportedChanges: () => reported,
-                publicRoot: () => jQuery(mountPoint).selectBox("root") ?? null,
-                publicController: () => jQuery(mountPoint).selectBox("controller") ?? null,
+                // Reached through the element rather than the captured handle,
+                // so the parity suite exercises the door a consumer has.
+                publicRoot: () => mountPoint.selectBox?.root ?? null,
+                publicController: () => mountPoint.selectBox?.controller ?? null,
                 settle: () => Promise.resolve(),
                 teardown: () => {
-                    jQuery(mountPoint).selectBox("destroy");
+                    box.destroy();
                     mountPoint.remove();
                 },
             }),
