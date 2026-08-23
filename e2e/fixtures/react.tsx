@@ -21,6 +21,8 @@ function Fixture(): React.JSX.Element {
                 options={config.options}
                 placeholder={config.placeholder}
                 surface={surface}
+                name={config.name}
+                required={config.required}
                 onChange={(values) => reportChange(values)}
             />
         );
@@ -30,6 +32,8 @@ function Fixture(): React.JSX.Element {
             options={config.options}
             placeholder={config.placeholder}
             surface={surface}
+            name={config.name}
+            required={config.required}
             onChange={(value) => reportChange(value)}
         />
     );

@@ -277,6 +277,22 @@ export class SelectBoxController<
         this.publish();
     }
 
+    /**
+     * Restores the empty selection regardless of the interaction flags.
+     *
+     * A form reset is not a user interaction: the platform resets read-only and
+     * disabled controls too, so this deliberately bypasses the gate that
+     * `clear()` respects.
+     */
+    reset(): void {
+        const empty = this.driver.empty();
+        this.currentValue = empty;
+        this.currentQuery = "";
+        this.currentOpen = false;
+        this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
+        this.publish();
+    }
+
     clear(): void {
         if (!this.canChange) return;
         const empty = this.driver.empty();

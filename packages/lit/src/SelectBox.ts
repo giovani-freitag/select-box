@@ -134,7 +134,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     formResetCallback(): void {
-        this.reactiveController?.clear();
+        this.reactiveController?.core.reset();
     }
 
     formDisabledCallback(disabled: boolean): void {

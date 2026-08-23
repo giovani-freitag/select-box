@@ -264,7 +264,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     formResetCallback(): void {
-        this.coreController?.clear();
+        this.coreController?.reset();
         this.pendingValue = null;
     }
 

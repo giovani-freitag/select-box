@@ -20,6 +20,7 @@ import {
 } from "react";
 
 import { useClickOutsideClose } from "./hooks/use-click-outside-close.js";
+import { FormMirror } from "./FormMirror.js";
 import { useMergedRefs } from "./hooks/use-merged-refs.js";
 import { useSelectBoxKeyDispatcher } from "./hooks/use-select-box-key-dispatcher.js";
 import { useSelectBoxVirtualizer } from "./hooks/use-select-box-virtualizer.js";
@@ -32,6 +33,8 @@ export interface PopoverSurfaceProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
     readonly rootRef: Ref<HTMLDivElement> | undefined;
+    readonly name: string | undefined;
+    readonly required: boolean | undefined;
     readonly placeholder: string | undefined;
     readonly className: string | undefined;
     readonly ariaLabel: string | undefined;
@@ -48,6 +51,8 @@ export function PopoverSurface<TExtra extends object>({
     state,
     controller,
     rootRef: forwardedRootRef,
+    name,
+    required,
     placeholder,
     className,
     ariaLabel,
@@ -80,6 +85,7 @@ export function PopoverSurface<TExtra extends object>({
             data-select-root
             data-select-mode={state.mode}
         >
+            <FormMirror state={state} controller={controller} name={name} required={required} />
             {isMulti ? (
                 <MultiTrigger
                     state={state}

@@ -11,7 +11,7 @@ import { expect, test } from "../lib/fixtures.js";
  * `formResetCallback` — which is exactly how this whole surface went unobserved.
  */
 
-const FORM_ASSOCIATED = ["lit", "webcomponents"];
+const FORM_ASSOCIATED = ["lit", "webcomponents", "react"];
 
 test.beforeEach(({ framework }) => {
     test.skip(!FORM_ASSOCIATED.includes(framework), "not a form-associated wrapper");

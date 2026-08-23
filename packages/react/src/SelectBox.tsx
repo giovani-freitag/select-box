@@ -47,6 +47,10 @@ interface SelectBoxBaseProps<TExtra extends object> {
     readonly disabled?: boolean;
     /** Refuses changes while staying focusable and submitted, like a readonly input. */
     readonly readOnly?: boolean;
+    /** Field name under which the selection is submitted. Omit to stay out of the form. */
+    readonly name?: string;
+    /** Blocks submission while nothing is selected, natively. */
+    readonly required?: boolean;
     readonly className?: string;
     /** Receives the imperative handle: the root element and the core controller. */
     readonly ref?: Ref<SelectBoxHandle<TExtra>> | undefined;
@@ -151,6 +155,8 @@ export function SelectBox<TExtra extends object = object>(
                 state={state}
                 controller={controller}
                 rootRef={rootRef}
+                name={props.name}
+                required={props.required}
                 className={props.className}
                 ariaLabel={props["aria-label"]}
                 ariaLabelledby={props["aria-labelledby"]}
@@ -163,6 +169,8 @@ export function SelectBox<TExtra extends object = object>(
             state={state}
             controller={controller}
             rootRef={rootRef}
+            name={props.name}
+            required={props.required}
             placeholder={props.placeholder}
             className={props.className}
             ariaLabel={props["aria-label"]}

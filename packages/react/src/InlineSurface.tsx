@@ -7,10 +7,14 @@ import {
 } from "@select-box/core";
 import { Fragment, useMemo, type JSX, type Ref } from "react";
 
+import { FormMirror } from "./FormMirror.js";
+
 export interface InlineSurfaceProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
     readonly rootRef: Ref<HTMLDivElement> | undefined;
+    readonly name: string | undefined;
+    readonly required: boolean | undefined;
     readonly className: string | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
@@ -26,6 +30,8 @@ export function InlineSurface<TExtra extends object>({
     state,
     controller,
     rootRef,
+    name,
+    required,
     className,
     ariaLabel,
     ariaLabelledby,
@@ -62,6 +68,7 @@ export function InlineSurface<TExtra extends object>({
             data-select-mode={state.mode}
             data-select-surface="inline"
         >
+            <FormMirror state={state} controller={controller} name={name} required={required} />
             {state.filteredGroups.map((group) => (
                 <Fragment key={group.key}>
                     {group.label ? (

@@ -40,6 +40,25 @@ select-box,
     color: var(--sb-color-text-primary);
 }
 
+/* The mirrored native control that carries this widget into a form.
+ *
+ * Visually hidden rather than `display: none`: a control barred from layout is
+ * also barred from being focused, and the browser then refuses a failed
+ * constraint validation without showing anything. Values are Bootstrap's
+ * visually-hidden mixin, the same set Radix ships for this exact job. */
+.select-box-form-mirror {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 .select-box-trigger {
     display: flex;
     align-items: center;
