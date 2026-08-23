@@ -1,5 +1,6 @@
 import { SubstringFilterStrategy } from "../filters/index.js";
 import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
+import { SelectBoxSnapshotView } from "../snapshot-view.js";
 import { Store } from "../store.js";
 import type {
     AddonTransformContext,
@@ -29,6 +30,15 @@ import { SingleSelectionDriver } from "./single-selection-driver.js";
  * subclasses in consumer code; this class is exposed so advanced callers can
  * inject a custom driver.
  */
+/** Everything the filtered-groups pipeline depends on, kept for cache validation. */
+interface PipelineCache<TExtra extends object> {
+    readonly key: string;
+    readonly allGroups: ReadonlyArray<SelectGroup<TExtra>>;
+    readonly filterStrategy: OptionFilterStrategy<TExtra>;
+    readonly addonCount: number;
+    readonly groups: ReadonlyArray<SelectGroup<TExtra>>;
+}
+
 export class SelectBoxController<
     TExtra extends object = object,
     TValue extends SelectionValue = string | null,
@@ -51,6 +61,7 @@ export class SelectBoxController<
     private currentDisabled: boolean;
     private currentReadOnly: boolean;
     private currentQuery = "";
+    private pipelineCache: PipelineCache<TExtra> | null = null;
     private currentOpen = false;
     private currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
     private readonly boundHighlightRanges = (label: string): ReadonlyArray<SearchMatchRange> =>
@@ -423,8 +434,41 @@ export class SelectBoxController<
         return { ...snapshot, addons: addonSlices };
     }
 
+    /**
+     * The filtered, addon-transformed groups for the current state.
+     *
+     * Memoised because a single interaction reads this several times — once to
+     * re-anchor the active row, again to build the snapshot — and every read
+     * otherwise re-ran the filter and the whole `transformGroups` chain. Hooks
+     * are contractually pure transformers, so a cache hit is safe.
+     */
     private computeFilteredGroups(): ReadonlyArray<SelectGroup<TExtra>> {
-        return this.applyTransformGroups(this.computeFilteredGroupsRaw());
+        const key = [
+            this.currentMode,
+            this.currentOpen ? "open" : "closed",
+            this.currentQuery,
+            SelectBoxSnapshotView.valueKey(this.currentValue),
+        ].join("\u0000");
+        const cached = this.pipelineCache;
+        if (
+            cached !== null
+            && cached.key === key
+            && cached.allGroups === this.allGroups
+            && cached.filterStrategy === this.filterStrategy
+            && cached.addonCount === this.registeredAddons.length
+        ) {
+            return cached.groups;
+        }
+
+        const groups = this.applyTransformGroups(this.computeFilteredGroupsRaw());
+        this.pipelineCache = {
+            key,
+            allGroups: this.allGroups,
+            filterStrategy: this.filterStrategy,
+            addonCount: this.registeredAddons.length,
+            groups,
+        };
+        return groups;
     }
 
     private computeFilteredGroupsRaw(): ReadonlyArray<SelectGroup<TExtra>> {
