@@ -1,21 +1,19 @@
 import {
     SelectBoxController,
     SelectBoxKeyDispatcher,
-    SelectBoxListVirtualizer,
-    SelectBoxRowModel,
     nextSelectBoxId,
     optionElementId,
     SelectBoxSnapshotView,
-    TextHighlighter,
     type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
-
-const ESTIMATED_OPTION_HEIGHT = 36;
-const ESTIMATED_HEADER_HEIGHT = 28;
-const LIST_VIEWPORT_HEIGHT = 240;
+import {
+    SelectBoxChipPainter,
+    SelectBoxListPainter,
+    SelectBoxNodeFactory,
+} from "@select-box/dom";
 
 export type SelectBoxSurface = "popover" | "inline";
 
@@ -66,12 +64,9 @@ export class SelectBoxView<TExtra extends object = object> {
     private readonly ariaLabel: string | undefined;
     private readonly ariaLabelledby: string | undefined;
 
-    private readonly listVirtualizer: SelectBoxListVirtualizer | null;
-    private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
-    private lastRowModelSource: ReadonlyArray<unknown> | null = null;
-    private unsubscribeFromVirtualizer: (() => void) | null = null;
-    private lastScrolledActiveIndex = -1;
-    private listInnerWrapper: HTMLDivElement | null = null;
+    private readonly nodeFactory: SelectBoxNodeFactory<TExtra>;
+    private readonly listPainter: SelectBoxListPainter<TExtra> | null;
+    private readonly chipPainter: SelectBoxChipPainter<TExtra>;
 
     constructor(
         config: SelectBoxControllerConfig<TExtra> & {
@@ -101,6 +96,12 @@ export class SelectBoxView<TExtra extends object = object> {
         this.onSingleChange = config.onValueChange;
         this.onMultiChange = config.onMultiValueChange;
         this.surface = config.surface ?? "popover";
+        this.nodeFactory = new SelectBoxNodeFactory<TExtra>({
+            instanceId: this.instanceId,
+            getController: () => this.controller,
+            refocus: () => this.input?.focus({ preventScroll: true }),
+        });
+        this.chipPainter = new SelectBoxChipPainter<TExtra>({ factory: this.nodeFactory });
 
         this.root = document.createElement("div");
         this.root.dataset["selectRoot"] = "";
@@ -119,7 +120,7 @@ export class SelectBoxView<TExtra extends object = object> {
             this.clearButton = null;
             this.popover = null;
             this.list = null;
-            this.listVirtualizer = null;
+            this.listPainter = null;
             this.root.append(this.inlineSurface);
             if (this.formMirror) this.root.append(this.formMirror);
             this.listen();
@@ -138,16 +139,14 @@ export class SelectBoxView<TExtra extends object = object> {
 
         this.root.append(this.trigger, this.popover);
         if (this.formMirror) this.root.append(this.formMirror);
-        this.list.style.maxHeight = `${LIST_VIEWPORT_HEIGHT}px`;
-        this.list.style.overflowY = "auto";
-        this.listVirtualizer = new SelectBoxListVirtualizer({
-            getScrollElement: () => this.list!,
-            getCount: () => this.rowModel.length,
-            estimateSize: (index) => this.estimateRowSize(this.rowModel, index),
-            initialViewportHeight: LIST_VIEWPORT_HEIGHT,
+        this.listPainter = new SelectBoxListPainter<TExtra>({
+            factory: this.nodeFactory,
+            getListElement: () => this.list,
+            onWindowChange: this.handleSnapshotChange,
         });
-        this.listVirtualizer.mount();
-        this.unsubscribeFromVirtualizer = this.listVirtualizer.subscribe(this.handleSnapshotChange);
+        this.list.style.maxHeight = `${this.listPainter.viewportHeight}px`;
+        this.list.style.overflowY = "auto";
+        this.listPainter.mount();
         this.listen();
         this.paint(this.controller.getState());
     }
@@ -163,9 +162,7 @@ export class SelectBoxView<TExtra extends object = object> {
 
     destroy(): void {
         this.unlisten();
-        this.unsubscribeFromVirtualizer?.();
-        this.unsubscribeFromVirtualizer = null;
-        this.listVirtualizer?.dispose();
+        this.listPainter?.dispose();
         this.controller.destroy();
         this.root.remove();
     }
@@ -479,7 +476,7 @@ export class SelectBoxView<TExtra extends object = object> {
         this.paintFormMirror(snapshot);
 
         if (this.surface === "inline") {
-            this.paintInline(snapshot, view, isMulti);
+            this.chipPainter.paintInlineSurface(this.inlineSurface!, snapshot, view);
             return;
         }
 
@@ -504,13 +501,13 @@ export class SelectBoxView<TExtra extends object = object> {
 
         this.paintComboboxRole(snapshot.open, isMulti);
 
-        this.paintChips(snapshot, isMulti);
+        this.chipPainter.paintTriggerChips(this.tagsContainer!, snapshot);
         this.setTriggerButtonPresent(this.clearButton!, isMulti && hasSelection);
 
         this.popover!.hidden = !snapshot.open;
         if (!snapshot.open) return;
 
-        this.paintList(snapshot, view, isMulti);
+        this.listPainter!.paint(snapshot, view);
     }
 
     /**
@@ -525,238 +522,5 @@ export class SelectBoxView<TExtra extends object = object> {
         if (present === (button.parentNode === this.trigger)) return;
         if (present) this.trigger!.append(button);
         else button.remove();
-    }
-
-    /** Inline-surface paint: every option is a toggleable chip rendered directly
-     * into the root container. No popover, no input, no virtualizer — just the
-     * chip grid that mirrors the docs-starlight light-DOM `.select-box-inline`. */
-    private paintInline(
-        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
-        view: SelectBoxSnapshotView<TExtra, SelectionValue>,
-        isMulti: boolean,
-    ): void {
-        if (!this.inlineSurface) return;
-        const surface = this.inlineSurface;
-        if (isMulti) surface.setAttribute("aria-multiselectable", "true");
-        else surface.removeAttribute("aria-multiselectable");
-        surface.replaceChildren();
-        for (const group of snapshot.filteredGroups) {
-            if (group.label !== "") {
-                surface.appendChild(this.createHeaderElement(group.label));
-            }
-            const tags = document.createElement("div");
-            tags.className = "select-box-tags";
-            tags.dataset["selectTags"] = "";
-            for (const option of group.options) {
-                tags.appendChild(
-                    this.createInlineChipButton(option, view.isSelected(option.value)),
-                );
-            }
-            surface.appendChild(tags);
-        }
-    }
-
-    private createInlineChipButton(
-        option: SelectOption<TExtra>,
-        isSelected: boolean,
-    ): HTMLButtonElement {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.setAttribute("role", "option");
-        button.setAttribute("aria-selected", String(isSelected));
-        button.setAttribute("aria-pressed", String(isSelected));
-        const classes = ["select-box-chip", "select-box-chip-selectable"];
-        if (isSelected) classes.push("select-box-chip-selected");
-        if (option.disabled) classes.push("select-box-chip-disabled");
-        button.className = classes.join(" ");
-        button.dataset["selectChip"] = "";
-        button.dataset["selectOption"] = "";
-        if (isSelected) button.dataset["selectSelected"] = "";
-        if (option.disabled === true || this.controller.getState().disabled
-            || this.controller.getState().readOnly) {
-            button.disabled = true;
-        }
-        button.textContent = option.label;
-        button.addEventListener("click", () => {
-            if (option.disabled) return;
-            this.controller.commitOption(option);
-        });
-        return button;
-    }
-
-    private paintChips(
-        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
-        isMulti: boolean,
-    ): void {
-        // Popover-only path — guarded by `paint`; references safe here.
-        const tagsContainer = this.tagsContainer!;
-        const input = this.input!;
-        const existingChips = tagsContainer.querySelectorAll<HTMLSpanElement>(
-            ".select-box-chip",
-        );
-        existingChips.forEach((chip) => chip.remove());
-        if (!isMulti) return;
-        const fragment = document.createDocumentFragment();
-        for (const option of snapshot.selectedOptions) {
-            fragment.appendChild(this.createChipElement(option));
-        }
-        tagsContainer.insertBefore(fragment, input);
-    }
-
-    private createChipElement(option: SelectOption<TExtra>): HTMLSpanElement {
-        const chip = document.createElement("span");
-        chip.className = "select-box-chip";
-        chip.dataset["selectChip"] = "";
-        chip.append(document.createTextNode(option.label));
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "select-box-chip-remove";
-        remove.setAttribute("aria-label", `Remove ${option.label}`);
-        remove.dataset["selectChipRemove"] = "";
-        remove.textContent = "×";
-        remove.addEventListener("mousedown", (event) => event.stopPropagation());
-        remove.addEventListener("click", (event) => {
-            event.stopPropagation();
-            this.controller.commitOption(option);
-            // Popover-multi-only path — `this.input` exists when surface !== "inline".
-            this.input?.focus({ preventScroll: true });
-        });
-        chip.append(remove);
-        return chip;
-    }
-
-    private paintList(
-        snapshot: SelectBoxSnapshot<TExtra, SelectionValue>,
-        view: SelectBoxSnapshotView<TExtra, SelectionValue>,
-        isMulti: boolean,
-    ): void {
-        // Popover-only path — surface guard in `paint` prevents this from
-        // being called in inline mode, so the non-null assertions are safe.
-        const list = this.list!;
-        const listVirtualizer = this.listVirtualizer!;
-        if (snapshot.filteredGroups !== this.lastRowModelSource) {
-            this.rowModel = new SelectBoxRowModel<TExtra>({ groups: snapshot.filteredGroups });
-            this.lastRowModelSource = snapshot.filteredGroups;
-        }
-        listVirtualizer.sync();
-
-        if (snapshot.isEmpty) {
-            const empty = document.createElement("p");
-            empty.className = "select-box-empty";
-            empty.dataset["selectEmpty"] = "";
-            empty.textContent = "No matches";
-            list.replaceChildren(empty);
-            this.listInnerWrapper = null;
-            return;
-        }
-
-        let wrapper = this.listInnerWrapper;
-        if (wrapper === null || wrapper.parentNode !== list) {
-            wrapper = document.createElement("div");
-            list.replaceChildren(wrapper);
-            this.listInnerWrapper = wrapper;
-        }
-
-        const items = listVirtualizer.getVirtualItems();
-        const totalSize = listVirtualizer.getTotalSize();
-        const paddingTop = items[0]?.start ?? 0;
-        const paddingBottom = Math.max(0, totalSize - (items.at(-1)?.end ?? 0));
-        const activeRowIndex = this.rowModel.findRowIndexForActiveIndex(snapshot.activeIndex);
-
-        wrapper.style.paddingTop = `${paddingTop}px`;
-        wrapper.style.paddingBottom = `${paddingBottom}px`;
-
-        const renderedNodes: HTMLElement[] = [];
-        for (const virtualRow of items) {
-            const row = this.rowModel.getRowAt(virtualRow.index);
-            if (row === undefined) continue;
-            const node =
-                row.kind === "header"
-                    ? this.createHeaderElement(row.group.label)
-                    : this.createOptionButton(
-                          row.option,
-                          virtualRow.index === activeRowIndex,
-                          view.isSelected(row.option.value),
-                          isMulti,
-                      );
-            node.dataset["index"] = String(virtualRow.index);
-            renderedNodes.push(node);
-        }
-
-        wrapper.replaceChildren(...renderedNodes);
-
-        for (const node of renderedNodes) {
-            listVirtualizer.measureElement(node);
-        }
-
-        if (activeRowIndex >= 0 && activeRowIndex !== this.lastScrolledActiveIndex) {
-            this.lastScrolledActiveIndex = activeRowIndex;
-            listVirtualizer.scrollToIndex(activeRowIndex, "auto");
-        } else if (activeRowIndex < 0) {
-            this.lastScrolledActiveIndex = -1;
-        }
-    }
-
-    private createHeaderElement(label: string): HTMLDivElement {
-        const header = document.createElement("div");
-        header.className = "select-box-group-label";
-        header.dataset["selectGroupLabel"] = "";
-        header.textContent = label;
-        return header;
-    }
-
-    private createOptionButton(
-        option: SelectOption<TExtra>,
-        isActive: boolean,
-        isSelected: boolean,
-        isMulti: boolean,
-    ): HTMLButtonElement {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.setAttribute("role", "option");
-        button.setAttribute("aria-selected", String(isSelected));
-        const classes = ["select-box-option"];
-        if (isActive) classes.push("select-box-option-active");
-        if (isSelected && isMulti) classes.push("select-box-option-selected");
-        if (option.disabled) classes.push("select-box-option-disabled");
-        button.className = classes.join(" ");
-        button.tabIndex = -1;
-        button.id = optionElementId(this.instanceId, option.value);
-        button.dataset["selectOption"] = "";
-        if (isActive) button.dataset["selectActive"] = "";
-        if (isSelected) button.dataset["selectSelected"] = "";
-        if (option.disabled) button.disabled = true;
-        if (isMulti) {
-            const tick = document.createElement("span");
-            tick.className = "select-box-option-tick";
-            tick.setAttribute("aria-hidden", "true");
-            tick.textContent = isSelected ? "✓" : "";
-            button.append(tick);
-        }
-        button.append(...this.createLabelNodes(option.label));
-        button.addEventListener("mousedown", (event) => event.preventDefault());
-        button.addEventListener("click", () => {
-            this.controller.commitOption(option);
-            // Popover-only path — `this.input` exists when surface !== "inline".
-            if (isMulti) this.input?.focus({ preventScroll: true });
-        });
-        return button;
-    }
-
-    private createLabelNodes(label: string): Node[] {
-        const ranges = this.controller.getState().highlightRanges(label);
-        return TextHighlighter.split(label, ranges).map((chunk) => {
-            if (!chunk.matched) return document.createTextNode(chunk.text);
-            const mark = document.createElement("mark");
-            mark.className = "select-box-option-match";
-            mark.textContent = chunk.text;
-            return mark;
-        });
-    }
-
-    private estimateRowSize(model: SelectBoxRowModel<TExtra>, index: number): number {
-        return model.getRowAt(index)?.kind === "header"
-            ? ESTIMATED_HEADER_HEIGHT
-            : ESTIMATED_OPTION_HEIGHT;
     }
 }
