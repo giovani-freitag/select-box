@@ -16,13 +16,16 @@ select-box,
     --sb-color-border: color-mix(in srgb, CanvasText 14%, transparent);
     --sb-color-highlight-bg: Highlight;
     --sb-color-highlight-text: HighlightText;
+    /* Separate from the highlight background on purpose: that one may legally be
+     * a gradient, and a gradient cannot draw an outline. */
+    --sb-color-focus-ring: Highlight;
     --sb-color-chip-bg: color-mix(in srgb, Highlight 14%, Canvas);
     --sb-color-chip-border: color-mix(in srgb, Highlight 30%, transparent);
 
     /* Spacing scale */
     --sb-space-xs: 0.25rem;
     --sb-space-sm: 0.5rem;
-    --sb-space-md: 0.875rem;
+    --sb-space-md: 0.6rem;
     --sb-space-lg: 1rem;
 
     /* Misc */
@@ -31,12 +34,18 @@ select-box,
     --sb-shadow-popover: 0 12px 24px -8px color-mix(in srgb, CanvasText 30%, transparent);
     --sb-font-size: inherit;
     --sb-font-size-small: 0.75em;
+    --sb-font-size-label: 0.85em;
     --sb-list-max-height: 240px;
     --sb-popover-z-index: 30;
+
+    /* System colours below only follow the reader's preference once the element
+     * opts into both schemes; without this the whole palette stays light. */
+    color-scheme: light dark;
 
     display: inline-block;
     position: relative;
     font: inherit;
+    font-size: var(--sb-font-size);
     color: var(--sb-color-text-primary);
 }
 
@@ -77,7 +86,7 @@ select-box,
 /* Multi mode: keep the single mode's padding so a chip-less trigger has
  * the same height as the single variant. Wrap chips + input inside the
  * same row; only chip overflow grows the trigger vertically. */
-[data-select-mode="multi"] .select-box-trigger {
+.select-box-multi .select-box-trigger {
     flex-wrap: wrap;
     cursor: text;
 }
@@ -93,7 +102,7 @@ select-box,
     display: contents;
 }
 
-[data-select-mode="multi"] .select-box-tags {
+.select-box-multi .select-box-tags {
     display: flex;
     flex: 1;
     flex-wrap: wrap;
@@ -107,7 +116,7 @@ select-box,
     min-width: 0;
     box-sizing: border-box;
     height: 28px;
-    padding: 0 0.6rem;
+    padding: 0 var(--sb-space-md);
     line-height: 1;
     border: none;
     background: transparent;
@@ -116,7 +125,7 @@ select-box,
     outline: none;
 }
 
-[data-select-mode="multi"] .select-box-input {
+.select-box-multi .select-box-input {
     flex: 1;
     min-width: 5rem;
 }
@@ -165,8 +174,8 @@ select-box,
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0 0 0 0.6rem;
-    font-size: 0.85em;
+    padding: 0 0 0 var(--sb-space-md);
+    font-size: var(--sb-font-size-label);
     line-height: 1;
     max-width: 100%;
     background: var(--sb-color-chip-bg);
@@ -229,7 +238,7 @@ select-box,
 .select-box-group-label {
     position: sticky;
     top: 0;
-    padding: 0.5rem 0.6rem 0.25rem;
+    padding: var(--sb-space-sm) var(--sb-space-md) var(--sb-space-xs);
     background: var(--sb-color-surface);
     color: var(--sb-color-text-secondary);
     font-size: var(--sb-font-size-small);
@@ -246,7 +255,7 @@ select-box,
     gap: var(--sb-space-sm);
     width: 100%;
     box-sizing: border-box;
-    padding: 0.3rem 0.6rem;
+    padding: 0.3rem var(--sb-space-md);
     line-height: 1.2;
     color: var(--sb-color-text-primary);
     font: inherit;
@@ -268,6 +277,15 @@ select-box,
     cursor: not-allowed;
 }
 
+.select-box-option-match {
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+}
+
 .select-box-option-selected {
     color: var(--sb-color-text-primary);
     font-weight: 500;
@@ -284,7 +302,7 @@ select-box,
 
 .select-box-empty {
     margin: 0;
-    padding: 0.75rem 0.6rem;
+    padding: var(--sb-space-lg) var(--sb-space-md);
     text-align: center;
     line-height: 1.4;
     color: var(--sb-color-text-secondary);
@@ -322,8 +340,8 @@ select-box,
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    padding: 0 0.6rem;
-    font-size: 0.85em;
+    padding: 0 var(--sb-space-md);
+    font-size: var(--sb-font-size-label);
     line-height: 1;
     max-width: 100%;
     background: transparent;
@@ -339,8 +357,12 @@ select-box,
     background: color-mix(in srgb, var(--sb-color-text-primary) 8%, transparent);
 }
 
-.select-box-chip-selectable:focus-visible {
-    outline: 2px solid var(--sb-color-highlight-bg);
+.select-box-caret:focus-visible,
+.select-box-clear:focus-visible,
+.select-box-chip-remove:focus-visible,
+.select-box-chip-selectable:focus-visible,
+.select-box-option:focus-visible {
+    outline: 2px solid var(--sb-color-focus-ring);
     outline-offset: 2px;
 }
 

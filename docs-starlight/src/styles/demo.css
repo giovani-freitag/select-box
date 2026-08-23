@@ -31,6 +31,7 @@ select-box-lit,
     --sb-color-border: var(--sl-color-hairline-shade, var(--sl-color-hairline));
     --sb-color-highlight-bg: var(--sb-brand-gradient);
     --sb-color-highlight-text: #ffffff;
+    --sb-color-focus-ring: var(--sl-color-text-accent);
     --sb-color-chip-bg: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
     --sb-color-chip-border: color-mix(in srgb, var(--sl-color-accent) 30%, transparent);
     --sb-shadow-popover: 0 18px 40px -16px rgba(2, 6, 23, 0.65);
