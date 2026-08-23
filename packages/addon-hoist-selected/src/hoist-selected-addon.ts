@@ -49,9 +49,10 @@ declare module "@select-box/core" {
 }
 
 /**
- * Selectize-style pinning: the currently selected option is lifted into a
- * synthetic top-most group so it stays visible no matter where it lives in the
- * original ordering. Pure transformer — never mutates the controller.
+ * Selectize-style pinning: the selected options are lifted into a synthetic
+ * top-most group so they stay visible no matter where they live in the original
+ * ordering. In multi mode every selected option is pinned, in selection order.
+ * Pure transformer — never mutates the controller.
  */
 export class HoistSelectedAddon<TExtra extends object = object>
     extends AbstractAddon<TExtra>
@@ -74,19 +75,27 @@ export class HoistSelectedAddon<TExtra extends object = object>
         context: AddonTransformContext<TExtra>,
     ): ReadonlyArray<SelectGroup<TExtra>> {
         if (!this.shouldApply(context.open)) return groups;
-        const target = context.selectedOption;
-        if (target === null) return groups;
-        if (!this.containsValue(groups, target.value)) return groups;
+        // Pin whatever survived the filter, in selection order. Anything the
+        // query hid stays hidden: the pinned group is a reordering of the
+        // visible list, never a way back in for a filtered-out option.
+        const present = this.presentValues(groups);
+        const targets = context.selectedOptions.filter((option) =>
+            present.has(option.value),
+        );
+        if (targets.length === 0) return groups;
 
+        const pinnedValues = new Set(targets.map((option) => option.value));
         const pinnedGroup: SelectGroup<TExtra> = {
             key: SELECTED_GROUP_KEY,
             label: this.groupLabel,
-            options: [target],
+            options: targets,
         };
         const remainingGroups = groups
             .map((group) => ({
                 ...group,
-                options: group.options.filter((option) => option.value !== target.value),
+                options: group.options.filter(
+                    (option) => !pinnedValues.has(option.value),
+                ),
             }))
             .filter((group) => group.options.length > 0);
         return [pinnedGroup, ...remainingGroups];
@@ -108,15 +117,13 @@ export class HoistSelectedAddon<TExtra extends object = object>
         return this.when === "always" || open;
     }
 
-    private containsValue(
+    private presentValues(
         groups: ReadonlyArray<SelectGroup<TExtra>>,
-        value: string,
-    ): boolean {
+    ): ReadonlySet<string> {
+        const values = new Set<string>();
         for (const group of groups) {
-            for (const option of group.options) {
-                if (option.value === value) return true;
-            }
+            for (const option of group.options) values.add(option.value);
         }
-        return false;
+        return values;
     }
 }

@@ -1,4 +1,4 @@
-import { SingleSelectBoxController } from "@select-box/core";
+import { MultiSelectBoxController, SingleSelectBoxController } from "@select-box/core";
 import type { SelectOption } from "@select-box/core";
 import { describe, expect, test } from "vitest";
 
@@ -132,5 +132,123 @@ describe("HoistSelectedAddon", () => {
         const slice = controller.getState().addons["hoist-selected"];
 
         expect(slice?.pinnedKeys).toEqual([]);
+    });
+});
+
+describe("HoistSelectedAddon in multi mode", () => {
+    test("pins every selected option, not just the first", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon", "apple"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        const groups = controller.getState().filteredGroups;
+
+        expect(groups[0]?.key).toBe("__selected__");
+        expect(groups[0]?.options.map((option) => option.label)).toEqual([
+            "Lemon",
+            "Apple",
+        ]);
+    });
+
+    test("pins in selection order, not in option order", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            addons: [new HoistSelectedAddon()],
+        });
+
+        controller.commitValue(["lime", "apple"]);
+
+        expect(
+            controller.getState().filteredGroups[0]?.options.map((o) => o.value),
+        ).toEqual(["lime", "apple"]);
+    });
+
+    test("leaves no pinned option behind in its original group", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon", "apple"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        const remaining = controller
+            .getState()
+            .filteredGroups.slice(1)
+            .flatMap((group) => group.options.map((option) => option.value));
+
+        expect(remaining).toEqual(["pear", "lime"]);
+    });
+
+    test("pins only the selections that survived the filter", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon", "apple"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        controller.setQuery("lem");
+
+        const groups = controller.getState().filteredGroups;
+        expect(groups[0]?.options.map((option) => option.value)).toEqual(["lemon"]);
+        expect(
+            groups.flatMap((group) => group.options.map((option) => option.value)),
+        ).not.toContain("apple");
+    });
+
+    test("stands down when the filter hides every selection", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon", "lime"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        controller.setQuery("pea");
+
+        expect(controller.getState().filteredGroups.map((group) => group.key)).toEqual([
+            "Pomes",
+        ]);
+    });
+
+    test("publishes every pinned key in the snapshot slice", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon", "apple"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        expect(controller.getState().addons["hoist-selected"].pinnedKeys).toEqual([
+            "lemon",
+            "apple",
+        ]);
+    });
+
+    test("re-pins as the selection grows", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["apple"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        controller.commitOption({ value: "lime", label: "Lime", group: "Citrus" });
+
+        expect(
+            controller.getState().filteredGroups[0]?.options.map((o) => o.value),
+        ).toEqual(["apple", "lime"]);
+    });
+
+    test("drops the pinned group once the last selection is cleared", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["apple", "lime"],
+            addons: [new HoistSelectedAddon()],
+        });
+
+        controller.clear();
+
+        expect(controller.getState().filteredGroups.map((group) => group.key)).toEqual([
+            "Pomes",
+            "Citrus",
+        ]);
     });
 });
