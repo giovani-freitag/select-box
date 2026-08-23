@@ -64,7 +64,7 @@ export class SelectBoxController<
         this.defaultFilter = new SubstringFilterStrategy<TExtra>();
         this.explicitFilter = config.filter ?? null;
         this.filterStrategy = this.explicitFilter ?? this.defaultFilter;
-        this.currentValue = this.driver.coerce(config.initialValue);
+        this.currentValue = this.resolveValueFromInput(config.initialValue);
         for (const addon of config.addons ?? []) {
             this.registeredAddons.push(addon);
             addon.attach?.();
@@ -172,7 +172,7 @@ export class SelectBoxController<
             return;
         }
         const current = this.currentActiveIndex === SelectBoxController.NO_ACTIVE_INDEX ? -1 : this.currentActiveIndex;
-        const next = (current + delta + flat.length) % flat.length;
+        const next = (((current + delta) % flat.length) + flat.length) % flat.length;
         this.currentActiveIndex = next;
         this.publish();
     }

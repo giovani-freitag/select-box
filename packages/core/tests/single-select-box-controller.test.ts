@@ -19,6 +19,49 @@ const fruits: ReadonlyArray<Fruit> = [
 ];
 
 describe("SingleSelectBoxController", () => {
+    test("drops an initialValue that names no known option", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "durian",
+        });
+
+        expect(controller.getState().value).toBeNull();
+        expect(controller.getState().selectedOption).toBeNull();
+    });
+
+    test("drops an initialValue that names a disabled option", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "plum",
+        });
+
+        expect(controller.getState().value).toBeNull();
+    });
+
+    test("keeps an initialValue that names a selectable option", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+        });
+
+        expect(controller.getState().value).toBe("pear");
+    });
+
+    test("lands inside the list for any navigation delta", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+        const selectable = 4;
+        const landings: number[] = [];
+
+        controller.open();
+        for (const delta of [-7, -5, -4, -3, -1, 1, 3, 4, 5, 7]) {
+            controller.moveActive(delta);
+            landings.push(controller.getState().activeIndex);
+        }
+
+        expect(landings.every((index) => index >= 0 && index < selectable)).toBe(true);
+    });
+
+
     test("normalises flat options into named groups plus a trailing ungrouped bucket", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,

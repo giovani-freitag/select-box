@@ -15,6 +15,23 @@ describe("SubstringFilterStrategy.match", () => {
         ]);
     });
 
+    test("covers the accent when the label arrives already decomposed", () => {
+        const decomposed = "Cafe\u0301";
+
+        const ranges = strategy.match(decomposed, "cafe");
+
+        expect(ranges).toEqual([{ start: 0, end: 5 }]);
+        expect(decomposed.slice(0, 5)).toBe(decomposed);
+    });
+
+    test("matches the same span whether the label is composed or decomposed", () => {
+        const composed = strategy.match("Café", "cafe");
+        const decomposed = strategy.match("Cafe\u0301", "cafe");
+
+        expect(composed.map((range) => range.end - range.start)).toEqual([4]);
+        expect(decomposed.map((range) => range.end - range.start)).toEqual([5]);
+    });
+
     test("is case-insensitive", () => {
         const ranges = strategy.match("APPLE", "app");
 

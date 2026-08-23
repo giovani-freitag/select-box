@@ -2,6 +2,8 @@ import type { SearchMatchRange, SelectOption } from "../types.js";
 import { AbstractFilterStrategy } from "./abstract-filter-strategy.js";
 
 const COMBINING_MARKS_PATTERN = /[̀-ͯ]/g;
+// Same class without `g`: a global regex carries `lastIndex` across `test` calls.
+const SINGLE_COMBINING_MARK = /[̀-ͯ]/;
 
 /**
  * Default filter: case-insensitive AND diacritic-insensitive substring
@@ -36,11 +38,29 @@ export class SubstringFilterStrategy<TExtra extends object = object>
             const found = normalized.indexOf(needle, cursor);
             if (found === -1) break;
             const start = indexMap[found]!;
-            const end = indexMap[found + needle.length - 1]! + 1;
+            const end = SubstringFilterStrategy.extendPastCombiningMarks(
+                label,
+                indexMap[found + needle.length - 1]! + 1,
+            );
             ranges.push({ start, end });
             cursor = found + needle.length;
         }
         return ranges;
+    }
+
+    /**
+     * Advances an end offset past the combining marks that follow it.
+     *
+     * Normalization strips those marks, so they never earn an `indexMap` entry.
+     * Leaving them outside the range highlights a base letter and renders its
+     * own accent unmarked beside it.
+     */
+    private static extendPastCombiningMarks(label: string, end: number): number {
+        let extended = end;
+        while (extended < label.length && SINGLE_COMBINING_MARK.test(label[extended]!)) {
+            extended += 1;
+        }
+        return extended;
     }
 
     private static normalize(text: string): string {
