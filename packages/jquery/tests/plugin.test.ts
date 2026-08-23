@@ -1,8 +1,9 @@
 import jQuery from "jquery";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
     EmptySelectionError,
+    LegacyMethodCallError,
     packageName,
     SelectBoxView,
 } from "../src/index.js";
@@ -98,6 +99,54 @@ describe("the instance the plugin hands back", () => {
             .toBe(true);
     });
 
+    test("toggle() opens a closed box and closes an open one", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+        const popover = () =>
+            document.querySelector<HTMLDivElement>("#fruit [data-select-popover]")!.hidden;
+
+        box.toggle();
+        expect(popover()).toBe(false);
+
+        box.toggle();
+        expect(popover()).toBe(true);
+    });
+
+    test("clear() drops the selection and repaints the trigger", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+        });
+
+        box.clear();
+
+        expect(box.controller.getState().value).toBeNull();
+        expect(
+            document.querySelector<HTMLInputElement>("#fruit [data-select-input]")?.value,
+        ).toBe("");
+    });
+
+    test("clear() empties every chip in multi mode", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            mode: "multi",
+            options: fruits,
+            initialValue: ["apple", "pear"],
+        });
+
+        box.clear();
+
+        expect(document.querySelectorAll("#fruit [data-select-chip]")).toHaveLength(0);
+    });
+
+    test("takes over the host, discarding whatever it was rendering", () => {
+        document.body.innerHTML = `<div id="fruit">Loading fruits…</div>`;
+
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        const host = document.querySelector<HTMLElement>("#fruit")!;
+        expect(host.textContent).not.toContain("Loading fruits…");
+        expect(host.children).toHaveLength(1);
+    });
+
     test("replaces the option list at runtime", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
         box.open();
@@ -156,8 +205,13 @@ describe("reaching the instance through the element", () => {
         expect(box.controller.getState().open).toBe(true);
     });
 
-    test("an element with no select box advertises none", () => {
-        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBeUndefined();
+    test("marks only the elements it mounted, never their neighbours", () => {
+        document.body.innerHTML = `<div id="fruit"></div><div id="veg"></div>`;
+
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBeDefined();
+        expect(document.querySelector<HTMLElement>("#veg")!.selectBox).toBeUndefined();
     });
 
     test("destroying through the instance clears the element property", () => {
@@ -197,5 +251,178 @@ describe("reaching the instance through the element", () => {
         jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
 
         expect(detach).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("form participation", () => {
+    function formWith(name: string | undefined): HTMLFormElement {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        void name;
+        return document.querySelector<HTMLFormElement>("#host-form")!;
+    }
+
+    test("resetting the form clears the selection, not just the native controls", () => {
+        const form = formWith("fruit");
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+        box.controller.commitValue("pear");
+
+        form.reset();
+
+        expect(box.controller.getState().value).toBeNull();
+    });
+
+    test("the reset repaints, so a stale label cannot come back", () => {
+        const form = formWith("fruit");
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+        box.controller.commitValue("pear");
+
+        form.reset();
+        box.open();
+        box.close();
+
+        expect(
+            document.querySelector<HTMLInputElement>("#fruit [data-select-input]")?.value,
+        ).toBe("");
+    });
+
+    test("resetting a different form leaves this one alone", () => {
+        document.body.innerHTML = `
+            <form id="host-form"><div id="fruit"></div></form>
+            <form id="other"><input name="unrelated" /></form>
+        `;
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+        box.controller.commitValue("pear");
+
+        document.querySelector<HTMLFormElement>("#other")!.reset();
+
+        expect(box.controller.getState().value).toBe("pear");
+    });
+
+    test("a nameless box stays out of the form and ignores its resets", () => {
+        const form = formWith(undefined);
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+        box.controller.commitValue("pear");
+
+        form.reset();
+
+        expect(document.querySelector("[data-select-form-mirror]")).toBeNull();
+        expect(box.controller.getState().value).toBe("pear");
+    });
+
+    test("a destroyed box stops answering form resets", () => {
+        const form = formWith("fruit");
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+        box.controller.commitValue("pear");
+        const controller = box.controller;
+        box.destroy();
+
+        form.reset();
+
+        expect(controller.getState().value).toBe("pear");
+    });
+
+    // A native <select> would come back to its preselected option; every wrapper
+    // here empties instead, because core's reset() empties. Pinned so the
+    // divergence is a decision on record rather than an accident.
+    test("empties the selection even when an initial value was given", () => {
+        const form = formWith("fruit");
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+        box.controller.commitValue("pear");
+
+        form.reset();
+
+        expect(box.controller.getState().value).toBeNull();
+    });
+});
+
+describe("document listeners", () => {
+    /**
+     * The view reaches the document for two things a local listener cannot see:
+     * a click outside the popover, and a form reset it may not be attached for
+     * yet. Both have to come off on teardown, and neither leak is visible
+     * through behaviour — a destroyed view's listeners are inert because its
+     * markup is gone — so the balance is what gets asserted.
+     */
+    function recordDocumentListeners(): {
+        readonly added: string[];
+        readonly removed: string[];
+    } {
+        const added: string[] = [];
+        const removed: string[] = [];
+        const originalAdd = document.addEventListener.bind(document);
+        const originalRemove = document.removeEventListener.bind(document);
+        vi.spyOn(document, "addEventListener").mockImplementation(
+            ((type: string, ...rest: unknown[]) => {
+                added.push(type);
+                return (originalAdd as (...args: unknown[]) => void)(type, ...rest);
+            }) as typeof document.addEventListener,
+        );
+        vi.spyOn(document, "removeEventListener").mockImplementation(
+            ((type: string, ...rest: unknown[]) => {
+                removed.push(type);
+                return (originalRemove as (...args: unknown[]) => void)(type, ...rest);
+            }) as typeof document.removeEventListener,
+        );
+        return { added, removed };
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test("a mount and destroy cycle leaves nothing on the document", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        const log = recordDocumentListeners();
+
+        jQuery("#fruit")
+            .selectBox<FruitExtra>({ options: fruits, name: "fruit" })
+            .destroy();
+
+        expect(log.added.length).toBeGreaterThan(0);
+        expect([...log.removed].sort()).toEqual([...log.added].sort());
+    });
+
+    test("re-initialising does not stack listeners", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        const log = recordDocumentListeners();
+
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits, name: "fruit" });
+
+        const live = log.added.length - log.removed.length;
+        expect(live).toBe(log.added.length / 2);
+    });
+
+    test("a nameless box never reaches the document for a reset", () => {
+        const log = recordDocumentListeners();
+
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(log.added).not.toContain("reset");
+    });
+});
+
+describe("legacy method-string calls", () => {
+    test("refuse loudly instead of mounting an empty box over the live one", () => {
+        const box = jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+        box.controller.commitValue("pear");
+
+        expect(() =>
+            (jQuery("#fruit").selectBox as unknown as (method: string) => void)("open"),
+        ).toThrow(LegacyMethodCallError);
+        expect(box.controller.getState().value).toBe("pear");
+        expect(document.querySelector<HTMLElement>("#fruit")!.selectBox).toBe(box);
+    });
+
+    test("name the method that moved, so the message is actionable", () => {
+        jQuery("#fruit").selectBox<FruitExtra>({ options: fruits });
+
+        expect(() =>
+            (jQuery("#fruit").selectBox as unknown as (method: string) => void)("destroy"),
+        ).toThrow(/\.destroy\(\)/);
     });
 });

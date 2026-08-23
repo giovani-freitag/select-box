@@ -45,10 +45,10 @@ describeParitySuite({
                     box.controller.commitValue(value);
                 },
                 reportedChanges: () => reported,
-                // Reached through the element rather than the captured handle,
-                // so the parity suite exercises the door a consumer has.
+                // Root comes through the element door and the controller through
+                // the returned instance, so the suite exercises both.
                 publicRoot: () => mountPoint.selectBox?.root ?? null,
-                publicController: () => mountPoint.selectBox?.controller ?? null,
+                publicController: () => box.controller,
                 settle: () => Promise.resolve(),
                 teardown: () => {
                     box.destroy();

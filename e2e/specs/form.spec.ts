@@ -70,6 +70,13 @@ test("resetting the form clears the selection", async ({ selectBox, page }) => {
 
     expect(await submitted(page)).toEqual([["fruit", ""]]);
     await expect(selectBox.input).toHaveValue("");
+    // The browser blanks the trigger input and the mirror on its own, so the two
+    // assertions above pass even if the widget never heard the reset. Reopening
+    // forces a repaint from the snapshot: a selection the reset missed comes back.
+    await selectBox.openPopover();
+    await page.keyboard.press("Escape");
+    await expect(selectBox.input).toHaveValue("");
+    expect(await submitted(page)).toEqual([["fruit", ""]]);
 });
 
 test("blocks submission while required and empty", async ({ selectBox, page }) => {
