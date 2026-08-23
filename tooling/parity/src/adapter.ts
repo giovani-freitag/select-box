@@ -1,0 +1,139 @@
+/**
+ * Contract every wrapper implements so the shared parity suite can drive it
+ * without knowing which framework rendered the DOM.
+ */
+
+export interface ParityOption {
+    readonly value: string;
+    readonly label: string;
+    readonly group?: string;
+}
+
+export type ParitySurface = "popover" | "inline";
+
+export interface ParityMountConfig {
+    readonly options: ReadonlyArray<ParityOption>;
+    readonly placeholder: string;
+    readonly multi: boolean;
+    readonly surface: ParitySurface;
+}
+
+/**
+ * The slice of the core controller the suite exercises.
+ *
+ * Structural on purpose: the suite proves the wrapper handed over the *live*
+ * controller without this package depending on the core's types.
+ */
+export interface ParityController {
+    open(): void;
+    getState(): { readonly open: boolean };
+}
+
+/**
+ * A mounted wrapper instance the suite interacts with.
+ *
+ * Every method that changes state is async so frameworks with deferred
+ * rendering can flush before the suite asserts.
+ */
+export interface ParityHandle {
+    /**
+     * Node the suite searches from. Deliberately not the select box's root: it
+     * is whatever contains the rendered tree — a shadow root, a host element, a
+     * mount point — so `querySelector` reaches every part including the root.
+     */
+    queryScope(): ParentNode;
+    /** Root element as the wrapper's own public API hands it over. */
+    publicRoot(): Element | null;
+    /** Core controller as the wrapper's own public API hands it over. */
+    publicController(): ParityController | null;
+    /** Resolves once the wrapper has flushed whatever is pending. */
+    settle(): Promise<void>;
+    focusInput(): Promise<void>;
+    typeIntoInput(text: string): Promise<void>;
+    clickElement(element: Element): Promise<void>;
+    pressKey(key: string): Promise<void>;
+    clickOutside(): Promise<void>;
+    unmount(): Promise<void>;
+}
+
+export interface ParityAdapter {
+    /** Framework label used in the suite's describe block. */
+    readonly name: string;
+    mount(config: ParityMountConfig): Promise<ParityHandle>;
+}
+
+export const PARITY_FRUITS: ReadonlyArray<ParityOption> = [
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "grape", label: "Grape" },
+];
+
+/** Same fruits carrying group keys, so wrappers must render group headers. */
+export const PARITY_GROUPED_FRUITS: ReadonlyArray<ParityOption> = [
+    { value: "apple", label: "Apple", group: "Pomes" },
+    { value: "pear", label: "Pear", group: "Pomes" },
+    { value: "grape", label: "Grape", group: "Berries" },
+];
+
+export const PARITY_PLACEHOLDER = "Pick a fruit";
+
+interface DomHandleConfig {
+    readonly queryScope: () => ParentNode;
+    readonly publicRoot: () => Element | null;
+    readonly publicController: () => ParityController | null;
+    readonly settle: () => Promise<void>;
+    readonly teardown: () => void;
+}
+
+/**
+ * Builds a handle that drives the component through native DOM events.
+ *
+ * Wrappers whose test tooling requires its own event helpers (React) supply a
+ * handle of their own instead; everything else shares this one so a behavioural
+ * difference between wrappers cannot come from the way the suite typed a key.
+ */
+export function createDomHandle(config: DomHandleConfig): ParityHandle {
+    function input(): HTMLInputElement {
+        return config.queryScope().querySelector<HTMLInputElement>("[data-select-input]")!;
+    }
+
+    return {
+        queryScope: config.queryScope,
+        publicRoot: config.publicRoot,
+        publicController: config.publicController,
+        settle: config.settle,
+
+        async focusInput(): Promise<void> {
+            input().focus();
+            await config.settle();
+        },
+
+        async typeIntoInput(text: string): Promise<void> {
+            const element = input();
+            element.value = text;
+            element.dispatchEvent(new Event("input", { bubbles: true }));
+            await config.settle();
+        },
+
+        async clickElement(element: Element): Promise<void> {
+            element.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+            element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+            await config.settle();
+        },
+
+        async pressKey(key: string): Promise<void> {
+            input().dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+            await config.settle();
+        },
+
+        async clickOutside(): Promise<void> {
+            document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+            await config.settle();
+        },
+
+        async unmount(): Promise<void> {
+            config.teardown();
+            await config.settle();
+        },
+    };
+}
