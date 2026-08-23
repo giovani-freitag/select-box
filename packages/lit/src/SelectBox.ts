@@ -7,6 +7,7 @@ import {
     isMultiSelection,
     type OptionFilterStrategy,
     type SelectBoxAddon,
+    type SelectBoxController as CoreSelectBoxController,
     type SelectBoxSnapshot,
     type SelectionValue,
     type SelectOption,
@@ -61,7 +62,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private readonly internals = this.attachInternals();
-    private controller: SelectBoxController<TExtra, SelectionValue> | null = null;
+    private reactiveController: SelectBoxController<TExtra, SelectionValue> | null = null;
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
@@ -74,18 +75,38 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private listVirtualizerMounted = false;
     private lastScrolledActiveIndex = -1;
 
+    /**
+     * Root element of the rendered select box.
+     *
+     * Same accessor name every wrapper exposes, so consumer code that reaches
+     * for the root reads the same across frameworks.
+     */
+    get root(): HTMLElement {
+        return this;
+    }
+
+    /**
+     * Core controller driving this instance, or null before it is connected.
+     *
+     * Escape hatch for behaviour the props and attributes do not cover; the
+     * same accessor name every wrapper exposes.
+     */
+    get controller(): CoreSelectBoxController<TExtra, SelectionValue> | null {
+        return this.reactiveController?.core ?? null;
+    }
+
     get value(): SelectionValue {
-        return this.controller?.state.value ?? null;
+        return this.reactiveController?.state.value ?? null;
     }
 
     /** First selected option (or `null`). Same as the snapshot field. */
     get selectedOption(): SelectOption<TExtra> | null {
-        return this.controller?.state.selectedOption ?? null;
+        return this.reactiveController?.state.selectedOption ?? null;
     }
 
     /** Every selected option. Length 0 or 1 in single mode. */
     get selectedOptions(): ReadonlyArray<SelectOption<TExtra>> {
-        return this.controller?.state.selectedOptions ?? [];
+        return this.reactiveController?.state.selectedOptions ?? [];
     }
 
     get form(): HTMLFormElement | null {
@@ -113,7 +134,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     formResetCallback(): void {
-        this.controller?.clear();
+        this.reactiveController?.clear();
     }
 
     formDisabledCallback(disabled: boolean): void {
@@ -126,6 +147,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     override connectedCallback(): void {
         super.connectedCallback();
+        this.dataset["selectRoot"] = "";
+        this.classList.add("select-box");
         // Popover-only side effects: outside-click closes the popover and the
         // virtualizer drives the list. Inline surface needs neither.
         if (this.isInline) return;
@@ -154,18 +177,18 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             changed.has("options") ||
             changed.has("addons") ||
             changed.has("ungroupedLabel");
-        if (!this.controller || rebuildOnlyChanges) {
+        if (!this.reactiveController || rebuildOnlyChanges) {
             this.rebuildController();
-        } else if (changed.has("multi") && this.controller) {
+        } else if (changed.has("multi") && this.reactiveController) {
             // Mode toggle preserves the current selection via driver coerce —
             // no need to throw away the controller.
-            this.controller.core.setMode(this.multi ? "multi" : "single");
+            this.reactiveController.core.setMode(this.multi ? "multi" : "single");
         } else if (changed.has("filter") && this.filter !== undefined) {
-            this.controller.setFilter(this.filter);
+            this.reactiveController.setFilter(this.filter);
         }
 
-        if (this.controller !== null && this.virtualizer !== null) {
-            const filteredGroups = this.controller.state.filteredGroups;
+        if (this.reactiveController !== null && this.virtualizer !== null) {
+            const filteredGroups = this.reactiveController.state.filteredGroups;
             if (filteredGroups !== this.lastRowModelSource) {
                 this.rowModel = new SelectBoxRowModel<TExtra>({ groups: filteredGroups });
                 this.lastRowModelSource = filteredGroups;
@@ -175,8 +198,12 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     protected override updated(): void {
-        if (!this.controller) return;
-        const snapshot = this.controller.state;
+        if (!this.reactiveController) return;
+        const snapshot = this.reactiveController.state;
+        // Root-level markers live on the host: there is no wrapper div, so the
+        // element itself is what a stylesheet and the contract address.
+        this.dataset["selectMode"] = snapshot.mode;
+        this.classList.toggle("select-box-multi", snapshot.mode === "multi");
         this.syncFormValue(snapshot);
         this.syncValidity();
         const currentKey = SelectBoxSnapshotView.valueKey(snapshot.value);
@@ -199,15 +226,15 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private rebuildController(): void {
-        this.controller = new SelectBoxController<TExtra, SelectionValue>(this, {
+        this.reactiveController = new SelectBoxController<TExtra, SelectionValue>(this, {
             mode: this.multi ? "multi" : "single",
             ...(this.options !== undefined ? { options: this.options } : {}),
             ...(this.addons !== undefined ? { addons: this.addons } : {}),
             ...(this.filter !== undefined ? { filter: this.filter } : {}),
             ungroupedLabel: this.ungroupedLabel,
         });
-        this.keyDispatcher = new SelectBoxKeyDispatcher(this.controller.core);
-        this.previousValueKey = SelectBoxSnapshotView.valueKey(this.controller.state.value);
+        this.keyDispatcher = new SelectBoxKeyDispatcher(this.reactiveController.core);
+        this.previousValueKey = SelectBoxSnapshotView.valueKey(this.reactiveController.state.value);
     }
 
     private scrollActiveOptionIntoView(activeIndex: number): void {
@@ -245,7 +272,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.internals.setValidity({});
             return;
         }
-        const snapshot = this.controller?.state;
+        const snapshot = this.reactiveController?.state;
         const hasSelection = snapshot ? snapshot.selectedOptions.length > 0 : false;
         if (!hasSelection) {
             this.internals.setValidity({ valueMissing: true }, "Please pick an option.");
@@ -255,32 +282,32 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private readonly handleOutsideMouseDown = (event: MouseEvent): void => {
-        if (!this.controller?.state.open) return;
+        if (!this.reactiveController?.state.open) return;
         if (!(event.target instanceof Node)) return;
         if (this.contains(event.target)) return;
-        this.controller.close();
+        this.reactiveController.close();
     };
 
     private readonly handleInputFocus = (): void => {
         if (this.disabled || this.readOnly) return;
-        if (!this.controller?.state.open) this.controller?.open();
+        if (!this.reactiveController?.state.open) this.reactiveController?.open();
     };
 
     private readonly handleInputClick = (): void => {
         if (this.disabled || this.readOnly) return;
-        if (!this.controller?.state.open) this.controller?.open();
+        if (!this.reactiveController?.state.open) this.reactiveController?.open();
     };
 
     private readonly handleInput = (event: Event): void => {
         if (this.disabled || this.readOnly) return;
-        if (!this.controller?.state.open) this.controller?.open();
-        this.controller?.setQuery((event.target as HTMLInputElement).value);
+        if (!this.reactiveController?.state.open) this.reactiveController?.open();
+        this.reactiveController?.setQuery((event.target as HTMLInputElement).value);
     };
 
     private readonly handleControlMouseDown = (event: MouseEvent): void => {
         if (this.disabled || this.readOnly) return;
         if (event.target !== this.inputRef.value) event.preventDefault();
-        if (!this.controller?.state.open) this.controller?.open();
+        if (!this.reactiveController?.state.open) this.reactiveController?.open();
         this.inputRef.value?.focus({ preventScroll: true });
     };
 
@@ -290,10 +317,10 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     private readonly handleCaretClick = (): void => {
         if (this.disabled || this.readOnly) return;
-        if (this.controller?.state.open) {
-            this.controller.close();
+        if (this.reactiveController?.state.open) {
+            this.reactiveController.close();
         } else {
-            this.controller?.open();
+            this.reactiveController?.open();
             this.inputRef.value?.focus({ preventScroll: true });
         }
     };
@@ -310,13 +337,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         event: MouseEvent,
     ): void => {
         event.stopPropagation();
-        this.controller?.commitOption(option);
+        this.reactiveController?.commitOption(option);
         this.inputRef.value?.focus({ preventScroll: true });
     };
 
     private readonly handleClearAll = (event: MouseEvent): void => {
         event.stopPropagation();
-        this.controller?.clear();
+        this.reactiveController?.clear();
         this.inputRef.value?.focus({ preventScroll: true });
     };
 
@@ -353,23 +380,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     override render(): TemplateResult {
-        const state = this.controller?.state;
+        const state = this.reactiveController?.state;
         if (!state) return html``;
         if (this.isInline) return this.renderInline(state);
         const isMulti = state.mode === "multi";
-        const rootClasses = ["select-box", isMulti ? "select-box-multi" : null]
-            .filter((value): value is string => value !== null)
-            .join(" ");
         return html`
-            <div
-                class=${rootClasses}
-                part="root"
-                data-select-root
-                data-select-mode=${state.mode}
-            >
-                ${isMulti ? this.renderMultiTrigger(state) : this.renderSingleTrigger(state)}
-                ${state.open ? this.renderPopover(state) : nothing}
-            </div>
+            ${isMulti ? this.renderMultiTrigger(state) : this.renderSingleTrigger(state)}
+            ${state.open ? this.renderPopover(state) : nothing}
         `;
     }
 
@@ -378,26 +395,16 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     ): TemplateResult {
         const isMulti = state.mode === "multi";
         const view = new SelectBoxSnapshotView(state);
-        const rootClasses = [
-            "select-box",
-            "select-box-inline",
-            isMulti ? "select-box-multi" : null,
-        ]
-            .filter((value): value is string => value !== null)
-            .join(" ");
         return html`
             <div
-                class=${rootClasses}
-                part="root"
+                class="select-box-inline"
                 role="listbox"
                 aria-multiselectable=${isMulti ? "true" : nothing}
-                data-select-root
-                data-select-mode=${state.mode}
                 data-select-surface="inline"
             >
                 ${state.filteredGroups.map((group) => html`
                     ${group.label
-                        ? html`<div class="select-box-group-label" part="group-label" data-select-group-label>${group.label}</div>`
+                        ? html`<div class="select-box-group-label" data-select-group-label>${group.label}</div>`
                         : nothing}
                     <div class="select-box-tags" data-select-tags>
                         ${group.options.map((option) => {
@@ -433,7 +440,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     private commitInlineChip(option: SelectOption<TExtra>): void {
         if (option.disabled) return;
-        this.controller?.commitOption(option);
+        this.reactiveController?.commitOption(option);
     }
 
     private renderSingleTrigger(
@@ -445,12 +452,11 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             ? state.selectedOption.label
             : (this.placeholder || "Select…");
         return html`
-            <div class="select-box-trigger" part="trigger" data-select-trigger>
+            <div class="select-box-trigger" data-select-trigger>
                 <input
                     ${ref(this.inputRef)}
                     type="text"
                     class="select-box-input"
-                    part="input"
                     role="combobox"
                     aria-haspopup="listbox"
                     aria-autocomplete="list"
@@ -468,7 +474,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 <button
                     type="button"
                     class="select-box-caret"
-                    part="caret"
+                    data-select-caret
                     tabindex="-1"
                     aria-hidden="true"
                     @mousedown=${this.handleCaretMouseDown}
@@ -486,7 +492,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         return html`
             <div
                 class="select-box-trigger"
-                part="trigger"
                 role="combobox"
                 aria-haspopup="listbox"
                 aria-expanded=${state.open}
@@ -502,6 +507,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                                     type="button"
                                     class="select-box-chip-remove"
                                     aria-label=${`Remove ${option.label}`}
+                                    data-select-chip-remove
                                     @mousedown=${(event: Event) => event.stopPropagation()}
                                     @click=${(event: MouseEvent) => this.handleChipRemove(option, event)}
                                 >×</button>
@@ -512,7 +518,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                         ${ref(this.inputRef)}
                         type="text"
                         class="select-box-input"
-                        part="input"
                         role="searchbox"
                         aria-autocomplete="list"
                         ?disabled=${this.disabled}
@@ -547,7 +552,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         return html`
             <div
                 class="select-box-popover"
-                part="popover"
                 role="listbox"
                 aria-multiselectable=${state.mode === "multi" ? "true" : nothing}
                 data-select-popover
@@ -555,12 +559,11 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 <div
                     ${ref(this.listRef)}
                     class="select-box-list"
-                    part="list"
                     data-select-list
                     style="max-height: ${LIST_VIEWPORT_HEIGHT}px; overflow-y: auto;"
                 >
                     ${state.isEmpty
-                        ? html`<p class="select-box-empty" part="empty" data-select-empty>No matches</p>`
+                        ? html`<p class="select-box-empty" data-select-empty>No matches</p>`
                         : this.renderVirtualRows(state)}
                 </div>
             </div>
@@ -601,7 +604,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     data-index=${rowIndex}
                     ${ref(this.handleRowRef)}
                     class="select-box-group-label"
-                    part="group-label"
                     data-select-group-label
                 >
                     ${row.group.label}
@@ -619,6 +621,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 aria-selected=${isSelected}
                 class=${this.optionClasses(isActive, isSelected, row.option.disabled, isMulti)}
                 ?disabled=${row.option.disabled}
+                tabindex="-1"
                 data-select-option
                 data-select-active=${isActive ? "" : nothing}
                 data-select-selected=${isSelected ? "" : nothing}
@@ -634,12 +637,12 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private commitFromList(option: SelectOption<TExtra>, isMulti: boolean): void {
-        this.controller?.commitOption(option);
+        this.reactiveController?.commitOption(option);
         if (isMulti) this.inputRef.value?.focus({ preventScroll: true });
     }
 
     private renderLabel(label: string): TemplateResult[] {
-        const state = this.controller?.state;
+        const state = this.reactiveController?.state;
         const ranges = state ? state.highlightRanges(label) : [];
         return TextHighlighter.split(label, ranges).map((chunk) =>
             chunk.matched

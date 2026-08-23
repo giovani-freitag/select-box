@@ -50,7 +50,7 @@ describe("<select-box multi /> (Lit)", () => {
     test("renders with the multi marker on the root", async () => {
         const element = await mount({ multi: true });
 
-        expect(element.querySelector("[data-select-mode='multi']")).not.toBeNull();
+        expect(element.dataset["selectMode"]).toBe("multi");
     });
 
     test("commitOption toggles chips and keeps the popover open", async () => {
@@ -103,7 +103,7 @@ describe("<select-box multi /> (Lit)", () => {
         element.multi = false;
         await element.updateComplete;
 
-        expect(element.querySelector("[data-select-mode='single']")).not.toBeNull();
+        expect(element.dataset["selectMode"]).toBe("single");
         expect(element.value).toBe(pear.value);
         expect(element.querySelectorAll("[data-select-chip]")).toHaveLength(0);
     });
@@ -124,7 +124,7 @@ describe("<select-box multi /> (Lit)", () => {
         element.multi = true;
         await element.updateComplete;
 
-        expect(element.querySelector("[data-select-mode='multi']")).not.toBeNull();
+        expect(element.dataset["selectMode"]).toBe("multi");
         expect(element.value).toEqual([apple.value]);
         const chips = [...element.querySelectorAll("[data-select-chip]")].map((chip) =>
             chip.textContent?.replace("×", "").trim(),
