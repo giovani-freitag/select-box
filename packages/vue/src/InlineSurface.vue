@@ -67,7 +67,7 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
                     role="option"
                     :aria-selected="view.isSelected(option.value)"
                     :aria-pressed="view.isSelected(option.value)"
-                    :disabled="option.disabled"
+                    :disabled="option.disabled === true || state.disabled || state.readOnly"
                     :class="inlineChipClass(view.isSelected(option.value), option.disabled)"
                     data-select-chip
                     data-select-option

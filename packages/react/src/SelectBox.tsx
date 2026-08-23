@@ -10,6 +10,7 @@ import {
 import { useEffect, useImperativeHandle, useRef, type JSX, type Ref } from "react";
 
 import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
+import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
@@ -42,6 +43,10 @@ interface SelectBoxBaseProps<TExtra extends object> {
     readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
     readonly filter?: OptionFilterStrategy<TExtra>;
     readonly surface?: SelectBoxSurface;
+    /** Refuses every interaction and stays out of the form data, like a disabled input. */
+    readonly disabled?: boolean;
+    /** Refuses changes while staying focusable and submitted, like a readonly input. */
+    readonly readOnly?: boolean;
     readonly className?: string;
     /** Receives the imperative handle: the root element and the core controller. */
     readonly ref?: Ref<SelectBoxHandle<TExtra>> | undefined;
@@ -105,6 +110,8 @@ export function SelectBox<TExtra extends object = object>(
         ...(props.filter !== undefined ? { filter: props.filter } : {}),
         ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
         initialValue,
+        disabled: props.disabled === true,
+        readOnly: props.readOnly === true,
     };
 
     const { state, controller } = useSelectBox<TExtra>(
@@ -121,6 +128,7 @@ export function SelectBox<TExtra extends object = object>(
 
     useFilterReactivity(controller, props.filter);
     useOptionsReactivity(controller, props.options);
+    useInteractivityReactivity(controller, props.disabled, props.readOnly);
     useNotifyChange(state, props.onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);

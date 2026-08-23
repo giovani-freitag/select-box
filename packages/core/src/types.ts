@@ -116,6 +116,10 @@ export interface SelectBoxSnapshot<
     readonly activeIndex: number;
     readonly activeOption: SelectOption<TExtra> | null;
     readonly isEmpty: boolean;
+    /** Refuses every interaction, like a disabled form control. */
+    readonly disabled: boolean;
+    /** Allows looking but not changing: no typing, no commit, no clear. */
+    readonly readOnly: boolean;
     /** Highlight ranges the active strategy draws for `label` under the current query. */
     readonly highlightRanges: (label: string) => ReadonlyArray<SearchMatchRange>;
     readonly addons: Readonly<SelectBoxAddonSnapshots>;
@@ -190,6 +194,10 @@ export interface SelectBoxControllerCommonConfig<TExtra extends object = object>
     readonly ungroupedLabel?: string;
     /** Addons registered before the first snapshot. Equivalent to calling `.use()` in order. */
     readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
+    /** Refuses every interaction, like a disabled form control. Defaults to `false`. */
+    readonly disabled?: boolean;
+    /** Allows looking but not changing. Defaults to `false`. */
+    readonly readOnly?: boolean;
 }
 
 /** Config accepted by the unified `SelectBoxController`. The `mode` flag picks the default driver. */

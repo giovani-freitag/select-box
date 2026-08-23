@@ -388,6 +388,10 @@ export class SelectBoxView<TExtra extends object = object> {
             this.input!.value = inputValue;
         }
         const hasSelection = snapshot.selectedOptions.length > 0;
+        this.input!.disabled = snapshot.disabled;
+        this.input!.readOnly = snapshot.readOnly;
+        if (snapshot.readOnly) this.input!.setAttribute("aria-readonly", "true");
+        else this.input!.removeAttribute("aria-readonly");
         this.input!.placeholder = isMulti
             ? (hasSelection ? "" : this.placeholder)
             : (snapshot.open && snapshot.selectedOption
@@ -466,7 +470,10 @@ export class SelectBoxView<TExtra extends object = object> {
         button.dataset["selectChip"] = "";
         button.dataset["selectOption"] = "";
         if (isSelected) button.dataset["selectSelected"] = "";
-        if (option.disabled) button.disabled = true;
+        if (option.disabled === true || this.controller.getState().disabled
+            || this.controller.getState().readOnly) {
+            button.disabled = true;
+        }
         button.textContent = option.label;
         button.addEventListener("click", () => {
             if (option.disabled) return;

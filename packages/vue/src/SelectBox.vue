@@ -10,6 +10,7 @@ import {
 import { computed, ref, watch, type ShallowRef } from "vue";
 
 import { useFilterReactivity } from "./composables/use-filter-reactivity.js";
+import { useInteractivityReactivity } from "./composables/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./composables/use-options-reactivity.js";
 import { useNotifyChange } from "./composables/use-notify-change.js";
 import { useSelectBox } from "./composables/use-select-box.js";
@@ -34,12 +35,18 @@ export interface SelectBoxProps<TExtra extends object = object> {
     multi?: boolean;
     /** Surface style. Defaults to `"popover"`. */
     surface?: SelectBoxSurface;
+    /** Refuses every interaction and stays out of the form data, like a disabled input. */
+    disabled?: boolean;
+    /** Refuses changes while staying focusable and submitted, like a readonly input. */
+    readOnly?: boolean;
 }
 
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
     defaultValue: null,
     multi: false,
     surface: "popover",
+    disabled: false,
+    readOnly: false,
 });
 const emit = defineEmits<{
     /** Single-mode change. Fires only when `multi` is `false`. */
@@ -58,6 +65,8 @@ function commonConfig() {
         ...(props.addons !== undefined ? { addons: props.addons } : {}),
         ...(props.filter !== undefined ? { filter: props.filter } : {}),
         ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
+        disabled: props.disabled,
+        readOnly: props.readOnly,
     };
 }
 
@@ -92,6 +101,11 @@ watch(
 
 useFilterReactivity(controller, computed(() => props.filter));
 useOptionsReactivity(controller, computed(() => props.options));
+useInteractivityReactivity(
+    controller,
+    computed(() => props.disabled),
+    computed(() => props.readOnly),
+);
 useNotifyChange(state, {
     single: (value, option) => emit("change", value, option),
     multi: (values, options) => emit("change-multi", values, options),

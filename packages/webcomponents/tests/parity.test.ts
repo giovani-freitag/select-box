@@ -21,6 +21,8 @@ describeParitySuite({
         element.setAttribute("placeholder", config.placeholder);
         element.setAttribute("surface", config.surface);
         if (config.multi) element.setAttribute("multi", "");
+        if (config.disabled === true) element.setAttribute("disabled", "");
+        if (config.readOnly === true) element.setAttribute("readonly", "");
         element.options = config.options;
         document.body.append(element);
 

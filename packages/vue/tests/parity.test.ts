@@ -23,6 +23,8 @@ describeParitySuite({
                 placeholder: config.placeholder,
                 multi: config.multi,
                 surface: config.surface,
+                disabled: config.disabled === true,
+                readOnly: config.readOnly === true,
             },
             attachTo: mountPoint,
         });

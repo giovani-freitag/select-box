@@ -123,6 +123,12 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             return;
         }
         if (name === "disabled" || name === "required" || name === "readonly") {
+            // The controller owns the refusal; this element only mirrors its own
+            // attributes into it.
+            this.coreController?.setInteractivity({
+                disabled: this.disabled,
+                readOnly: this.readOnly,
+            });
             this.syncValidity();
             this.handleSnapshotChange();
         }
@@ -337,6 +343,8 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             ...(this.pendingFilter !== undefined ? { filter: this.pendingFilter } : {}),
             ungroupedLabel: this.getAttribute("ungrouped-label") ?? "",
             initialValue: this.pendingValue,
+            disabled: this.disabled,
+            readOnly: this.readOnly,
         });
     }
 
@@ -382,19 +390,16 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     private readonly handleInputChange = (event: Event): void => {
-        if (this.disabled || this.readOnly) return;
         const input = event.currentTarget as HTMLInputElement;
         if (!this.coreController?.getState().open) this.coreController?.open();
         this.coreController?.setQuery(input.value);
     };
 
     private readonly handleInputFocus = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (!this.coreController?.getState().open) this.coreController?.open();
     };
 
     private readonly handleInputClick = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (!this.coreController?.getState().open) this.coreController?.open();
     };
 
@@ -403,7 +408,6 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     };
 
     private readonly handleCaretClick = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (this.coreController?.getState().open) {
             this.coreController.close();
         } else {
@@ -414,7 +418,6 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
 
     private readonly handleTriggerMouseDown = (event: MouseEvent): void => {
         if (this.coreController?.getState().mode !== "multi") return;
-        if (this.disabled || this.readOnly) return;
         if (event.target === this.refs?.input) return;
         if (event.target instanceof Element && event.target.closest("[data-select-chip-remove], [data-select-clear]")) return;
         event.preventDefault();
@@ -428,7 +431,6 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     };
 
     private readonly handleClearClick = (event: Event): void => {
-        if (this.disabled || this.readOnly) return;
         event.stopPropagation();
         this.coreController?.clear();
         this.refs?.input.focus({ preventScroll: true });
@@ -544,6 +546,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.refs.input.setAttribute("aria-expanded", String(snapshot.open));
         this.refs.input.setAttribute("aria-readonly", String(this.readOnly));
         this.refs.input.disabled = this.disabled;
+        this.refs.input.readOnly = this.readOnly;
 
         this.paintChips(snapshot, isMulti);
         this.refs.caret.hidden = isMulti;

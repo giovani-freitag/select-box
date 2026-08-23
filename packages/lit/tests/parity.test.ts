@@ -18,6 +18,8 @@ describeParitySuite({
         element.options = config.options;
         element.surface = config.surface;
         if (config.multi) element.multi = true;
+        if (config.disabled === true) element.disabled = true;
+        if (config.readOnly === true) element.readOnly = true;
         document.body.append(element);
         await element.updateComplete;
 

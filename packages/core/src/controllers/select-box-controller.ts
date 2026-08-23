@@ -48,6 +48,8 @@ export class SelectBoxController<
     private readonly registeredAddons: SelectBoxAddon<TExtra>[] = [];
 
     private currentValue: TValue;
+    private currentDisabled: boolean;
+    private currentReadOnly: boolean;
     private currentQuery = "";
     private currentOpen = false;
     private currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
@@ -67,6 +69,8 @@ export class SelectBoxController<
         this.explicitFilter = config.filter ?? null;
         this.filterStrategy = this.explicitFilter ?? this.defaultFilter;
         this.currentValue = this.resolveValueFromInput(config.initialValue);
+        this.currentDisabled = config.disabled ?? false;
+        this.currentReadOnly = config.readOnly ?? false;
         for (const addon of config.addons ?? []) {
             this.registeredAddons.push(addon);
             addon.attach?.();
@@ -123,6 +127,36 @@ export class SelectBoxController<
         this.publish();
     }
 
+    /**
+     * Refuses or allows interaction, the way a form control's own flags do.
+     *
+     * `disabled` blocks everything; `readOnly` still lets a user open the list
+     * and look around, but refuses typing, committing and clearing. One gate here
+     * is what keeps the five wrappers from each growing their own guard.
+     *
+     * @param flags - Whichever flag changed; the other keeps its current value.
+     */
+    setInteractivity(flags: { readonly disabled?: boolean; readonly readOnly?: boolean }): void {
+        const nextDisabled = flags.disabled ?? this.currentDisabled;
+        const nextReadOnly = flags.readOnly ?? this.currentReadOnly;
+        if (nextDisabled === this.currentDisabled && nextReadOnly === this.currentReadOnly) return;
+        this.currentDisabled = nextDisabled;
+        this.currentReadOnly = nextReadOnly;
+        if (!this.canChange) this.currentOpen = false;
+        this.publish();
+    }
+
+    /**
+     * Whether the control accepts interaction.
+     *
+     * Both flags refuse it. They differ outside the controller: a read-only
+     * control is still focusable and still submits its value, a disabled one is
+     * neither — which is exactly how the native attributes behave.
+     */
+    private get canChange(): boolean {
+        return !this.currentDisabled && !this.currentReadOnly;
+    }
+
     getHighlightRanges(label: string): ReadonlyArray<SearchMatchRange> {
         if (this.currentQuery.trim() === "") return [];
         return this.filterStrategy.match(label, this.currentQuery);
@@ -162,6 +196,7 @@ export class SelectBoxController<
     }
 
     open(): void {
+        if (!this.canChange) return;
         if (this.currentOpen) return;
         this.currentOpen = true;
         this.currentActiveIndex = this.initialActiveIndexOnOpen();
@@ -182,6 +217,7 @@ export class SelectBoxController<
     }
 
     setQuery(query: string): void {
+        if (!this.canChange) return;
         if (query === this.currentQuery) return;
         this.currentQuery = query;
         this.currentActiveIndex = this.firstSelectableIndex(this.computeFilteredGroups());
@@ -189,6 +225,7 @@ export class SelectBoxController<
     }
 
     moveActive(delta: number): void {
+        if (!this.canChange) return;
         const flat = this.flattenSelectable(this.computeFilteredGroups());
         if (flat.length === 0) {
             this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
@@ -202,12 +239,14 @@ export class SelectBoxController<
     }
 
     commitActive(): void {
+        if (!this.canChange) return;
         const flat = this.flattenSelectable(this.computeFilteredGroups());
         const target = flat[this.currentActiveIndex];
         if (target) this.commitOption(target);
     }
 
     commitOption(option: SelectOption<TExtra>): void {
+        if (!this.canChange) return;
         if (option.disabled) return;
         const next = this.driver.commit(this.currentValue, option);
         if (Object.is(next, this.currentValue)) return;
@@ -226,6 +265,7 @@ export class SelectBoxController<
      * clear. The active driver coerces; unknown values are silently dropped.
      */
     commitValue(input: SelectionValueInput): void {
+        if (!this.canChange) return;
         const next = this.resolveValueFromInput(input);
         if (Object.is(next, this.currentValue)) return;
         this.currentValue = next;
@@ -238,6 +278,7 @@ export class SelectBoxController<
     }
 
     clear(): void {
+        if (!this.canChange) return;
         const empty = this.driver.empty();
         if (Object.is(empty, this.currentValue) && this.currentQuery === "") return;
         this.currentValue = empty;
@@ -334,6 +375,8 @@ export class SelectBoxController<
             activeIndex: this.currentActiveIndex,
             activeOption,
             isEmpty,
+            disabled: this.currentDisabled,
+            readOnly: this.currentReadOnly,
             addons: {},
         };
         return this.applyAddonSnapshots(baseSnapshot);

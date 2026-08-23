@@ -17,6 +17,8 @@ function snapshot(
         activeIndex: -1,
         activeOption: null,
         isEmpty: true,
+        disabled: false,
+        readOnly: false,
         highlightRanges: () => [],
         addons: {},
         ...overrides,

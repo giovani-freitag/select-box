@@ -189,6 +189,9 @@ function SingleTrigger<TExtra extends object>({
                 onFocus={handleInputFocus}
                 onClick={handleInputClick}
                 onKeyDown={handleKeyDown}
+                disabled={state.disabled}
+                readOnly={state.readOnly}
+                aria-readonly={state.readOnly || undefined}
                 data-select-input
             />
             <button
@@ -304,6 +307,9 @@ function MultiTrigger<TExtra extends object>({
                     onChange={handleInputChange}
                     onFocus={handleInputFocus}
                     onKeyDown={handleKeyDown}
+                    disabled={state.disabled}
+                    readOnly={state.readOnly}
+                    aria-readonly={state.readOnly || undefined}
                     data-select-input
                 />
             </div>

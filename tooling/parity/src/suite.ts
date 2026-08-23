@@ -231,6 +231,48 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(groupLabels(mounted)).toEqual(["Berries"]);
         });
 
+        async function mountWithFlags(flags: {
+            readonly disabled?: boolean;
+            readonly readOnly?: boolean;
+        }): Promise<ParityHandle> {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+                ...flags,
+            });
+            return handle;
+        }
+
+        test("a disabled control refuses to open", async () => {
+            const mounted = await mountWithFlags({ disabled: true });
+
+            await mounted.focusInput();
+
+            expect(isOpen(mounted)).toBe(false);
+            expect(input(mounted).disabled).toBe(true);
+        });
+
+        test("a read-only control refuses to open and stays enabled", async () => {
+            const mounted = await mountWithFlags({ readOnly: true });
+
+            await mounted.focusInput();
+
+            expect(isOpen(mounted)).toBe(false);
+            expect(input(mounted).disabled).toBe(false);
+            expect(input(mounted).readOnly).toBe(true);
+        });
+
+        test("a read-only control refuses a commit driven through the controller", async () => {
+            const mounted = await mountWithFlags({ readOnly: true });
+
+            mounted.publicController()!.open();
+            await mounted.settle();
+
+            expect(isOpen(mounted)).toBe(false);
+        });
+
         test("swapping the options renders the new list", async () => {
             const mounted = await mountSingle();
             await mounted.focusInput();

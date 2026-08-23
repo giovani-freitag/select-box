@@ -16,6 +16,8 @@ export interface ParityMountConfig {
     readonly placeholder: string;
     readonly multi: boolean;
     readonly surface: ParitySurface;
+    readonly disabled?: boolean;
+    readonly readOnly?: boolean;
 }
 
 /**

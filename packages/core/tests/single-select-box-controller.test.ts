@@ -102,6 +102,80 @@ describe("SingleSelectBoxController", () => {
         expect(controller.getState().query).toBe("pe");
     });
 
+    test("disabled refuses to open, type, commit or clear", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+            disabled: true,
+        });
+
+        controller.open();
+        controller.setQuery("app");
+        controller.commitValue("apple");
+        controller.clear();
+
+        const snapshot = controller.getState();
+        expect(snapshot.open).toBe(false);
+        expect(snapshot.query).toBe("");
+        expect(snapshot.value).toBe("pear");
+        expect(snapshot.disabled).toBe(true);
+    });
+
+    test("readOnly refuses to open and to change anything", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+            readOnly: true,
+        });
+
+        controller.open();
+        controller.moveActive(1);
+        controller.setQuery("app");
+        controller.commitValue("apple");
+        controller.clear();
+
+        const snapshot = controller.getState();
+        expect(snapshot.open).toBe(false);
+        expect(snapshot.query).toBe("");
+        expect(snapshot.value).toBe("pear");
+        expect(snapshot.readOnly).toBe(true);
+    });
+
+    test("commitOption and commitActive are refused while read-only", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+        controller.open();
+        controller.setInteractivity({ readOnly: true });
+
+        controller.commitOption(fruits[0]!);
+        controller.commitActive();
+
+        expect(controller.getState().value).toBeNull();
+    });
+
+    test("disabling a live controller closes it", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+        controller.open();
+
+        controller.setInteractivity({ disabled: true });
+
+        expect(controller.getState().open).toBe(false);
+    });
+
+    test("lifting the flags restores interaction", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            disabled: true,
+        });
+
+        controller.setInteractivity({ disabled: false });
+        controller.open();
+        expect(controller.getState().open).toBe(true);
+
+        controller.commitValue("apple");
+
+        expect(controller.getState().value).toBe("apple");
+    });
+
     test("lands inside the list for any navigation delta", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
         const selectable = 4;

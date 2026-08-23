@@ -21,6 +21,8 @@ describeParitySuite({
             placeholder: config.placeholder,
             mode: config.multi ? "multi" : "single",
             surface: config.surface,
+            disabled: config.disabled === true,
+            readOnly: config.readOnly === true,
         });
 
         return Promise.resolve(

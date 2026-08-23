@@ -189,6 +189,16 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.reactiveController.setFilter(this.filter);
         }
 
+        if (this.reactiveController !== null
+            && (changed.has("disabled") || changed.has("readOnly"))) {
+            // The controller owns the refusal; the element only mirrors its own
+            // properties into it.
+            this.reactiveController.core.setInteractivity({
+                disabled: this.disabled,
+                readOnly: this.readOnly,
+            });
+        }
+
         if (this.reactiveController !== null && this.virtualizer !== null) {
             const filteredGroups = this.reactiveController.state.filteredGroups;
             if (filteredGroups !== this.lastRowModelSource) {
@@ -234,6 +244,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             ...(this.addons !== undefined ? { addons: this.addons } : {}),
             ...(this.filter !== undefined ? { filter: this.filter } : {}),
             ungroupedLabel: this.ungroupedLabel,
+            disabled: this.disabled,
+            readOnly: this.readOnly,
         });
         this.keyDispatcher = new SelectBoxKeyDispatcher(this.reactiveController.core);
         this.previousValueKey = SelectBoxSnapshotView.valueKey(this.reactiveController.state.value);
@@ -291,23 +303,19 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     };
 
     private readonly handleInputFocus = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (!this.reactiveController?.state.open) this.reactiveController?.open();
     };
 
     private readonly handleInputClick = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (!this.reactiveController?.state.open) this.reactiveController?.open();
     };
 
     private readonly handleInput = (event: Event): void => {
-        if (this.disabled || this.readOnly) return;
         if (!this.reactiveController?.state.open) this.reactiveController?.open();
         this.reactiveController?.setQuery((event.target as HTMLInputElement).value);
     };
 
     private readonly handleControlMouseDown = (event: MouseEvent): void => {
-        if (this.disabled || this.readOnly) return;
         if (event.target !== this.inputRef.value) event.preventDefault();
         if (!this.reactiveController?.state.open) this.reactiveController?.open();
         this.inputRef.value?.focus({ preventScroll: true });
@@ -318,7 +326,6 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     };
 
     private readonly handleCaretClick = (): void => {
-        if (this.disabled || this.readOnly) return;
         if (this.reactiveController?.state.open) {
             this.reactiveController.close();
         } else {
@@ -465,6 +472,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     aria-expanded=${state.open}
                     aria-readonly=${this.readOnly}
                     ?disabled=${this.disabled}
+                    ?readonly=${this.readOnly}
                     placeholder=${placeholderText}
                     .value=${inputValue}
                     data-select-input
@@ -523,6 +531,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                         role="searchbox"
                         aria-autocomplete="list"
                         ?disabled=${this.disabled}
+                    ?readonly=${this.readOnly}
                         placeholder=${placeholderText}
                         .value=${state.query}
                         data-select-input

@@ -89,6 +89,8 @@ describeParitySuite({
                     options={options}
                     placeholder={config.placeholder}
                     surface={config.surface}
+                    disabled={config.disabled === true}
+                    readOnly={config.readOnly === true}
                 />
             ) : (
                 <SelectBox
@@ -96,6 +98,8 @@ describeParitySuite({
                     options={options}
                     placeholder={config.placeholder}
                     surface={config.surface}
+                    disabled={config.disabled === true}
+                    readOnly={config.readOnly === true}
                 />
             );
         const result = render(element(config.options));

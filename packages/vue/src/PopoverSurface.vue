@@ -203,6 +203,9 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                     aria-autocomplete="list"
                     :placeholder="placeholderText"
                     :value="state.query"
+                    :disabled="state.disabled"
+                    :readonly="state.readOnly"
+                    :aria-readonly="state.readOnly || undefined"
                     data-select-input
                     @input="handleInput"
                     @focus="handleInputFocus"
@@ -233,6 +236,9 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 :aria-expanded="state.open"
                 :placeholder="placeholderText"
                 :value="inputValue"
+                :disabled="state.disabled"
+                :readonly="state.readOnly"
+                :aria-readonly="state.readOnly || undefined"
                 data-select-input
                 @input="handleInput"
                 @focus="handleInputFocus"

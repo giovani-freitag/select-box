@@ -90,7 +90,7 @@ export function InlineSurface<TExtra extends object>({
                                     role="option"
                                     aria-selected={isSelected}
                                     aria-pressed={isSelected}
-                                    disabled={option.disabled}
+                                    disabled={option.disabled === true || state.disabled || state.readOnly}
                                     className={chipClassName}
                                     onClick={() => handleChipClick(option)}
                                     data-select-chip
