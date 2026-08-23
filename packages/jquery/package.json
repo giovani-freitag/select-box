@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "license": "UNLICENSED",
-    "description": "jQuery wrapper for the select-box library — registers $.fn.selectBox plugin.",
+    "description": "jQuery wrapper for the select-box library \u2014 registers $.fn.selectBox plugin.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -37,6 +37,7 @@
     "devDependencies": {
         "@select-box/core": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
+        "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "@types/jquery": "^3.5.32",
         "eslint": "^9.17.0",

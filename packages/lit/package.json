@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "license": "UNLICENSED",
-    "description": "Lit wrapper for the select-box library — ready <SelectBox /> element + ReactiveController for composing custom LitElements.",
+    "description": "Lit wrapper for the select-box library \u2014 ready <SelectBox /> element + ReactiveController for composing custom LitElements.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -42,6 +42,7 @@
     "devDependencies": {
         "@select-box/core": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
+        "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "eslint": "^9.17.0",
         "happy-dom": "^15.11.7",

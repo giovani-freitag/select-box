@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "license": "UNLICENSED",
-    "description": "Web Components wrapper for the select-box library — exports SelectBoxElement and defineSelectBoxElement.",
+    "description": "Web Components wrapper for the select-box library \u2014 exports SelectBoxElement and defineSelectBoxElement.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -41,6 +41,7 @@
     "devDependencies": {
         "@select-box/core": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
+        "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "element-internals-polyfill": "^3.0.2",
         "eslint": "^9.17.0",
