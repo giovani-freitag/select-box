@@ -15,10 +15,12 @@ import {
     type JSX,
     type KeyboardEvent,
     type MouseEvent,
+    type Ref,
     type RefObject,
 } from "react";
 
 import { useClickOutsideClose } from "./hooks/use-click-outside-close.js";
+import { useMergedRefs } from "./hooks/use-merged-refs.js";
 import { useSelectBoxKeyDispatcher } from "./hooks/use-select-box-key-dispatcher.js";
 import { useSelectBoxVirtualizer } from "./hooks/use-select-box-virtualizer.js";
 
@@ -29,6 +31,7 @@ const LIST_VIEWPORT_HEIGHT = 240;
 export interface PopoverSurfaceProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
+    readonly rootRef: Ref<HTMLDivElement> | undefined;
     readonly placeholder: string | undefined;
     readonly className: string | undefined;
     readonly ariaLabel: string | undefined;
@@ -44,12 +47,14 @@ export interface PopoverSurfaceProps<TExtra extends object> {
 export function PopoverSurface<TExtra extends object>({
     state,
     controller,
+    rootRef: forwardedRootRef,
     placeholder,
     className,
     ariaLabel,
     ariaLabelledby,
 }: PopoverSurfaceProps<TExtra>): JSX.Element {
     const rootRef = useRef<HTMLDivElement>(null);
+    const setRootNode = useMergedRefs(rootRef, forwardedRootRef);
     const inputRef = useRef<HTMLInputElement>(null);
     const keyDispatcher = useSelectBoxKeyDispatcher(controller);
 
@@ -70,7 +75,7 @@ export function PopoverSurface<TExtra extends object>({
 
     return (
         <div
-            ref={rootRef}
+            ref={setRootNode}
             className={rootClassName}
             data-select-root
             data-select-mode={state.mode}
@@ -189,6 +194,7 @@ function SingleTrigger<TExtra extends object>({
             <button
                 type="button"
                 className="select-box-caret"
+                data-select-caret
                 onMouseDown={handleCaretMouseDown}
                 onClick={handleCaretClick}
                 tabIndex={-1}
@@ -279,6 +285,7 @@ function MultiTrigger<TExtra extends object>({
                             type="button"
                             className="select-box-chip-remove"
                             aria-label={`Remove ${option.label}`}
+                            data-select-chip-remove
                             onMouseDown={(event) => event.stopPropagation()}
                             onClick={(event) => handleChipRemove(option, event)}
                         >
@@ -441,6 +448,7 @@ function VirtualizedOptionList<TExtra extends object>({
                                 controller.commitOption(row.option);
                                 onAfterCommit?.();
                             }}
+                            tabIndex={-1}
                             data-select-option
                             data-select-active={isActive ? "" : undefined}
                             data-select-selected={selected ? "" : undefined}

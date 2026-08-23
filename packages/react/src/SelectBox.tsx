@@ -1,11 +1,13 @@
 import {
     type OptionFilterStrategy,
     type SelectBoxAddon,
+    type SelectBoxController,
     type SelectBoxControllerConfig,
+    type SelectionValue,
     type SelectionValueInput,
     type SelectOption,
 } from "@select-box/core";
-import { useEffect, type JSX } from "react";
+import { useEffect, useImperativeHandle, useRef, type JSX, type Ref } from "react";
 
 import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
@@ -19,6 +21,19 @@ import { PopoverSurface } from "./PopoverSurface.js";
  * — both surfaces work in single and multi modes. Mutable at runtime. */
 export type SelectBoxSurface = "popover" | "inline";
 
+/**
+ * Imperative handle a `ref` on `<SelectBox>` receives.
+ *
+ * Escape hatch for behaviour the props do not cover; carries the same two
+ * members every wrapper exposes.
+ */
+export interface SelectBoxHandle<TExtra extends object = object> {
+    /** Root element, the same node `data-select-root` marks. */
+    readonly root: HTMLDivElement | null;
+    /** Core controller driving this instance. */
+    readonly controller: SelectBoxController<TExtra, SelectionValue>;
+}
+
 interface SelectBoxBaseProps<TExtra extends object> {
     readonly options?: ReadonlyArray<SelectOption<TExtra>>;
     readonly placeholder?: string;
@@ -27,6 +42,8 @@ interface SelectBoxBaseProps<TExtra extends object> {
     readonly filter?: OptionFilterStrategy<TExtra>;
     readonly surface?: SelectBoxSurface;
     readonly className?: string;
+    /** Receives the imperative handle: the root element and the core controller. */
+    readonly ref?: Ref<SelectBoxHandle<TExtra>> | undefined;
     readonly "aria-label"?: string;
     readonly "aria-labelledby"?: string;
 }
@@ -104,11 +121,26 @@ export function SelectBox<TExtra extends object = object>(
     useFilterReactivity(controller, props.filter);
     useNotifyChange(state, props.onChange);
 
+    const rootRef = useRef<HTMLDivElement>(null);
+    // `root` is a getter, not a captured value: switching surfaces mounts a
+    // different root element, and a captured node would dangle outside the tree.
+    useImperativeHandle(
+        props.ref,
+        () => ({
+            get root(): HTMLDivElement | null {
+                return rootRef.current;
+            },
+            controller,
+        }),
+        [controller],
+    );
+
     if (props.surface === "inline") {
         return (
             <InlineSurface<TExtra>
                 state={state}
                 controller={controller}
+                rootRef={rootRef}
                 className={props.className}
                 ariaLabel={props["aria-label"]}
                 ariaLabelledby={props["aria-labelledby"]}
@@ -120,6 +152,7 @@ export function SelectBox<TExtra extends object = object>(
         <PopoverSurface<TExtra>
             state={state}
             controller={controller}
+            rootRef={rootRef}
             placeholder={props.placeholder}
             className={props.className}
             ariaLabel={props["aria-label"]}

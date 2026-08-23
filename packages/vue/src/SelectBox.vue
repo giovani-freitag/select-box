@@ -7,7 +7,7 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
-import { computed, watch, type ShallowRef } from "vue";
+import { computed, ref, watch, type ShallowRef } from "vue";
 
 import { useFilterReactivity } from "./composables/use-filter-reactivity.js";
 import { useNotifyChange } from "./composables/use-notify-change.js";
@@ -96,16 +96,31 @@ useNotifyChange(state, {
 });
 
 const isInline = computed(() => props.surface === "inline");
+
+const surface = ref<{ root: HTMLDivElement | null } | null>(null);
+
+/**
+ * Imperative surface reachable through a template ref: the root element and the
+ * core controller, the same two members every wrapper exposes.
+ */
+defineExpose({
+    get root(): HTMLDivElement | null {
+        return surface.value?.root ?? null;
+    },
+    controller,
+});
 </script>
 
 <template>
     <InlineSurface
         v-if="isInline"
+        ref="surface"
         :state="state"
         :controller="controller"
     />
     <PopoverSurface
         v-else
+        ref="surface"
         :state="state"
         :controller="controller"
         :placeholder="placeholder"

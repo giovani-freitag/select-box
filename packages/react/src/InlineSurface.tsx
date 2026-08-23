@@ -5,11 +5,12 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
-import { Fragment, useMemo, type JSX } from "react";
+import { Fragment, useMemo, type JSX, type Ref } from "react";
 
 export interface InlineSurfaceProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
+    readonly rootRef: Ref<HTMLDivElement> | undefined;
     readonly className: string | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
@@ -24,6 +25,7 @@ export interface InlineSurfaceProps<TExtra extends object> {
 export function InlineSurface<TExtra extends object>({
     state,
     controller,
+    rootRef,
     className,
     ariaLabel,
     ariaLabelledby,
@@ -50,6 +52,7 @@ export function InlineSurface<TExtra extends object>({
 
     return (
         <div
+            ref={rootRef}
             className={rootClassName}
             role="listbox"
             aria-multiselectable={isMulti ? true : undefined}

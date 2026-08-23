@@ -1,7 +1,8 @@
 import { act, fireEvent, render } from "@testing-library/react";
+import { createRef } from "react";
 import { describe, expect, test, vi } from "vitest";
 
-import { SelectBox } from "../src/SelectBox.js";
+import { SelectBox, type SelectBoxHandle } from "../src/SelectBox.js";
 
 const fruits = [
     { value: "apple", label: "Apple" },
@@ -16,6 +17,26 @@ function mount() {
 }
 
 describe("<SelectBox /> (React)", () => {
+    test("the ref hands over the root element and the live controller", () => {
+        const ref = createRef<SelectBoxHandle>();
+
+        const { container } = render(<SelectBox ref={ref} options={fruits} />);
+
+        expect(ref.current?.root).toBe(container.querySelector("[data-select-root]"));
+        expect(ref.current?.controller.getState().open).toBe(false);
+    });
+
+    test("the ref tracks the current root across a surface change", () => {
+        const ref = createRef<SelectBoxHandle>();
+        const view = render(<SelectBox ref={ref} options={fruits} surface="popover" />);
+
+        act(() => {
+            view.rerender(<SelectBox ref={ref} options={fruits} surface="inline" />);
+        });
+
+        expect(ref.current?.root).toBe(view.container.querySelector("[data-select-root]"));
+    });
+
     test("renders the trigger input with the placeholder and no value", () => {
         const { input } = mount();
 

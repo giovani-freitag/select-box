@@ -6,12 +6,16 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
-import { computed } from "vue";
+import { computed, useTemplateRef } from "vue";
 
 const props = defineProps<{
     state: SelectBoxSnapshot<TExtra, SelectionValue>;
     controller: SelectBoxController<TExtra, SelectionValue>;
 }>();
+
+const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
+
+defineExpose({ root: rootRef });
 
 const isMulti = computed(() => props.state.mode === "multi");
 const view = computed(
@@ -37,6 +41,7 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
 
 <template>
     <div
+        ref="rootEl"
         :class="[
             'select-box',
             'select-box-inline',

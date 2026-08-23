@@ -25,6 +25,8 @@ const props = defineProps<{
 }>();
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
+
+defineExpose({ root: rootRef });
 const inputRef = useTemplateRef<HTMLInputElement>("inputEl");
 
 const keyDispatcher = useSelectBoxKeyDispatcher(props.controller);
@@ -188,6 +190,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                         type="button"
                         class="select-box-chip-remove"
                         :aria-label="`Remove ${option.label}`"
+                        data-select-chip-remove
                         @mousedown.stop
                         @click="(event) => handleChipRemove(option, event)"
                     >×</button>
@@ -239,6 +242,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
             <button
                 type="button"
                 class="select-box-caret"
+                data-select-caret
                 tabindex="-1"
                 aria-hidden="true"
                 @mousedown.prevent
@@ -286,6 +290,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                             :aria-selected="entry.isSelected"
                             :class="optionClasses(entry.isActive, entry.isSelected, entry.row.option.disabled)"
                             :disabled="entry.row.option.disabled"
+                            tabindex="-1"
                             data-select-option
                             :data-select-active="entry.isActive ? '' : undefined"
                             :data-select-selected="entry.isSelected ? '' : undefined"
