@@ -14,6 +14,22 @@ function createScrollElement(): HTMLElement {
     return scrollElement;
 }
 
+/**
+ * Stands in for CSS layout, which no DOM shim runs. TanStack sizes the viewport
+ * off `offsetWidth`/`offsetHeight`, so defining those is the only way to
+ * exercise the branch a real browser takes.
+ */
+function reportHeight(element: HTMLElement, height: number): void {
+    Object.defineProperty(element, "offsetHeight", {
+        configurable: true,
+        get: () => height,
+    });
+    Object.defineProperty(element, "offsetWidth", {
+        configurable: true,
+        get: () => 200,
+    });
+}
+
 describe("SelectBoxListVirtualizer", () => {
     let scrollElement: HTMLElement;
 
@@ -165,6 +181,121 @@ describe("SelectBoxListVirtualizer", () => {
 
         expect(() => virtualizer.scrollToIndex(10, "auto")).not.toThrow();
 
+        virtualizer.dispose();
+    });
+});
+
+describe("SelectBoxListVirtualizer against a laid-out viewport", () => {
+    const SMALL_FALLBACK = 60;
+    const REAL_VIEWPORT = 300;
+
+    let scrollElement: HTMLElement;
+
+    function create(
+        overrides: { readonly initialViewportHeight?: number } = {},
+    ): SelectBoxListVirtualizer {
+        return new SelectBoxListVirtualizer({
+            getScrollElement: () => scrollElement,
+            getCount: () => 1_000,
+            estimateSize: () => ROW_HEIGHT,
+            overscan: 0,
+            ...overrides,
+        });
+    }
+
+    function windowSize(virtualizer: SelectBoxListVirtualizer): number {
+        return virtualizer.getVirtualItems().length;
+    }
+
+    beforeEach(() => {
+        scrollElement = createScrollElement();
+    });
+
+    afterEach(() => {
+        scrollElement.remove();
+        vi.restoreAllMocks();
+    });
+
+    test("the measured height decides the window, overriding the fallback", () => {
+        reportHeight(scrollElement, REAL_VIEWPORT);
+        const virtualizer = create({ initialViewportHeight: SMALL_FALLBACK });
+
+        virtualizer.mount();
+
+        // 300px of 30px rows, no overscan: ten rows, not the fallback's two.
+        expect(windowSize(virtualizer)).toBe(REAL_VIEWPORT / ROW_HEIGHT);
+        virtualizer.dispose();
+    });
+
+    test("the fallback only stands in while the height reads zero", () => {
+        reportHeight(scrollElement, 0);
+        const virtualizer = create({ initialViewportHeight: SMALL_FALLBACK });
+
+        virtualizer.mount();
+
+        expect(windowSize(virtualizer)).toBe(SMALL_FALLBACK / ROW_HEIGHT);
+        virtualizer.dispose();
+    });
+
+    test("a measured height is used with no fallback configured at all", () => {
+        reportHeight(scrollElement, REAL_VIEWPORT);
+        const virtualizer = create();
+
+        virtualizer.mount();
+
+        expect(windowSize(virtualizer)).toBe(REAL_VIEWPORT / ROW_HEIGHT);
+        virtualizer.dispose();
+    });
+
+    test("a taller viewport renders strictly more rows than a shorter one", () => {
+        reportHeight(scrollElement, 120);
+        const short = create();
+        short.mount();
+        const shortWindow = windowSize(short);
+        short.dispose();
+
+        vi.restoreAllMocks();
+        reportHeight(scrollElement, 360);
+        const tall = create();
+        tall.mount();
+
+        expect(windowSize(tall)).toBeGreaterThan(shortWindow);
+        tall.dispose();
+    });
+
+    test("the window follows the scroll offset instead of pinning to the top", () => {
+        reportHeight(scrollElement, REAL_VIEWPORT);
+        const virtualizer = create();
+        virtualizer.mount();
+        const firstIndex = virtualizer.getVirtualItems()[0]?.index;
+
+        // The real path a browser takes: the element scrolls and emits, and
+        // TanStack recomputes the window from the new offset.
+        scrollElement.scrollTop = 500 * ROW_HEIGHT;
+        scrollElement.dispatchEvent(new Event("scroll"));
+
+        const window = virtualizer.getVirtualItems();
+        expect(firstIndex).toBe(0);
+        expect(window[0]?.index).toBe(500);
+        expect(window.length).toBe(REAL_VIEWPORT / ROW_HEIGHT);
+        virtualizer.dispose();
+    });
+
+    test("every row in the window carries a real offset and size", () => {
+        reportHeight(scrollElement, REAL_VIEWPORT);
+        const virtualizer = create();
+        virtualizer.mount();
+
+        const items = virtualizer.getVirtualItems();
+
+        expect(items.length).toBeGreaterThan(1);
+        items.forEach((item, position) => {
+            expect(item.size).toBe(ROW_HEIGHT);
+            expect(item.start).toBe(item.index * ROW_HEIGHT);
+            if (position > 0) {
+                expect(item.index).toBe((items[position - 1]?.index ?? -1) + 1);
+            }
+        });
         virtualizer.dispose();
     });
 });
