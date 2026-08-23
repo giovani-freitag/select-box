@@ -1,0 +1,79 @@
+/**
+ * Scenario configuration every fixture reads from the URL.
+ *
+ * One page per framework serves every spec: the specs vary the query string
+ * instead of the suite needing a fixture per case.
+ */
+
+export interface FixtureOption {
+    readonly value: string;
+    readonly label: string;
+    readonly disabled?: boolean;
+    readonly group?: string;
+}
+
+export interface FixtureConfig {
+    readonly options: ReadonlyArray<FixtureOption>;
+    readonly multi: boolean;
+    readonly surface: "popover" | "inline";
+    readonly placeholder: string;
+}
+
+const FRUITS: ReadonlyArray<FixtureOption> = [
+    { value: "apple", label: "Apple" },
+    { value: "pear", label: "Pear" },
+    { value: "grape", label: "Grape" },
+    { value: "peach", label: "Peach" },
+    { value: "lemon", label: "Lemon" },
+];
+
+const GROUPS = ["Pomes", "Stone fruits", "Citrus"];
+
+function buildOptions(params: URLSearchParams): ReadonlyArray<FixtureOption> {
+    const count = Number(params.get("count") ?? "0");
+    const grouped = params.get("groups") === "1";
+    const withDisabled = params.get("disabled") === "1";
+
+    // A generated list is the only way to exercise virtualization; the small
+    // fruit list keeps every other spec readable.
+    const base: ReadonlyArray<FixtureOption> =
+        count > 0
+            ? Array.from({ length: count }, (_unused, index) => ({
+                  value: `option-${index}`,
+                  label: `Option ${index}`,
+              }))
+            : FRUITS;
+
+    return base.map((option, index) => ({
+        ...option,
+        ...(grouped ? { group: GROUPS[index % GROUPS.length]! } : {}),
+        ...(withDisabled && index === 1 ? { disabled: true } : {}),
+    }));
+}
+
+export function readFixtureConfig(): FixtureConfig {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        options: buildOptions(params),
+        multi: params.get("multi") === "1",
+        surface: params.get("surface") === "inline" ? "inline" : "popover",
+        placeholder: params.get("placeholder") ?? "Pick a fruit",
+    };
+}
+
+/**
+ * Wires the fixture's shared controls.
+ *
+ * Every fixture offers the same two buttons so the lifecycle specs read the
+ * same across the matrix: one tears the instance down, one flips the surface
+ * at runtime.
+ *
+ * @param handlers - What this framework does for each control.
+ */
+export function wireControls(handlers: {
+    readonly destroy: () => void;
+    readonly toggleSurface: () => void;
+}): void {
+    document.querySelector("#destroy")!.addEventListener("click", handlers.destroy);
+    document.querySelector("#toggle-surface")!.addEventListener("click", handlers.toggleSurface);
+}

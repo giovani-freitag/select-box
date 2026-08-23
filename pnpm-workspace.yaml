@@ -3,6 +3,7 @@ packages:
   - "tooling/*"
   - "docs-starlight"
   - "docs-vitepress"
+  - "e2e"
 allowBuilds:
   esbuild: true
   sharp: true

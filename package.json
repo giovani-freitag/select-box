@@ -13,6 +13,7 @@
     "scripts": {
         "build": "turbo run build",
         "test": "turbo run test",
+        "e2e": "turbo run e2e",
         "typecheck": "turbo run typecheck",
         "lint": "turbo run lint",
         "clean": "turbo run clean && rm -rf node_modules"

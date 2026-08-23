@@ -42,3 +42,55 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  e2e:
+    name: Matrix E2E (${{ matrix.framework }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      # One job per wrapper: a core regression turns every column red at once,
+      # a wrapper regression only its own, so the failure names the layer.
+      fail-fast: false
+      matrix:
+        framework: [react, vue, lit, webcomponents, jquery]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chromium
+        run: pnpm --filter @select-box/e2e exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run matrix project
+        run: pnpm --filter @select-box/e2e exec playwright test --project=${{ matrix.framework }}
+        env:
+          CI: "true"
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.framework }}
+          path: e2e/playwright-report/
+          retention-days: 7

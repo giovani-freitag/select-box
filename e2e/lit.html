@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>lit fixture</title>
+        <style>
+            /* Controls sit above the mount: an open popover is absolutely
+               positioned and would otherwise cover them, so a spec could not
+               click them. */
+            .controls {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            #mount {
+                width: 320px;
+            }
+
+            /* A positioned neighbour after the component: without it, the
+               popover would paint on top from `position: absolute` alone and
+               the paint-order spec could never fail. */
+            .overlap {
+                position: relative;
+                height: 300px;
+                margin-top: 0.5rem;
+                background: #fde68a;
+            }
+
+            body {
+                margin: 1rem;
+                font-family: system-ui, sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>lit</h1>
+            <div class="controls">
+                <button id="destroy" type="button">destroy</button>
+                <button id="toggle-surface" type="button">toggle surface</button>
+                <output id="last-change"></output>
+            </div>
+            <div id="mount"></div>
+            <div class="overlap" data-overlap>positioned neighbour</div>
+        </main>
+        <script type="module" src="/fixtures/lit.ts"></script>
+    </body>
+</html>
