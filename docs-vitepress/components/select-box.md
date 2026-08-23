@@ -28,15 +28,15 @@ const fruits = [
     { value: { id: 3, name: "lemon" }, label: "Lemon" },
 ];
 
-jQuery("#fruit")
-    .selectBox({
-        options: fruits,
-        placeholder: "Search fruits…",
-        ungroupedLabel: "Citrus",
-    })
-    .on("change", (_event, value) => {
-        console.log(value);
-    });
+jQuery("#fruit").on("change", (_event, value) => {
+    console.log(value);
+});
+
+const box = jQuery("#fruit").selectBox({
+    options: fruits,
+    placeholder: "Search fruits…",
+    ungroupedLabel: "Citrus",
+});
 ```
 
 </template>

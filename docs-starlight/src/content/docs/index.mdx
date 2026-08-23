@@ -104,15 +104,15 @@ import FrameworkDemo from "../../components/demos/grouped/Demo.astro";
             import "@select-box/jquery";
             import jQuery from "jquery";
 
-            jQuery("#fruit")
-                .selectBox({
-                    options: fruits,
-                    placeholder: "Search fruits…",
-                    ungroupedLabel: "Citrus",
-                })
-                .on("selectbox:valuechange", (_event, value) => {
-                    console.log(value);
-                });
+            jQuery("#fruit").on("change", (_event, value) => {
+                console.log(value);
+            });
+
+            const box = jQuery("#fruit").selectBox({
+                options: fruits,
+                placeholder: "Search fruits…",
+                ungroupedLabel: "Citrus",
+            });
             ```
         </Fragment>
     </FrameworkDemo>

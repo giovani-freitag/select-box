@@ -25,12 +25,15 @@ const fruits = [
 
 const committed = document.getElementById("committed")!;
 
-jQuery("#fruit")
-    .selectBox<FruitExtra>({
-        options: fruits,
-        ungroupedLabel: "Citrus",
-        placeholder: "Search fruits…",
-    })
-    .on("change", (_event, _value: string | null, option: SelectOption<FruitExtra> | null) => {
+jQuery("#fruit").on(
+    "change",
+    (_event, _value: string | null, option: SelectOption<FruitExtra> | null) => {
         committed.textContent = option ? JSON.stringify(option) : "null";
-    });
+    },
+);
+
+jQuery("#fruit").selectBox<FruitExtra>({
+    options: fruits,
+    ungroupedLabel: "Citrus",
+    placeholder: "Search fruits…",
+});

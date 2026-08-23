@@ -116,15 +116,15 @@ tabs — the preview is the real wrapper running natively on this page.
             { value: "lemon", label: "Lemon" },
         ];
 
-        jQuery("#fruit")
-            .selectBox({
-                options: fruits,
-                placeholder: "Search fruits…",
-                ungroupedLabel: "Citrus",
-            })
-            .on("selectbox:valuechange", (_event, value) => {
-                console.log(value);
-            });
+        jQuery("#fruit").on("change", (_event, value) => {
+            console.log(value);
+        });
+
+        const box = jQuery("#fruit").selectBox({
+            options: fruits,
+            placeholder: "Search fruits…",
+            ungroupedLabel: "Citrus",
+        });
         ```
     </Fragment>
 </FrameworkDemo>
