@@ -1,0 +1,17 @@
+{
+    "name": "@select-box/styles",
+    "version": "0.0.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "description": "Base stylesheet shared by every select-box wrapper.",
+    "exports": {
+        ".": "./select-box.css",
+        "./select-box.css": "./select-box.css"
+    },
+    "files": [
+        "select-box.css"
+    ],
+    "sideEffects": [
+        "*.css"
+    ]
+}
