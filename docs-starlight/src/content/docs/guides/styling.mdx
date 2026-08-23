@@ -184,7 +184,8 @@ Scoping rules vary by wrapper:
 - **Lit** — the custom element is itself the root, so scope through the
   tag or a class on it: `select-box-lit .select-box-option { … }`.
 - **jQuery** — give the host element a class and scope through that:
-  `$("#picker").addClass("my-select").selectBox({ … })`.
+  `$("#picker").addClass("my-select").selectBox({ … })` (the call returns the
+  instance, so add the class before it).
 
 ## A full themed example
 

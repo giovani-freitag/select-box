@@ -95,7 +95,7 @@ For Vue, Lit and jQuery, the API mirrors the same shape. See the [components pag
 The styled component hands over two things on every wrapper, under the same
 names: `root` (the outermost element) and `controller` (the core controller
 driving it). React exposes them through `ref`, Vue through a template ref,
-the two custom elements as getters, jQuery as `$el.selectBox('controller')`.
+the two custom elements as getters, jQuery on the instance its plugin returns.
 Enough for most escape hatches without leaving the styled tier.
 
 ## Headless mode

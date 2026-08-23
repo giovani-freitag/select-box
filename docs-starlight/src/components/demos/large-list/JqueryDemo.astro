@@ -26,21 +26,21 @@
         }));
     }
 
-    function mount(count: number): void {
-        jQuery("#demo-large-list-jq").selectBox({
+    function mount(count: number) {
+        return jQuery("#demo-large-list-jq").selectBox({
             options: generate(count),
             placeholder: "Search…",
         });
     }
 
-    mount(1000);
+    let box = mount(1000);
 
     document.querySelector<HTMLInputElement>("#demo-large-list-jq-range")!
         .addEventListener("change", function () {
             const count = Number(this.value);
             document.querySelector("#demo-large-list-jq-count")!.textContent = count.toLocaleString();
-            jQuery("#demo-large-list-jq").selectBox("destroy");
-            mount(count);
+            box.destroy();
+            box = mount(count);
         });
 </script>
 <!-- #endregion snippet -->

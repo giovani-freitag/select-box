@@ -187,15 +187,18 @@ const fruits = [
     { value: "lemon", label: "Lemon" },
 ];
 
-jQuery("#fruit")
-    .selectBox({
-        options: fruits,
-        placeholder: "Pick a fruit",
-        ungroupedLabel: "Citrus",
-    })
-    .on("change", (_event, value, option) => {
-        console.log(value, option);
-    });
+jQuery("#fruit").on("change", (_event, value, option) => {
+    console.log(value, option);
+});
+
+// The call hands back the instance, so `box` is your handle from here on.
+const box = jQuery("#fruit").selectBox({
+    options: fruits,
+    placeholder: "Pick a fruit",
+    ungroupedLabel: "Citrus",
+});
+
+box.open();
 ```
 
   </TabItem>

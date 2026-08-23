@@ -386,7 +386,7 @@ factory but with the **same signature and snapshot fields**:
 | React | `const { state, controller } = useSelectBox(config)` (and `useMultiSelectBox`) | Snapshot + controller methods |
 | Vue | `const { state, controller } = useSelectBox(config)` | Reactive refs + methods |
 | Lit | `class extends LitElement { selectBox = new SelectBoxController(this, config) }` | Lit-reactive |
-| jQuery | `$('selector').selectBox(config)` chain + `.selectBox('controller')` | jQuery collection |
+| jQuery | `const box = $('selector').selectBox(config)` | `SelectBoxView` with `.root` / `.controller` getters |
 
 Snapshot field names are identical across every wrapper:
 `mode`, `open`, `query`, `value`, `selectedOption`, `selectedOptions`,
@@ -491,7 +491,7 @@ framework's own door:
 | Lit | `element.root`, `element.controller` |
 | React | `ref` on `<SelectBox>` yields `{ root, controller }` |
 | Vue | `root` / `controller` on the instance, via a template ref |
-| jQuery | `$el.selectBox('root')`, `$el.selectBox('controller')` |
+| jQuery | `box.root`, `box.controller` on the returned view |
 
 `controller` is the escape hatch: the styled tier stays declarative for
 the common case, and hands over the core controller when a consumer
@@ -545,6 +545,48 @@ The painters take no framework types and hold no reference to a host —
 a `getController` accessor and a `refocus` callback are the whole
 contract — so they are tested directly against a controller with no
 wrapper in the picture at all.
+
+### 5.4 The jQuery instance
+
+jQuery is the only wrapper with no framework object to hand back, so it
+publishes the view itself instead of a method-string dispatcher:
+
+```js
+const box = $('#picker').selectBox({ options: fruits, mode: 'multi' });
+
+box.open();
+box.setOptions(nextFruits);
+box.setMode('single');
+box.controller.commitValue('pear');
+box.destroy();
+```
+
+Two doors, both reaching the same instance:
+
+| Door | Shape |
+|---|---|
+| The call | `$(el).selectBox(config)` returns the `SelectBoxView` |
+| The element | `el.selectBox`, i.e. `$(el).prop('selectBox')` |
+
+The element property is the Selectize convention — the instance hangs off
+the node it was built on, so code that never held the return value can
+still reach it. It is cleared the moment the view is destroyed, whichever
+door did it.
+
+Consequences worth stating:
+
+- **Init is no longer chainable.** `$(el).selectBox(config)` hands back the
+  view, not the collection, so bind events before it:
+  `$(el).on('change', …)` then `.selectBox(config)`.
+- **An empty collection throws** `EmptySelectionError`. There is no honest
+  instance to return, and it nearly always means the selector was wrong.
+- **A multi-element collection builds one view per element** and returns
+  the first; the rest are reached through their own `element.selectBox`.
+- **Re-initialising destroys the previous view first**, then advertises the
+  new one — the order the `onDestroy` bookkeeping relies on.
+
+`SelectBoxView` carries `root` and `controller` as getters, so §5.2 reads
+the same in jQuery as everywhere else.
 
 ## 6. Testing strategy
 
@@ -886,9 +928,9 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
    `packages/react/tests/integration.test.tsx`, and no teardown at all
    fails the parity scenario that asserts `detach` runs.
 1. **jQuery wrapper architecture stress** — `[resolved]` jQuery is
-   imperative; users expect chainable API + plugin pattern. Shipped with
-   `$.fn.selectBox(config)` + `.selectBox('controller'|'open'|...)`
-   method-string overloads; teardown via `.selectBox('destroy')`. No
+   imperative; users expect a plugin they can reach back into. Shipped as
+   an object API instead of method strings: `$.fn.selectBox(config)`
+   returns the `SelectBoxView` and hangs it off the element (§5.4). No
    concessions leaked back into the core.
 2. **Virtualizer cross-framework** — `[resolved]` Use
    `@tanstack/virtual-core` (the framework-agnostic core that all
