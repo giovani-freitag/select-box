@@ -23,6 +23,21 @@ function chipLabels(): string[] {
     );
 }
 
+function caret(): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>("#fruit .select-box-caret");
+}
+
+function clearButton(): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>("#fruit [data-select-clear]");
+}
+
+function commitOption(label: string): void {
+    const option = [...document.querySelectorAll<HTMLButtonElement>(
+        "#fruit [data-select-option]",
+    )].find((candidate) => candidate.textContent?.includes(label))!;
+    option.click();
+}
+
 describe("$.fn.selectBox multi integration", () => {
     test("renders with mode='multi' when configured", () => {
         jQuery("#fruit").selectBox({
@@ -63,6 +78,40 @@ describe("$.fn.selectBox multi integration", () => {
         pearButton.click();
 
         expect(lastValues).toEqual(["pear"]);
+    });
+
+    test("leaves the caret out of the tree and holds the clear button until a chip exists", () => {
+        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+        getInput().focus();
+
+        commitOption("Apple");
+
+        expect(caret()).toBeNull();
+        expect(clearButton()).not.toBeNull();
+    });
+
+    test("renders no clear button while the selection is empty", () => {
+        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+
+        expect(clearButton()).toBeNull();
+    });
+
+    test("clicking the clear button empties the selection and drops the button again", () => {
+        jQuery("#fruit").selectBox({ mode: "multi", options: fruits, initialValue: ["apple"] });
+
+        clearButton()!.click();
+
+        expect(chipLabels()).toEqual([]);
+        expect(clearButton()).toBeNull();
+    });
+
+    test("setMode('single') brings the caret back and drops the clear button", () => {
+        jQuery("#fruit").selectBox({ mode: "multi", options: fruits, initialValue: ["apple"] });
+
+        jQuery("#fruit").selectBox("setMode", "single");
+
+        expect(caret()).not.toBeNull();
+        expect(clearButton()).toBeNull();
     });
 
     test("setMode('single') preserves the first selected option", () => {

@@ -39,6 +39,7 @@ declare global {
         selectBox<TExtra extends object = object>(
             method: "controller",
         ): SelectBoxController<TExtra, SelectionValue> | undefined;
+        selectBox(method: "root"): HTMLElement | undefined;
     }
 }
 

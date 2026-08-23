@@ -204,10 +204,10 @@ export class SelectBoxView<TExtra extends object = object> {
         const caret = document.createElement("button");
         caret.type = "button";
         caret.className = "select-box-caret";
+        caret.dataset["selectCaret"] = "";
         caret.tabIndex = -1;
         caret.setAttribute("aria-hidden", "true");
         caret.textContent = "▾";
-        if (this.multi) caret.hidden = true;
 
         const clear = document.createElement("button");
         clear.type = "button";
@@ -216,7 +216,6 @@ export class SelectBoxView<TExtra extends object = object> {
         clear.setAttribute("aria-label", "Clear all");
         clear.dataset["selectClear"] = "";
         clear.textContent = "×";
-        clear.hidden = true;
 
         trigger.append(tags, caret, clear);
         return trigger;
@@ -371,7 +370,7 @@ export class SelectBoxView<TExtra extends object = object> {
             return;
         }
 
-        this.caret!.hidden = isMulti;
+        this.setTriggerButtonPresent(this.caret!, !isMulti);
         if (isMulti) this.popover!.setAttribute("aria-multiselectable", "true");
         else this.popover!.removeAttribute("aria-multiselectable");
 
@@ -393,12 +392,26 @@ export class SelectBoxView<TExtra extends object = object> {
         }
 
         this.paintChips(snapshot, isMulti);
-        this.clearButton!.hidden = !(isMulti && hasSelection);
+        this.setTriggerButtonPresent(this.clearButton!, isMulti && hasSelection);
 
         this.popover!.hidden = !snapshot.open;
         if (!snapshot.open) return;
 
         this.paintList(snapshot, view, isMulti);
+    }
+
+    /**
+     * Attaches or detaches one of the trigger's trailing buttons.
+     *
+     * Presence in the tree, not the `hidden` attribute, is what drives
+     * visibility here: `hidden` resolves to `display: none` only through the
+     * user-agent stylesheet, so any consumer rule setting `display` on the
+     * same element silently outranks it.
+     */
+    private setTriggerButtonPresent(button: HTMLButtonElement, present: boolean): void {
+        if (present === (button.parentNode === this.trigger)) return;
+        if (present) this.trigger!.append(button);
+        else button.remove();
     }
 
     /** Inline-surface paint: every option is a toggleable chip rendered directly
@@ -569,6 +582,7 @@ export class SelectBoxView<TExtra extends object = object> {
     private createHeaderElement(label: string): HTMLDivElement {
         const header = document.createElement("div");
         header.className = "select-box-group-label";
+        header.dataset["selectGroupLabel"] = "";
         header.textContent = label;
         return header;
     }
@@ -588,6 +602,7 @@ export class SelectBoxView<TExtra extends object = object> {
         if (isSelected && isMulti) classes.push("select-box-option-selected");
         if (option.disabled) classes.push("select-box-option-disabled");
         button.className = classes.join(" ");
+        button.tabIndex = -1;
         button.dataset["selectOption"] = "";
         if (isActive) button.dataset["selectActive"] = "";
         if (isSelected) button.dataset["selectSelected"] = "";

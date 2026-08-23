@@ -21,7 +21,22 @@ function popoverHidden(): boolean | undefined {
     return document.querySelector<HTMLDivElement>("#fruit [data-select-popover]")?.hidden;
 }
 
+function caret(): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>("#fruit .select-box-caret");
+}
+
+function clearButton(): HTMLButtonElement | null {
+    return document.querySelector<HTMLButtonElement>("#fruit [data-select-clear]");
+}
+
 describe("$.fn.selectBox integration", () => {
+    test("renders the caret and leaves the clear button out of the tree", () => {
+        jQuery("#fruit").selectBox({ options: fruits, placeholder: "Pick a fruit" });
+
+        expect(caret()).not.toBeNull();
+        expect(clearButton()).toBeNull();
+    });
+
     test("focusing the trigger input opens the popover", () => {
         jQuery("#fruit").selectBox({ options: fruits, placeholder: "Pick a fruit" });
         const input = getInput();

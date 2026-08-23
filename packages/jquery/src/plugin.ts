@@ -16,7 +16,15 @@ export interface SelectBoxPluginConfig<TExtra extends object = object>
     readonly surface?: SelectBoxSurface;
 }
 
-type Method = "open" | "close" | "toggle" | "clear" | "destroy" | "controller" | "setMode";
+type Method =
+    | "open"
+    | "close"
+    | "toggle"
+    | "clear"
+    | "destroy"
+    | "controller"
+    | "root"
+    | "setMode";
 
 const VIEWS = new WeakMap<HTMLElement, SelectBoxView>();
 
@@ -30,7 +38,7 @@ export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
         this: JQuery,
         configOrMethod: SelectBoxPluginConfig<TExtra> | Method,
         arg?: "single" | "multi",
-    ): JQuery | SelectBoxController<TExtra, SelectionValue> | undefined {
+    ): JQuery | SelectBoxController<TExtra, SelectionValue> | HTMLElement | undefined {
         if (typeof configOrMethod === "string") {
             return invokeMethod<TExtra>(this, configOrMethod, arg);
         }
@@ -69,12 +77,12 @@ function invokeMethod<TExtra extends object>(
     collection: JQuery,
     method: Method,
     arg?: "single" | "multi",
-): JQuery | SelectBoxController<TExtra, SelectionValue> | undefined {
-    if (method === "controller") {
+): JQuery | SelectBoxController<TExtra, SelectionValue> | HTMLElement | undefined {
+    if (method === "controller" || method === "root") {
         const first = collection.get(0);
         if (!first) return undefined;
         const view = VIEWS.get(first) as SelectBoxView<TExtra> | undefined;
-        return view?.getController();
+        return method === "root" ? view?.root : view?.getController();
     }
 
     collection.each((_index, host) => {
