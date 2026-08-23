@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { beforeAll } from "vitest";
 
 import {

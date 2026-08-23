@@ -2,14 +2,47 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
 import { describe, expect, test } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const typesSource = readFileSync(resolve(here, "../../src/types.ts"), "utf-8");
+const typesPath = resolve(here, "../../src/types.ts");
+const typesSource = readFileSync(typesPath, "utf-8");
 const indexSource = readFileSync(resolve(here, "../../src/index.ts"), "utf-8");
 
-function stripBlockComments(source: string): string {
-    return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+/**
+ * Reads one interface's members off the AST.
+ *
+ * Parsing rather than matching text is what makes this guard trustworthy: a
+ * regex anchored on indentation returns an empty list when the file is
+ * reformatted, and an empty list silently satisfies every assertion that walks
+ * it.
+ *
+ * @param interfaceName - Interface to read.
+ * @returns Its member signatures, in declaration order.
+ * @throws When the interface is absent, so a rename fails loudly.
+ */
+function readInterfaceMembers(interfaceName: string): ReadonlyArray<ts.TypeElement> {
+    const source = ts.createSourceFile(
+        typesPath,
+        typesSource,
+        ts.ScriptTarget.ES2022,
+        /* setParentNodes */ true,
+    );
+    let members: ReadonlyArray<ts.TypeElement> | null = null;
+    source.forEachChild((node) => {
+        if (ts.isInterfaceDeclaration(node) && node.name.text === interfaceName) {
+            members = node.members;
+        }
+    });
+    if (members === null) throw new Error(`interface ${interfaceName} not found in types.ts`);
+    return members;
+}
+
+function memberNames(members: ReadonlyArray<ts.TypeElement>): ReadonlyArray<string> {
+    return members
+        .map((member) => (member.name && ts.isIdentifier(member.name) ? member.name.text : null))
+        .filter((name): name is string => name !== null);
 }
 
 /**
@@ -28,50 +61,37 @@ describe("addon contract", () => {
         expect(indexSource).not.toMatch(/SelectBoxAddonHost/);
     });
 
-    test("SelectBoxAddon.attach takes no arguments", () => {
-        const interfaceMatch = typesSource.match(
-            /export interface SelectBoxAddon<[^>]+>\s*{[^}]*}/,
-        );
-        expect(interfaceMatch, "SelectBoxAddon interface block not found").not.toBeNull();
+    test("SelectBoxAddon carries exactly the documented hooks", () => {
+        const names = [...memberNames(readInterfaceMembers("SelectBoxAddon"))].sort();
 
-        const interfaceBody = interfaceMatch![0];
-        expect(interfaceBody).toMatch(/attach\?\(\)\s*:\s*void/);
-        expect(interfaceBody).toMatch(/detach\?\(\)\s*:\s*void/);
-    });
-
-    test("only the documented hooks live on SelectBoxAddon", () => {
-        const interfaceMatch = typesSource.match(
-            /export interface SelectBoxAddon<[^>]+>\s*{([\s\S]*?)\n}/,
-        );
-        expect(interfaceMatch, "SelectBoxAddon interface block not found").not.toBeNull();
-
-        const memberSource = stripBlockComments(interfaceMatch![1]!);
-        // Members live at 4-space indent; multi-line signature params live deeper
-        // and must not be counted as members.
-        const memberNames = Array.from(memberSource.matchAll(/^ {4}(?:readonly\s+)?(\w+)\??\s*[(:]/gm))
-            .map((match) => match[1])
-            .filter((name): name is string => name !== undefined);
-
-        const allowed = new Set([
-            "name",
+        expect(names).toEqual([
             "attach",
             "detach",
+            "extendSnapshot",
+            "name",
             "provideFilter",
             "transformGroups",
-            "extendSnapshot",
         ]);
-        for (const member of memberNames) {
-            expect(allowed.has(member), `Unexpected addon hook: ${member}`).toBe(true);
-        }
     });
 
-    test("SelectBoxAddon does not expose mutator methods (set*/use)", () => {
-        const interfaceMatch = typesSource.match(
-            /export interface SelectBoxAddon<[^>]+>\s*{([\s\S]*?)\n}/,
-        );
-        const memberSource = stripBlockComments(interfaceMatch![1]!);
+    test("SelectBoxAddon.attach and .detach take no arguments", () => {
+        const members = readInterfaceMembers("SelectBoxAddon");
 
-        expect(memberSource).not.toMatch(/^ {4}set[A-Z]\w*\??\s*\(/m);
-        expect(memberSource).not.toMatch(/^ {4}use\??\s*\(/m);
+        const lifecycle = members.filter(
+            (member): member is ts.MethodSignature =>
+                ts.isMethodSignature(member) &&
+                member.name !== undefined &&
+                ts.isIdentifier(member.name) &&
+                ["attach", "detach"].includes(member.name.text),
+        );
+
+        expect(lifecycle).toHaveLength(2);
+        expect(lifecycle.map((member) => member.parameters.length)).toEqual([0, 0]);
+    });
+
+    test("SelectBoxAddon exposes no mutator hook", () => {
+        const names = memberNames(readInterfaceMembers("SelectBoxAddon"));
+
+        expect(names.filter((name) => /^set[A-Z]/.test(name) || name === "use")).toEqual([]);
     });
 });

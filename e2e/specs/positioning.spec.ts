@@ -18,8 +18,9 @@ test("the popover sits directly under the trigger, aligned and matching width", 
     const trigger = (await selectBox.trigger.boundingBox())!;
     const popover = (await selectBox.popover.boundingBox())!;
 
-    expect(popover.y - (trigger.y + trigger.height)).toBeLessThanOrEqual(8);
-    expect(popover.y).toBeGreaterThan(trigger.y);
+    const gap = popover.y - (trigger.y + trigger.height);
+    expect(gap).toBeGreaterThanOrEqual(0);
+    expect(gap).toBeLessThanOrEqual(8);
     expect(Math.abs(popover.x - trigger.x)).toBeLessThanOrEqual(1);
     expect(Math.abs(popover.width - trigger.width)).toBeLessThanOrEqual(1);
 });

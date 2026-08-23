@@ -20,15 +20,16 @@ test("tearing the instance down leaves nothing behind", async ({ selectBox }) =>
 });
 
 test("a click after teardown does not throw", async ({ selectBox, page }) => {
-    const errors: string[] = [];
-    page.on("pageerror", (error) => errors.push(error.message));
     await selectBox.open();
     await selectBox.openPopover();
+    // Armed before the actions and awaited after: reading a buffer straight
+    // after the click races the event and misses a real throw.
+    const thrown = page.waitForEvent("pageerror", { timeout: 1_000 }).catch(() => null);
 
     await selectBox.destroy();
     await page.mouse.click(5, 5);
 
-    expect(errors).toEqual([]);
+    expect(await thrown).toBeNull();
 });
 
 test("switching to the inline surface at runtime keeps one working instance", async ({

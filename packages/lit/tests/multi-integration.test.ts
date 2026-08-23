@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBox } from "../src/index.js";

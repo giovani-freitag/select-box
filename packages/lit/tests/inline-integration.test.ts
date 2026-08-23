@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import type { SelectionValue } from "@select-box/core";
 import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
