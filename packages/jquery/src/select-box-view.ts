@@ -18,11 +18,42 @@ import {
 export type SelectBoxSurface = "popover" | "inline";
 
 /**
+ * The part of a select box that can be published on a plain DOM element.
+ *
+ * A global property cannot carry the view's `TExtra` parameter, so this handle
+ * exposes only the members whose signatures do not mention it. Anything typed
+ * by `TExtra` — the controller, the option list — stays on the instance the
+ * plugin returns, where the compiler can still check it.
+ */
+export interface SelectBoxElementHandle {
+    /** The element the view owns. */
+    readonly root: HTMLElement;
+    /** Opens the popover. */
+    open(): void;
+    /** Closes the popover. */
+    close(): void;
+    /** Opens the popover when closed, closes it when open. */
+    toggle(): void;
+    /** Drops the current selection. */
+    clear(): void;
+    /**
+     * Switches between single and multi selection in place.
+     *
+     * @param mode - Selection mode to move to.
+     */
+    setMode(mode: "single" | "multi"): void;
+    /** Tears the view down and takes its markup out of the document. */
+    destroy(): void;
+}
+
+/**
  * Light-DOM select box view that wires a `SelectBoxController` into a host
  * element. Supports both single and multi modes via the config's `mode` flag,
  * and both `popover` and `inline` surfaces via the `surface` flag.
  */
-export class SelectBoxView<TExtra extends object = object> {
+export class SelectBoxView<TExtra extends object = object>
+    implements SelectBoxElementHandle
+{
     private readonly rootElement: HTMLDivElement;
     private readonly coreController: SelectBoxController<TExtra, SelectionValue>;
     private readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
@@ -41,20 +72,21 @@ export class SelectBoxView<TExtra extends object = object> {
     }
 
     /**
-     * The element this view owns, which every wrapper marks `data-select-root`.
+     * The element this view owns.
      *
-     * A getter rather than a captured node: switching surfaces builds a
-     * different root, and a held reference would dangle outside the tree.
+     * @returns The outermost node, marked `data-select-root`.
      */
     get root(): HTMLDivElement {
+        // Read through rather than captured: a surface switch builds a different
+        // root, and a node held by a consumer would dangle outside the tree.
         return this.rootElement;
     }
 
     /**
      * The controller driving this view.
      *
-     * The escape hatch behind the styled tier: it is the same instance the
-     * view renders from, so a call through it repaints like any other change.
+     * @returns The same instance the view renders from, so a call through it
+     * repaints like any other change.
      */
     get controller(): SelectBoxController<TExtra, SelectionValue> {
         return this.coreController;
@@ -203,22 +235,36 @@ export class SelectBoxView<TExtra extends object = object> {
         this.onDestroy?.();
     }
 
-    /** Opens the popover. */
+    /**
+     * Opens the popover.
+     *
+     * No visible effect on the inline surface, which has no popover — the open
+     * flag still flips, so a later surface switch opens already-open.
+     */
     open(): void {
         this.coreController.open();
     }
 
-    /** Closes the popover. */
+    /**
+     * Closes the popover.
+     */
     close(): void {
         this.coreController.close();
     }
 
-    /** Opens the popover when closed, closes it when open. */
+    /**
+     * Opens the popover when it is closed, closes it when it is open.
+     */
     toggle(): void {
         this.coreController.toggle();
     }
 
-    /** Drops the current selection. */
+    /**
+     * Drops the current selection.
+     *
+     * Refused while the control is disabled or read-only, the same as a
+     * selection made by hand.
+     */
     clear(): void {
         this.coreController.clear();
     }
@@ -378,7 +424,9 @@ export class SelectBoxView<TExtra extends object = object> {
 
     private listen(): void {
         this.unsubscribeFromStore = this.coreController.subscribe(this.handleSnapshotChange);
-        this.formMirror?.form?.addEventListener("reset", this.handleFormReset);
+        if (this.formMirror !== null) {
+            document.addEventListener("reset", this.handleFormReset);
+        }
         if (this.surface === "inline") return;
         this.input!.addEventListener("input", this.handleInputChange);
         this.input!.addEventListener("focus", this.handleInputFocus);
@@ -397,7 +445,7 @@ export class SelectBoxView<TExtra extends object = object> {
     private unlisten(): void {
         this.unsubscribeFromStore?.();
         this.unsubscribeFromStore = null;
-        this.formMirror?.form?.removeEventListener("reset", this.handleFormReset);
+        document.removeEventListener("reset", this.handleFormReset);
         if (this.surface === "inline") return;
         this.input?.removeEventListener("input", this.handleInputChange);
         this.input?.removeEventListener("focus", this.handleInputFocus);
@@ -411,7 +459,21 @@ export class SelectBoxView<TExtra extends object = object> {
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
     }
 
-    private readonly handleFormReset = (): void => {
+    /**
+     * Clears the selection when the form holding the mirror is reset.
+     *
+     * Bound at the document rather than on the form: the view is built before
+     * its root reaches the tree, so the mirror has no form owner yet and a
+     * listener placed on it would attach to nothing. The filter asks the
+     * resetting form whether the mirror is one of the controls it owns, which
+     * is both the precise question and immune to a cross-realm identity check.
+     */
+    private readonly handleFormReset = (event: Event): void => {
+        const mirror = this.formMirror;
+        if (mirror === null) return;
+        const form = event.target as HTMLFormElement | null;
+        if (form === null || form.elements === undefined) return;
+        if (!Array.from(form.elements).includes(mirror)) return;
         this.coreController.reset();
     };
 
