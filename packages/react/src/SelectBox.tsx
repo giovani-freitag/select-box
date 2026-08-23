@@ -10,6 +10,7 @@ import {
 import { useEffect, useImperativeHandle, useRef, type JSX, type Ref } from "react";
 
 import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
+import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
 import { InlineSurface } from "./InlineSurface.js";
@@ -119,6 +120,7 @@ export function SelectBox<TExtra extends object = object>(
     }, [controller, wantMulti]);
 
     useFilterReactivity(controller, props.filter);
+    useOptionsReactivity(controller, props.options);
     useNotifyChange(state, props.onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);

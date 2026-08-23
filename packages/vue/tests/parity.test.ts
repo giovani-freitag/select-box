@@ -35,6 +35,9 @@ describeParitySuite({
 
         return createDomHandle({
             queryScope: () => mountPoint,
+            setOptions: (options) => {
+                void wrapper.setProps({ options });
+            },
             publicRoot: () => exposed?.root ?? null,
             publicController: () => exposed?.controller ?? null,
             settle: () => nextTick(),

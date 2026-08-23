@@ -16,6 +16,12 @@ export interface SelectBoxPluginConfig<TExtra extends object = object>
     readonly surface?: SelectBoxSurface;
 }
 
+/** Extra argument a method may carry: a mode for `setMode`, a list for `options`. */
+type MethodArgument<TExtra extends object> =
+    | "single"
+    | "multi"
+    | ReadonlyArray<SelectOption<TExtra>>;
+
 type Method =
     | "open"
     | "close"
@@ -24,6 +30,7 @@ type Method =
     | "destroy"
     | "controller"
     | "root"
+    | "options"
     | "setMode";
 
 const VIEWS = new WeakMap<HTMLElement, SelectBoxView>();
@@ -37,7 +44,7 @@ export function registerSelectBoxPlugin(jq: typeof JQueryStatic): void {
     function selectBoxPlugin<TExtra extends object = object>(
         this: JQuery,
         configOrMethod: SelectBoxPluginConfig<TExtra> | Method,
-        arg?: "single" | "multi",
+        arg?: MethodArgument<TExtra>,
     ): JQuery | SelectBoxController<TExtra, SelectionValue> | HTMLElement | undefined {
         if (typeof configOrMethod === "string") {
             return invokeMethod<TExtra>(this, configOrMethod, arg);
@@ -76,7 +83,7 @@ function initialize<TExtra extends object>(
 function invokeMethod<TExtra extends object>(
     collection: JQuery,
     method: Method,
-    arg?: "single" | "multi",
+    arg?: MethodArgument<TExtra>,
 ): JQuery | SelectBoxController<TExtra, SelectionValue> | HTMLElement | undefined {
     if (method === "controller" || method === "root") {
         const first = collection.get(0);
@@ -103,6 +110,9 @@ function invokeMethod<TExtra extends object>(
                 break;
             case "setMode":
                 if (arg === "single" || arg === "multi") view.setMode(arg);
+                break;
+            case "options":
+                if (Array.isArray(arg)) view.setOptions(arg);
                 break;
             case "destroy":
                 view.destroy();

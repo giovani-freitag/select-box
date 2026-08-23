@@ -10,6 +10,7 @@ import {
 import { computed, ref, watch, type ShallowRef } from "vue";
 
 import { useFilterReactivity } from "./composables/use-filter-reactivity.js";
+import { useOptionsReactivity } from "./composables/use-options-reactivity.js";
 import { useNotifyChange } from "./composables/use-notify-change.js";
 import { useSelectBox } from "./composables/use-select-box.js";
 import InlineSurface from "./InlineSurface.vue";
@@ -90,6 +91,7 @@ watch(
 );
 
 useFilterReactivity(controller, computed(() => props.filter));
+useOptionsReactivity(controller, computed(() => props.options));
 useNotifyChange(state, {
     single: (value, option) => emit("change", value, option),
     multi: (values, options) => emit("change-multi", values, options),

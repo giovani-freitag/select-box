@@ -1,10 +1,13 @@
 import { act, fireEvent, render, type RenderResult } from "@testing-library/react";
 import { createRef, type RefObject } from "react";
 
+import type { JSX } from "react";
+
 import {
     describeParitySuite,
     type ParityHandle,
     type ParityMountConfig,
+    type ParityOption,
 } from "@select-box/parity";
 
 import { SelectBox, type SelectBoxHandle } from "../src/SelectBox.js";
@@ -17,6 +20,7 @@ import { SelectBox, type SelectBoxHandle } from "../src/SelectBox.js";
 function createReactHandle(
     result: RenderResult,
     handleRef: RefObject<SelectBoxHandle | null>,
+    rerenderWith: (options: ReadonlyArray<ParityOption>) => void,
 ): ParityHandle {
     function input(): HTMLInputElement {
         return result.container.querySelector<HTMLInputElement>("[data-select-input]")!;
@@ -31,6 +35,11 @@ function createReactHandle(
         publicRoot: () => handleRef.current?.root ?? null,
         publicController: () => handleRef.current?.controller ?? null,
         settle: flush,
+
+        async setOptions(options: ReadonlyArray<ParityOption>): Promise<void> {
+            act(() => rerenderWith(options));
+            await flush();
+        },
 
         async focusInput(): Promise<void> {
             act(() => {
@@ -72,25 +81,29 @@ describeParitySuite({
 
     mount(config: ParityMountConfig): Promise<ParityHandle> {
         const handleRef = createRef<SelectBoxHandle>();
-        const result = config.multi
-            ? render(
-                  <SelectBox
-                      multi
-                      ref={handleRef}
-                      options={config.options}
-                      placeholder={config.placeholder}
-                      surface={config.surface}
-                  />,
-              )
-            : render(
-                  <SelectBox
-                      ref={handleRef}
-                      options={config.options}
-                      placeholder={config.placeholder}
-                      surface={config.surface}
-                  />,
-              );
+        const element = (options: ReadonlyArray<ParityOption>): JSX.Element =>
+            config.multi ? (
+                <SelectBox
+                    multi
+                    ref={handleRef}
+                    options={options}
+                    placeholder={config.placeholder}
+                    surface={config.surface}
+                />
+            ) : (
+                <SelectBox
+                    ref={handleRef}
+                    options={options}
+                    placeholder={config.placeholder}
+                    surface={config.surface}
+                />
+            );
+        const result = render(element(config.options));
 
-        return Promise.resolve(createReactHandle(result, handleRef));
+        return Promise.resolve(
+            createReactHandle(result, handleRef, (options) => {
+                result.rerender(element(options));
+            }),
+        );
     },
 });

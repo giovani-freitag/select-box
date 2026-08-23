@@ -26,6 +26,9 @@ describeParitySuite({
         return Promise.resolve(
             createDomHandle({
                 queryScope: () => mountPoint,
+                setOptions: (options) => {
+                    jQuery(mountPoint).selectBox("options", options);
+                },
                 publicRoot: () => jQuery(mountPoint).selectBox("root") ?? null,
                 publicController: () => jQuery(mountPoint).selectBox("controller") ?? null,
                 settle: () => Promise.resolve(),

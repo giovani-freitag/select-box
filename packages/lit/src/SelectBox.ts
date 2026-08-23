@@ -173,12 +173,14 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     protected override willUpdate(changed: PropertyValues<this>): void {
-        const rebuildOnlyChanges =
-            changed.has("options") ||
-            changed.has("addons") ||
-            changed.has("ungroupedLabel");
+        // `options` swaps in place on a live controller so the committed selection
+        // survives, the way a native select behaves when its children change.
+        // `addons` and `ungroupedLabel` are construction-time and still rebuild.
+        const rebuildOnlyChanges = changed.has("addons") || changed.has("ungroupedLabel");
         if (!this.reactiveController || rebuildOnlyChanges) {
             this.rebuildController();
+        } else if (changed.has("options")) {
+            this.reactiveController.core.setOptions(this.options ?? []);
         } else if (changed.has("multi") && this.reactiveController) {
             // Mode toggle preserves the current selection via driver coerce —
             // no need to throw away the controller.

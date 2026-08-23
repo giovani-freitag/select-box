@@ -174,6 +174,15 @@ export class SelectBoxView<TExtra extends object = object> {
         this.controller.clear();
     }
 
+    /**
+     * Replaces the option list, keeping whatever selection still applies.
+     *
+     * @param options - The new flat option list.
+     */
+    setOptions(options: ReadonlyArray<SelectOption<TExtra>>): void {
+        this.controller.setOptions(options);
+    }
+
     private createTrigger(): HTMLDivElement {
         const trigger = document.createElement("div");
         trigger.className = "select-box-trigger";

@@ -4,6 +4,7 @@ import {
     PARITY_FRUITS,
     PARITY_GROUPED_FRUITS,
     PARITY_PLACEHOLDER,
+    PARITY_SWAPPED_FRUITS,
     type ParityAdapter,
     type ParityHandle,
 } from "./adapter.js";
@@ -228,6 +229,35 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             await mounted.typeIntoInput("rap");
 
             expect(groupLabels(mounted)).toEqual(["Berries"]);
+        });
+
+        test("swapping the options renders the new list", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.setOptions(PARITY_SWAPPED_FRUITS);
+
+            expect(optionLabels(mounted)).toEqual(["Pear", "Fig", "Date"]);
+        });
+
+        test("swapping the options keeps a selection the new list still offers", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+            await mounted.clickElement(optionByLabel(mounted, "Pear"));
+
+            await mounted.setOptions(PARITY_SWAPPED_FRUITS);
+
+            expect(input(mounted).value).toBe("Pear");
+        });
+
+        test("swapping the options drops a selection the new list no longer offers", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+            await mounted.clickElement(optionByLabel(mounted, "Apple"));
+
+            await mounted.setOptions(PARITY_SWAPPED_FRUITS);
+
+            expect(input(mounted).value).toBe("");
         });
 
         test("hands over the live controller, not a copy", async () => {

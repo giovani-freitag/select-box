@@ -47,6 +47,61 @@ describe("SingleSelectBoxController", () => {
         expect(controller.getState().value).toBe("pear");
     });
 
+    test("swapping the options keeps a selection that still exists", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+        });
+
+        controller.setOptions([
+            { value: "pear", label: "Pear", id: 2, name: "pear" },
+            { value: "fig", label: "Fig", id: 6, name: "fig" },
+        ]);
+
+        expect(controller.getState().value).toBe("pear");
+        expect(controller.getState().filteredGroups[0]!.options.map((o) => o.value)).toEqual([
+            "pear",
+            "fig",
+        ]);
+    });
+
+    test("swapping the options drops a selection that no longer exists", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({
+            options: fruits,
+            initialValue: "pear",
+        });
+
+        controller.setOptions([{ value: "fig", label: "Fig", id: 6, name: "fig" }]);
+
+        expect(controller.getState().value).toBeNull();
+    });
+
+    test("the highlighted row follows its option across a swap", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+        controller.open();
+        controller.moveActive(1);
+        controller.moveActive(1);
+        const highlighted = controller.getState().activeOption!.value;
+
+        controller.setOptions([
+            { value: "fig", label: "Fig", id: 6, name: "fig" },
+            ...fruits,
+        ]);
+
+        expect(controller.getState().activeOption!.value).toBe(highlighted);
+    });
+
+    test("swapping the options keeps the query and the open state", () => {
+        const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
+        controller.open();
+        controller.setQuery("pe");
+
+        controller.setOptions([...fruits, { value: "fig", label: "Fig", id: 6, name: "fig" }]);
+
+        expect(controller.getState().open).toBe(true);
+        expect(controller.getState().query).toBe("pe");
+    });
+
     test("lands inside the list for any navigation delta", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({ options: fruits });
         const selectable = 4;

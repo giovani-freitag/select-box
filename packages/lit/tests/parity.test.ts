@@ -23,6 +23,9 @@ describeParitySuite({
 
         return createDomHandle({
             queryScope: () => element,
+            setOptions: (options) => {
+                element.options = options;
+            },
             publicRoot: () => element.root,
             publicController: () => element.controller,
             settle: async () => {

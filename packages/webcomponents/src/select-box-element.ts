@@ -277,7 +277,11 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
     set options(next: ReadonlyArray<SelectOption<TExtra>> | undefined) {
         this.pendingOptions = next;
-        this.rebuildControllerIfConnected();
+        // A live controller swaps its list in place, the way a native select
+        // reacts to its `<option>` children changing. Rebuilding would throw the
+        // committed selection away.
+        if (this.coreController) this.coreController.setOptions(next ?? []);
+        else this.rebuildControllerIfConnected();
     }
 
     get value(): SelectionValue {

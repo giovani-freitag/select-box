@@ -39,8 +39,9 @@ export class SelectBoxController<
     private currentMode: SelectionMode;
     private driver: SelectionDriver<TValue>;
     private readonly store: Store<SelectBoxSnapshot<TExtra, TValue>>;
-    private readonly allGroups: ReadonlyArray<SelectGroup<TExtra>>;
-    private readonly optionsByValue: ReadonlyMap<string, SelectOption<TExtra>>;
+    private allGroups: ReadonlyArray<SelectGroup<TExtra>>;
+    private optionsByValue: ReadonlyMap<string, SelectOption<TExtra>>;
+    private readonly ungroupedLabel: string;
     private readonly defaultFilter: OptionFilterStrategy<TExtra>;
     private explicitFilter: OptionFilterStrategy<TExtra> | null;
     private filterStrategy: OptionFilterStrategy<TExtra>;
@@ -56,9 +57,10 @@ export class SelectBoxController<
     constructor(config: SelectBoxControllerConfig<TExtra>) {
         this.currentMode = config.mode ?? "single";
         this.driver = SelectBoxController.resolveDriver<TValue>(this.currentMode);
+        this.ungroupedLabel = config.ungroupedLabel ?? "";
         this.allGroups = normalizeOptionsToGroups({
             options: config.options ?? [],
-            ungroupedLabel: config.ungroupedLabel ?? "",
+            ungroupedLabel: this.ungroupedLabel,
         });
         this.optionsByValue = indexOptionsByValue(this.allGroups);
         this.defaultFilter = new SubstringFilterStrategy<TExtra>();
@@ -99,6 +101,28 @@ export class SelectBoxController<
     }
 
     /** Highlight ranges the active strategy draws for `label` under the current query. */
+    /**
+     * Replaces the option list on a live controller.
+     *
+     * Mirrors a native `<select>` whose `<option>` children changed: the list is
+     * re-normalised, the selection is re-resolved against it so keys that no
+     * longer name a selectable option drop out, and the highlighted row follows
+     * its option rather than its index.
+     *
+     * @param options - The new flat option list.
+     */
+    setOptions(options: ReadonlyArray<SelectOption<TExtra>>): void {
+        const previousActive = this.activeOption();
+        this.allGroups = normalizeOptionsToGroups({
+            options,
+            ungroupedLabel: this.ungroupedLabel,
+        });
+        this.optionsByValue = indexOptionsByValue(this.allGroups);
+        this.currentValue = this.resolveValueFromInput(this.currentValue);
+        this.currentActiveIndex = this.indexOfActiveCandidate(previousActive);
+        this.publish();
+    }
+
     getHighlightRanges(label: string): ReadonlyArray<SearchMatchRange> {
         if (this.currentQuery.trim() === "") return [];
         return this.filterStrategy.match(label, this.currentQuery);
@@ -272,6 +296,21 @@ export class SelectBoxController<
             value = this.driver.commit(value, option);
         }
         return value;
+    }
+
+    /** The currently highlighted option, or null when nothing is highlighted. */
+    private activeOption(): SelectOption<TExtra> | null {
+        if (this.currentActiveIndex === SelectBoxController.NO_ACTIVE_INDEX) return null;
+        return this.flattenSelectable(this.computeFilteredGroups())[this.currentActiveIndex] ?? null;
+    }
+
+    /** Where a previously highlighted option sits in the current list, if at all. */
+    private indexOfActiveCandidate(candidate: SelectOption<TExtra> | null): number {
+        if (candidate === null) return SelectBoxController.NO_ACTIVE_INDEX;
+        const index = this.flattenSelectable(this.computeFilteredGroups()).findIndex(
+            (option) => option.value === candidate.value,
+        );
+        return index === -1 ? SelectBoxController.NO_ACTIVE_INDEX : index;
     }
 
     private buildSnapshot(): SelectBoxSnapshot<TExtra, TValue> {

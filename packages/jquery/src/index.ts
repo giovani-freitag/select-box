@@ -1,4 +1,4 @@
-import type { SelectBoxController, SelectionValue } from "@select-box/core";
+import type { SelectBoxController, SelectionValue, SelectOption } from "@select-box/core";
 import jQuery from "jquery";
 
 import { registerSelectBoxPlugin, type SelectBoxPluginConfig } from "./plugin.js";
@@ -40,6 +40,10 @@ declare global {
             method: "controller",
         ): SelectBoxController<TExtra, SelectionValue> | undefined;
         selectBox(method: "root"): HTMLElement | undefined;
+        selectBox<TExtra extends object = object>(
+            method: "options",
+            options: ReadonlyArray<SelectOption<TExtra>>,
+        ): JQuery<TElement>;
     }
 }
 

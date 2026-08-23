@@ -48,6 +48,8 @@ export interface ParityHandle {
     publicController(): ParityController | null;
     /** Resolves once the wrapper has flushed whatever is pending. */
     settle(): Promise<void>;
+    /** Replaces the option list the way a consumer of this wrapper would. */
+    setOptions(options: ReadonlyArray<ParityOption>): Promise<void>;
     focusInput(): Promise<void>;
     typeIntoInput(text: string): Promise<void>;
     clickElement(element: Element): Promise<void>;
@@ -77,8 +79,16 @@ export const PARITY_GROUPED_FRUITS: ReadonlyArray<ParityOption> = [
 
 export const PARITY_PLACEHOLDER = "Pick a fruit";
 
+/** A different list, sharing one value with `PARITY_FRUITS` so a swap can keep it. */
+export const PARITY_SWAPPED_FRUITS: ReadonlyArray<ParityOption> = [
+    { value: "pear", label: "Pear" },
+    { value: "fig", label: "Fig" },
+    { value: "date", label: "Date" },
+];
+
 interface DomHandleConfig {
     readonly queryScope: () => ParentNode;
+    readonly setOptions: (options: ReadonlyArray<ParityOption>) => void;
     readonly publicRoot: () => Element | null;
     readonly publicController: () => ParityController | null;
     readonly settle: () => Promise<void>;
@@ -102,6 +112,11 @@ export function createDomHandle(config: DomHandleConfig): ParityHandle {
         publicRoot: config.publicRoot,
         publicController: config.publicController,
         settle: config.settle,
+
+        async setOptions(options: ReadonlyArray<ParityOption>): Promise<void> {
+            config.setOptions(options);
+            await config.settle();
+        },
 
         async focusInput(): Promise<void> {
             input().focus();
