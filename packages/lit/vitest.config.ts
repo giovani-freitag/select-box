@@ -7,5 +7,8 @@ export default defineConfig({
         // initializer and happy-dom 15 ships no ElementInternals, so it cannot be
         // constructed there at all.
         environment: "jsdom",
+        // A real ElementInternals, so form association is exercised instead of
+        // stubbed away per test file.
+        setupFiles: ["element-internals-polyfill"],
     },
 });

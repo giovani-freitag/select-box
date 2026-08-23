@@ -485,7 +485,11 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         const snapshot = this.coreController?.getState();
         const hasSelection = snapshot ? snapshot.selectedOptions.length > 0 : false;
         if (!hasSelection) {
-            this.internals.setValidity({});
+            this.internals.setValidity(
+                { valueMissing: true },
+                "Please pick an option.",
+                this.refs?.input,
+            );
             return;
         }
         this.internals.setValidity({});

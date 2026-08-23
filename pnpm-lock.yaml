@@ -370,6 +370,9 @@ importers:
       '@select-box/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/tsconfig
+      element-internals-polyfill:
+        specifier: ^1.3.11
+        version: 1.3.13
       eslint:
         specifier: ^9.17.0
         version: 9.39.4
@@ -2926,6 +2929,9 @@ packages:
 
   electron-to-chromium@1.5.353:
     resolution: {integrity: sha512-kOrWphBi8TOZyiJZqsgqIle0lw+tzmnQK83pV9dZUd01Nm2POECSyFQMAuarzZdYqQW7FH9RaYOuaRo3h+bQ3w==}
+
+  element-internals-polyfill@1.3.13:
+    resolution: {integrity: sha512-viZ7wJsvh6eFwGQX512zEaccK/c6RRFSerJsdkfe3DW/ZtruvNeOR33fpPZgfXxvqRdU2lK33KM4S6GqaTgVKQ==}
 
   element-internals-polyfill@3.0.2:
     resolution: {integrity: sha512-uB0/Qube3lkwh8SmkTnGIyUgJ9YdqVSzIoHMRCEQjAbD4Y5UzsVbch1tIxjTgUe5k3gy1U0ZMKMJ90A81lqwig==}
@@ -7564,6 +7570,8 @@ snapshots:
       semver: 7.8.0
 
   electron-to-chromium@1.5.353: {}
+
+  element-internals-polyfill@1.3.13: {}
 
   element-internals-polyfill@3.0.2: {}
 

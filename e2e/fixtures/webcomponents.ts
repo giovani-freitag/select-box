@@ -9,6 +9,8 @@ defineSelectBoxElement();
 const config = readFixtureConfig();
 const element = document.createElement("select-box");
 element.setAttribute("placeholder", config.placeholder);
+if (config.name !== "") element.setAttribute("name", config.name);
+if (config.required) element.setAttribute("required", "");
 element.setAttribute("surface", config.surface);
 if (config.multi) element.setAttribute("multi", "");
 element.options = config.options;

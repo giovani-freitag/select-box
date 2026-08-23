@@ -1,5 +1,5 @@
 import type { SelectionValue } from "@select-box/core";
-import { beforeAll, describe, expect, test } from "vitest";
+import { afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBoxElement } from "../src/index.js";
 
@@ -17,6 +17,32 @@ const fruits = [
 beforeAll(() => {
     defineSelectBoxElement();
 });
+
+/**
+ * Mounts the element inside a real form so `FormData` can observe it.
+ *
+ * @param setup - Which form-facing attributes to declare.
+ * @returns The form and the element, both attached to the document.
+ */
+afterEach(() => {
+    document.body.innerHTML = "";
+});
+
+function mountInForm(setup: {
+    readonly name?: string;
+    readonly required?: boolean;
+    readonly multi?: boolean;
+}): { form: HTMLFormElement; element: SelectBoxElement<FruitExtra> } {
+    const form = document.createElement("form");
+    const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
+    if (setup.name !== undefined) element.setAttribute("name", setup.name);
+    if (setup.required === true) element.setAttribute("required", "");
+    if (setup.multi === true) element.setAttribute("multi", "");
+    element.options = fruits;
+    form.append(element);
+    document.body.append(form);
+    return { form, element };
+}
 
 describe("<select-box>", () => {
     test("renders the trigger input with placeholder when no value is selected", () => {
@@ -88,16 +114,55 @@ describe("<select-box>", () => {
         expect((SelectBoxConstructor as unknown as { formAssociated?: boolean }).formAssociated).toBe(true);
     });
 
-    test("exposes the ElementInternals validity surface", () => {
-        const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
-        element.options = fruits;
-        document.body.append(element);
+    test("submits the committed value under its name", () => {
+        const { form, element } = mountInForm({ name: "fruit" });
 
-        expect(typeof element.checkValidity).toBe("function");
-        expect(typeof element.reportValidity).toBe("function");
-        expect(element.validity).toBeDefined();
-        expect(element.willValidate).toBe(true);
+        element.value = "pear";
 
-        element.remove();
+        expect([...new FormData(form)]).toEqual([["fruit", "pear"]]);
     });
+
+    test("submits one entry per selection in multi mode", () => {
+        const { form, element } = mountInForm({ name: "fruit", multi: true });
+
+        element.value = ["pear", "lemon"];
+
+        expect([...new FormData(form)]).toEqual([
+            ["fruit", "pear"],
+            ["fruit", "lemon"],
+        ]);
+    });
+
+    test("submits an empty entry while no option is selected", () => {
+        const { form } = mountInForm({ name: "fruit" });
+
+        expect([...new FormData(form)]).toEqual([["fruit", ""]]);
+    });
+
+    test("submits no entry at all when multi mode holds nothing", () => {
+        const { form } = mountInForm({ name: "fruit", multi: true });
+
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
+    test("submits nothing when it carries no name", () => {
+        const { form, element } = mountInForm({});
+
+        element.value = "pear";
+
+        expect([...new FormData(form)]).toEqual([]);
+    });
+
+    test("fails validation while required and empty, and passes once filled", () => {
+        const { element } = mountInForm({ name: "fruit", required: true });
+
+        expect(element.checkValidity()).toBe(false);
+        expect(element.validationMessage).not.toBe("");
+
+        element.value = "pear";
+
+        expect(element.checkValidity()).toBe(true);
+        expect(element.validationMessage).toBe("");
+    });
+
 });

@@ -1,27 +1,7 @@
 import type { SelectionValue } from "@select-box/core";
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { defineSelectBoxElement, type SelectBox } from "../src/index.js";
-
-// jsdom 25 ships partial ElementInternals — patch the form-association
-// methods our component touches. Real-browser form-association behaviour
-// is covered by the deferred matrix E2E suite (§6.3).
-beforeAll(() => {
-    const proto = HTMLElement.prototype as HTMLElement & {
-        attachInternals: () => ElementInternals;
-    };
-    const original = proto.attachInternals;
-    proto.attachInternals = function () {
-        const internals = original.call(this) as ElementInternals & Record<string, unknown>;
-        if (typeof internals.setFormValue !== "function") {
-            internals.setFormValue = () => {};
-        }
-        if (typeof internals.setValidity !== "function") {
-            internals.setValidity = () => {};
-        }
-        return internals;
-    };
-});
 
 interface Fruit {
     readonly value: string;

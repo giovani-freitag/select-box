@@ -17,6 +17,9 @@ export interface FixtureConfig {
     readonly multi: boolean;
     readonly surface: "popover" | "inline";
     readonly placeholder: string;
+    /** Submitted field name. Empty means the control stays out of the form data. */
+    readonly name: string;
+    readonly required: boolean;
 }
 
 const FRUITS: ReadonlyArray<FixtureOption> = [
@@ -58,6 +61,8 @@ export function readFixtureConfig(): FixtureConfig {
         multi: params.get("multi") === "1",
         surface: params.get("surface") === "inline" ? "inline" : "popover",
         placeholder: params.get("placeholder") ?? "Pick a fruit",
+        name: params.get("name") ?? "",
+        required: params.get("required") === "1",
     };
 }
 

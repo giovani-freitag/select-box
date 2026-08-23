@@ -6,6 +6,8 @@ export interface ScenarioQuery {
     readonly count?: number;
     readonly groups?: boolean;
     readonly disabled?: boolean;
+    readonly name?: string;
+    readonly required?: boolean;
 }
 
 /**
@@ -35,6 +37,8 @@ export class SelectBoxPage {
         if (scenario.count !== undefined) params.set("count", String(scenario.count));
         if (scenario.groups === true) params.set("groups", "1");
         if (scenario.disabled === true) params.set("disabled", "1");
+        if (scenario.name !== undefined) params.set("name", scenario.name);
+        if (scenario.required === true) params.set("required", "1");
         const query = params.toString();
         await this.page.goto(`/${this.framework}.html${query === "" ? "" : `?${query}`}`);
         await this.root.waitFor();

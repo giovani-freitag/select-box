@@ -1,23 +1,6 @@
-import { afterEach, beforeAll, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { defineSelectBoxElement, type SelectBox } from "../src/index.js";
-
-beforeAll(() => {
-    const proto = HTMLElement.prototype as HTMLElement & {
-        attachInternals: () => ElementInternals;
-    };
-    const original = proto.attachInternals;
-    proto.attachInternals = function () {
-        const internals = original.call(this) as ElementInternals & Record<string, unknown>;
-        if (typeof internals.setFormValue !== "function") {
-            internals.setFormValue = () => {};
-        }
-        if (typeof internals.setValidity !== "function") {
-            internals.setValidity = () => {};
-        }
-        return internals;
-    };
-});
 
 interface Fruit {
     readonly value: string;
