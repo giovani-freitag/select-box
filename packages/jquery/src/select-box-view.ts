@@ -60,6 +60,8 @@ export class SelectBoxView<TExtra extends object = object> {
     private readonly placeholder: string;
     private readonly formMirror: HTMLSelectElement | null;
     private readonly inlineSurface: HTMLDivElement | null;
+    private readonly ariaLabel: string | undefined;
+    private readonly ariaLabelledby: string | undefined;
 
     private readonly listVirtualizer: SelectBoxListVirtualizer | null;
     private rowModel: SelectBoxRowModel<TExtra> = new SelectBoxRowModel<TExtra>({ groups: [] });
@@ -74,6 +76,8 @@ export class SelectBoxView<TExtra extends object = object> {
             readonly surface?: SelectBoxSurface;
             readonly name?: string;
             readonly required?: boolean;
+            readonly ariaLabel?: string;
+            readonly ariaLabelledby?: string;
             readonly onValueChange?: (
                 value: string | null,
                 option: SelectOption<TExtra> | null,
@@ -89,6 +93,8 @@ export class SelectBoxView<TExtra extends object = object> {
         this.previousValueKey = SelectBoxSnapshotView.valueKey(this.controller.getState().value);
         this.placeholder = config.placeholder ?? "Select…";
         this.formMirror = SelectBoxView.createFormMirror(config.name, config.required === true);
+        this.ariaLabel = config.ariaLabel;
+        this.ariaLabelledby = config.ariaLabelledby;
         this.onSingleChange = config.onValueChange;
         this.onMultiChange = config.onMultiValueChange;
         this.surface = config.surface ?? "popover";
@@ -217,6 +223,37 @@ export class SelectBoxView<TExtra extends object = object> {
         return mirror;
     }
 
+    /**
+     * Points the combobox role, its state and its label at whichever node owns
+     * them in the current mode.
+     *
+     * Written on every paint rather than at construction: `setMode` moves the
+     * role between the trigger and the input, and the node it left behind would
+     * otherwise keep announcing a stale `aria-expanded`.
+     *
+     * @param open - Whether the popover is showing.
+     * @param isMulti - Whether the trigger owns the role instead of the input.
+     */
+    private paintComboboxRole(open: boolean, isMulti: boolean): void {
+        const combobox = isMulti ? this.trigger! : this.input!;
+        const other = isMulti ? this.input! : this.trigger!;
+
+        combobox.setAttribute("role", "combobox");
+        combobox.setAttribute("aria-haspopup", "listbox");
+        combobox.setAttribute("aria-expanded", String(open));
+        if (this.ariaLabel !== undefined) combobox.setAttribute("aria-label", this.ariaLabel);
+        if (this.ariaLabelledby !== undefined) {
+            combobox.setAttribute("aria-labelledby", this.ariaLabelledby);
+        }
+
+        other.removeAttribute("aria-expanded");
+        other.removeAttribute("aria-haspopup");
+        other.removeAttribute("aria-label");
+        other.removeAttribute("aria-labelledby");
+        if (other === this.input) other.setAttribute("role", "searchbox");
+        else other.removeAttribute("role");
+    }
+
     /** Mirrors the snapshot into the native control the form reads. */
     private paintFormMirror(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {
         if (!this.formMirror) return;
@@ -246,11 +283,6 @@ export class SelectBoxView<TExtra extends object = object> {
         const trigger = document.createElement("div");
         trigger.className = "select-box-trigger";
         trigger.dataset["selectTrigger"] = "";
-        if (this.multi) {
-            trigger.setAttribute("role", "combobox");
-            trigger.setAttribute("aria-haspopup", "listbox");
-            trigger.setAttribute("aria-expanded", "false");
-        }
 
         const tags = document.createElement("div");
         tags.className = "select-box-tags";
@@ -259,11 +291,6 @@ export class SelectBoxView<TExtra extends object = object> {
         const input = document.createElement("input");
         input.type = "text";
         input.className = "select-box-input";
-        input.setAttribute("role", this.multi ? "searchbox" : "combobox");
-        if (!this.multi) {
-            input.setAttribute("aria-haspopup", "listbox");
-            input.setAttribute("aria-expanded", "false");
-        }
         input.setAttribute("aria-autocomplete", "list");
         input.dataset["selectInput"] = "";
 
@@ -464,11 +491,7 @@ export class SelectBoxView<TExtra extends object = object> {
                 ? snapshot.selectedOption.label
                 : this.placeholder);
 
-        if (isMulti) {
-            this.trigger!.setAttribute("aria-expanded", String(snapshot.open));
-        } else {
-            this.input!.setAttribute("aria-expanded", String(snapshot.open));
-        }
+        this.paintComboboxRole(snapshot.open, isMulti);
 
         this.paintChips(snapshot, isMulti);
         this.setTriggerButtonPresent(this.clearButton!, isMulti && hasSelection);

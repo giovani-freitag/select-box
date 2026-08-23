@@ -14,6 +14,8 @@ const props = defineProps<{
     controller: SelectBoxController<TExtra, SelectionValue>;
     name: string | undefined;
     required: boolean | undefined;
+    ariaLabelText: string | undefined;
+    ariaLabelledbyRef: string | undefined;
 }>();
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");

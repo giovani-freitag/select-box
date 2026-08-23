@@ -24,6 +24,8 @@ describeParitySuite({
         if (config.disabled === true) element.setAttribute("disabled", "");
         if (config.readOnly === true) element.setAttribute("readonly", "");
         element.options = config.options;
+        if (config.addons !== undefined) element.addons = config.addons;
+        if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
         document.body.append(element);
 
         return Promise.resolve(
@@ -31,6 +33,9 @@ describeParitySuite({
                 queryScope: () => element,
                 setOptions: (options) => {
                     element.options = options;
+                },
+                setMulti: (multi) => {
+                    element.multi = multi;
                 },
                 publicRoot: () => element.root,
                 publicController: () => element.controller,

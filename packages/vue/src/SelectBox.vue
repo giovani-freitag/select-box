@@ -43,6 +43,14 @@ export interface SelectBoxProps<TExtra extends object = object> {
     name?: string;
     /** Blocks submission while nothing is selected, natively. */
     required?: boolean;
+    /**
+     * Accessible name for the combobox.
+     *
+     * An explicit prop rather than attribute fallthrough, because a bare
+     * `aria-label` would land on the root and the role lives on a child.
+     */
+    ariaLabel?: string;
+    ariaLabelledby?: string;
 }
 
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
@@ -139,6 +147,8 @@ defineExpose({
         :controller="controller"
         :name="name"
         :required="required"
+        :aria-label-text="ariaLabel"
+        :aria-labelledby-ref="ariaLabelledby"
     />
     <PopoverSurface
         v-else
@@ -148,5 +158,7 @@ defineExpose({
         :placeholder="placeholder"
         :name="name"
         :required="required"
+        :aria-label-text="ariaLabel"
+        :aria-labelledby-ref="ariaLabelledby"
     />
 </template>

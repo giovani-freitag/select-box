@@ -6,6 +6,7 @@ import {
     PARITY_GROUPED_FRUITS,
     PARITY_PLACEHOLDER,
     PARITY_SWAPPED_FRUITS,
+    type ParityAddon,
     type ParityAdapter,
     type ParityHandle,
 } from "./adapter.js";
@@ -329,6 +330,116 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             await mounted.setOptions(PARITY_SWAPPED_FRUITS);
 
             expect(input(mounted).value).toBe("");
+        });
+
+        async function mountWithAddon(addon: ParityAddon): Promise<ParityHandle> {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+                addons: [addon],
+            });
+            return handle;
+        }
+
+        test("names the combobox with the label a consumer asked for", async () => {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+                ariaLabel: "Fruit picker",
+            });
+            const mounted = handle;
+
+            const combobox = mounted.queryScope().querySelector("[role='combobox']");
+
+            expect(combobox).not.toBeNull();
+            expect(combobox!.getAttribute("aria-label")).toBe("Fruit picker");
+        });
+
+        test("keeps aria-expanded on the combobox and nowhere else", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            const announcing = [
+                ...mounted.queryScope().querySelectorAll("[aria-expanded]"),
+            ];
+
+            expect(announcing).toHaveLength(1);
+            expect(announcing[0]!.getAttribute("role")).toBe("combobox");
+            expect(announcing[0]!.getAttribute("aria-expanded")).toBe("true");
+        });
+
+        test("moves the combobox role when the mode flips, leaving no stale state", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.setMulti(true);
+
+            // The node that stopped being the combobox must stop announcing too,
+            // otherwise a screen reader hears two expandable controls.
+            const comboboxes = mounted.queryScope().querySelectorAll("[role='combobox']");
+            const announcing = mounted.queryScope().querySelectorAll("[aria-expanded]");
+            expect(comboboxes).toHaveLength(1);
+            expect(announcing).toHaveLength(1);
+            expect(announcing[0]).toBe(comboboxes[0]);
+        });
+
+        test("announces multi-selectability on the listbox in multi mode", async () => {
+            const mounted = await mountMulti();
+            await mounted.focusInput();
+
+            const listbox = mounted.queryScope().querySelector("[data-select-popover]");
+
+            expect(listbox!.getAttribute("aria-multiselectable")).toBe("true");
+        });
+
+        test("exactly one node claims the combobox role in multi mode", async () => {
+            const mounted = await mountMulti();
+
+            const comboboxes = mounted.queryScope().querySelectorAll("[role='combobox']");
+
+            expect(comboboxes).toHaveLength(1);
+        });
+
+        test("renders the groups an addon's transformGroups produced", async () => {
+            const mounted = await mountWithAddon({
+                name: "pin",
+                transformGroups: (groups) => [
+                    { key: "pinned", label: "Pinned", options: [PARITY_FRUITS[2]!] },
+                    ...groups,
+                ],
+            });
+
+            await mounted.focusInput();
+
+            expect(groupLabels(mounted)).toContain("Pinned");
+            expect(optionLabels(mounted)[0]).toBe("Grape");
+        });
+
+        test("publishes what an addon's extendSnapshot returned", async () => {
+            const mounted = await mountWithAddon({
+                name: "badge",
+                extendSnapshot: () => ({ marker: "from-addon" }),
+            });
+
+            const published = mounted.publicController()!.getState().addons;
+
+            expect(published["badge"]).toEqual({ marker: "from-addon" });
+        });
+
+        test("an addon that removes every group leaves the list empty", async () => {
+            const mounted = await mountWithAddon({
+                name: "blackhole",
+                transformGroups: () => [],
+            });
+
+            await mounted.focusInput();
+
+            expect(optionLabels(mounted)).toEqual([]);
+            expect(mounted.queryScope().querySelector("[data-select-empty]")).not.toBeNull();
         });
 
         test("hands over the live controller, not a copy", async () => {

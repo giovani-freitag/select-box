@@ -19,6 +19,10 @@ export interface ParityMountConfig {
     readonly surface: ParitySurface;
     readonly disabled?: boolean;
     readonly readOnly?: boolean;
+    /** Addons registered at construction, exactly as a consumer would pass them. */
+    readonly addons?: ReadonlyArray<ParityAddon>;
+    /** Accessible name a consumer asked for. */
+    readonly ariaLabel?: string;
 }
 
 /**
@@ -29,7 +33,33 @@ export interface ParityMountConfig {
  */
 export interface ParityController {
     open(): void;
-    getState(): { readonly open: boolean };
+    getState(): {
+        readonly open: boolean;
+        readonly addons: Readonly<Record<string, unknown>>;
+    };
+}
+
+/**
+ * The addon shape, structurally.
+ *
+ * Declared here rather than imported so this package keeps no dependency on the
+ * core, while still letting a scenario hand a real addon to every wrapper the
+ * way a consumer would.
+ */
+export interface ParityAddon {
+    readonly name: string;
+    transformGroups?(
+        groups: ReadonlyArray<{
+            readonly key: string;
+            readonly label: string;
+            readonly options: ReadonlyArray<ParityOption>;
+        }>,
+    ): ReadonlyArray<{
+        readonly key: string;
+        readonly label: string;
+        readonly options: ReadonlyArray<ParityOption>;
+    }>;
+    extendSnapshot?(): unknown;
 }
 
 /**
@@ -53,6 +83,8 @@ export interface ParityHandle {
     settle(): Promise<void>;
     /** Replaces the option list the way a consumer of this wrapper would. */
     setOptions(options: ReadonlyArray<ParityOption>): Promise<void>;
+    /** Flips selection cardinality on a live instance. */
+    setMulti(multi: boolean): Promise<void>;
     focusInput(): Promise<void>;
     typeIntoInput(text: string): Promise<void>;
     clickElement(element: Element): Promise<void>;
@@ -99,6 +131,7 @@ export const PARITY_SWAPPED_FRUITS: ReadonlyArray<ParityOption> = [
 interface DomHandleConfig {
     readonly queryScope: () => ParentNode;
     readonly setOptions: (options: ReadonlyArray<ParityOption>) => void;
+    readonly setMulti: (multi: boolean) => void;
     readonly publicRoot: () => Element | null;
     readonly publicController: () => ParityController | null;
     readonly settle: () => Promise<void>;
@@ -125,6 +158,11 @@ export function createDomHandle(config: DomHandleConfig): ParityHandle {
 
         async setOptions(options: ReadonlyArray<ParityOption>): Promise<void> {
             config.setOptions(options);
+            await config.settle();
+        },
+
+        async setMulti(multi: boolean): Promise<void> {
+            config.setMulti(multi);
             await config.settle();
         },
 

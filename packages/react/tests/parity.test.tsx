@@ -21,6 +21,7 @@ function createReactHandle(
     result: RenderResult,
     handleRef: RefObject<SelectBoxHandle | null>,
     rerenderWith: (options: ReadonlyArray<ParityOption>) => void,
+    rerenderMulti: (multi: boolean) => void,
 ): ParityHandle {
     function input(): HTMLInputElement {
         return result.container.querySelector<HTMLInputElement>("[data-select-input]")!;
@@ -38,6 +39,11 @@ function createReactHandle(
 
         async setOptions(options: ReadonlyArray<ParityOption>): Promise<void> {
             act(() => rerenderWith(options));
+            await flush();
+        },
+
+        async setMulti(multi: boolean): Promise<void> {
+            act(() => rerenderMulti(multi));
             await flush();
         },
 
@@ -81,14 +87,19 @@ describeParitySuite({
 
     mount(config: ParityMountConfig): Promise<ParityHandle> {
         const handleRef = createRef<SelectBoxHandle>();
-        const element = (options: ReadonlyArray<ParityOption>): JSX.Element =>
-            config.multi ? (
+        const element = (
+            options: ReadonlyArray<ParityOption>,
+            multi: boolean = config.multi,
+        ): JSX.Element =>
+            multi ? (
                 <SelectBox
                     multi
                     ref={handleRef}
                     options={options}
                     placeholder={config.placeholder}
                     surface={config.surface}
+                    addons={config.addons}
+                    aria-label={config.ariaLabel}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                 />
@@ -98,6 +109,8 @@ describeParitySuite({
                     options={options}
                     placeholder={config.placeholder}
                     surface={config.surface}
+                    addons={config.addons}
+                    aria-label={config.ariaLabel}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                 />
@@ -105,9 +118,16 @@ describeParitySuite({
         const result = render(element(config.options));
 
         return Promise.resolve(
-            createReactHandle(result, handleRef, (options) => {
-                result.rerender(element(options));
-            }),
+            createReactHandle(
+                result,
+                handleRef,
+                (options) => {
+                    result.rerender(element(options));
+                },
+                (multi) => {
+                    result.rerender(element(config.options, multi));
+                },
+            ),
         );
     },
 });

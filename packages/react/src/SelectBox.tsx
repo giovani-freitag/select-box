@@ -37,25 +37,25 @@ export interface SelectBoxHandle<TExtra extends object = object> {
 }
 
 interface SelectBoxBaseProps<TExtra extends object> {
-    readonly options?: ReadonlyArray<SelectOption<TExtra>>;
-    readonly placeholder?: string;
-    readonly ungroupedLabel?: string;
-    readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
-    readonly filter?: OptionFilterStrategy<TExtra>;
-    readonly surface?: SelectBoxSurface;
+    readonly options?: ReadonlyArray<SelectOption<TExtra>> | undefined;
+    readonly placeholder?: string | undefined;
+    readonly ungroupedLabel?: string | undefined;
+    readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>> | undefined;
+    readonly filter?: OptionFilterStrategy<TExtra> | undefined;
+    readonly surface?: SelectBoxSurface | undefined;
     /** Refuses every interaction and stays out of the form data, like a disabled input. */
-    readonly disabled?: boolean;
+    readonly disabled?: boolean | undefined;
     /** Refuses changes while staying focusable and submitted, like a readonly input. */
-    readonly readOnly?: boolean;
+    readonly readOnly?: boolean | undefined;
     /** Field name under which the selection is submitted. Omit to stay out of the form. */
-    readonly name?: string;
+    readonly name?: string | undefined;
     /** Blocks submission while nothing is selected, natively. */
-    readonly required?: boolean;
-    readonly className?: string;
+    readonly required?: boolean | undefined;
+    readonly className?: string | undefined;
     /** Receives the imperative handle: the root element and the core controller. */
     readonly ref?: Ref<SelectBoxHandle<TExtra>> | undefined;
-    readonly "aria-label"?: string;
-    readonly "aria-labelledby"?: string;
+    readonly "aria-label"?: string | undefined;
+    readonly "aria-labelledby"?: string | undefined;
 }
 
 export interface SelectBoxSingleProps<TExtra extends object = object>

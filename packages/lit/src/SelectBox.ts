@@ -471,6 +471,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     aria-autocomplete="list"
                     aria-expanded=${state.open}
                     aria-readonly=${this.readOnly}
+                    aria-label=${this.getAttribute("aria-label") ?? nothing}
+                    aria-labelledby=${this.getAttribute("aria-labelledby") ?? nothing}
                     ?disabled=${this.disabled}
                     ?readonly=${this.readOnly}
                     placeholder=${placeholderText}
@@ -505,6 +507,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 role="combobox"
                 aria-haspopup="listbox"
                 aria-expanded=${state.open}
+                aria-label=${this.getAttribute("aria-label") ?? nothing}
+                aria-labelledby=${this.getAttribute("aria-labelledby") ?? nothing}
                 data-select-trigger
                 @mousedown=${this.handleControlMouseDown}
             >

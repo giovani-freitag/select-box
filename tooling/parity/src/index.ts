@@ -5,6 +5,7 @@ export {
     PARITY_GROUPED_FRUITS,
     PARITY_PLACEHOLDER,
     PARITY_SWAPPED_FRUITS,
+    type ParityAddon,
     type ParityAdapter,
     type ParityController,
     type ParityHandle,

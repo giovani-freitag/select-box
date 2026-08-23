@@ -25,6 +25,8 @@ const props = defineProps<{
     placeholder: string | undefined;
     name: string | undefined;
     required: boolean | undefined;
+    ariaLabelText: string | undefined;
+    ariaLabelledbyRef: string | undefined;
 }>();
 
 const rootRef = useTemplateRef<HTMLDivElement>("rootEl");
@@ -178,6 +180,8 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
             class="select-box-trigger"
             data-select-trigger
             role="combobox"
+            :aria-label="ariaLabelText"
+            :aria-labelledby="ariaLabelledbyRef"
             aria-haspopup="listbox"
             :aria-expanded="state.open"
             @mousedown="handleControlMouseDown"
@@ -235,6 +239,8 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 type="text"
                 class="select-box-input"
                 role="combobox"
+                :aria-label="ariaLabelText"
+                :aria-labelledby="ariaLabelledbyRef"
                 aria-haspopup="listbox"
                 aria-autocomplete="list"
                 :aria-expanded="state.open"

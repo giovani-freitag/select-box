@@ -21,6 +21,8 @@ describeParitySuite({
             placeholder: config.placeholder,
             mode: config.multi ? "multi" : "single",
             surface: config.surface,
+            ...(config.addons !== undefined ? { addons: config.addons } : {}),
+            ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
             disabled: config.disabled === true,
             readOnly: config.readOnly === true,
         });
@@ -30,6 +32,9 @@ describeParitySuite({
                 queryScope: () => mountPoint,
                 setOptions: (options) => {
                     jQuery(mountPoint).selectBox("options", options);
+                },
+                setMulti: (multi) => {
+                    jQuery(mountPoint).selectBox("setMode", multi ? "multi" : "single");
                 },
                 publicRoot: () => jQuery(mountPoint).selectBox("root") ?? null,
                 publicController: () => jQuery(mountPoint).selectBox("controller") ?? null,

@@ -483,6 +483,20 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.syncValidity();
     }
 
+    /**
+     * Copies the accessible name from the host onto the labelled node.
+     *
+     * @param host - Element the consumer labelled.
+     * @param target - Node carrying the widget role.
+     */
+    private static mirrorLabel(host: HTMLElement, target: HTMLElement): void {
+        for (const attribute of ["aria-label", "aria-labelledby", "aria-describedby"]) {
+            const value = host.getAttribute(attribute);
+            if (value === null) target.removeAttribute(attribute);
+            else target.setAttribute(attribute, value);
+        }
+    }
+
     private syncValidity(): void {
         if (!this.required || this.disabled || this.readOnly) {
             this.internals.setValidity({});
@@ -545,6 +559,9 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.refs.input.placeholder = placeholderText;
         this.refs.input.setAttribute("aria-expanded", String(snapshot.open));
         this.refs.input.setAttribute("aria-readonly", String(this.readOnly));
+        // The host is what a consumer labels, but the input is what carries
+        // role="combobox", so the label has to travel inward to be announced.
+        SelectBoxElement.mirrorLabel(this, this.refs.input);
         this.refs.input.disabled = this.disabled;
         this.refs.input.readOnly = this.readOnly;
 
@@ -552,6 +569,9 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.refs.caret.hidden = isMulti;
         this.paintClearButton(hasSelection, isMulti);
 
+        // The popover is the listbox, so multi-selectability is announced there —
+        // the inline surface sets its own copy separately.
+        this.refs.popover.setAttribute("aria-multiselectable", String(isMulti));
         this.refs.popover.hidden = !snapshot.open;
         if (!snapshot.open) return;
 

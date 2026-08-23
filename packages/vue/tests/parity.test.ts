@@ -23,6 +23,8 @@ describeParitySuite({
                 placeholder: config.placeholder,
                 multi: config.multi,
                 surface: config.surface,
+                ...(config.addons !== undefined ? { addons: config.addons } : {}),
+                ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
                 disabled: config.disabled === true,
                 readOnly: config.readOnly === true,
             },
@@ -39,6 +41,9 @@ describeParitySuite({
             queryScope: () => mountPoint,
             setOptions: (options) => {
                 void wrapper.setProps({ options });
+            },
+            setMulti: (multi) => {
+                void wrapper.setProps({ multi });
             },
             publicRoot: () => exposed?.root ?? null,
             publicController: () => exposed?.controller ?? null,
