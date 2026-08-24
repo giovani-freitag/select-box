@@ -7,8 +7,9 @@
     "type": "module",
     "scripts": {
         "e2e": "playwright test",
+        "e2e:docs": "playwright test --config playwright.docs.config.ts",
         "e2e:headed": "playwright test --headed",
-        "lint": "eslint specs lib fixtures",
+        "lint": "eslint specs docs-specs lib fixtures",
         "report": "playwright show-report",
         "typecheck": "vue-tsc --noEmit"
     },

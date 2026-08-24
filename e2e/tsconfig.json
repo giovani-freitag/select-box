@@ -7,6 +7,13 @@
         "moduleResolution": "bundler",
         "module": "preserve"
     },
-    "include": ["specs/**/*.ts", "lib/**/*.ts", "fixtures/**/*.ts", "fixtures/**/*.tsx", "*.config.ts"],
+    "include": [
+        "specs/**/*.ts",
+        "docs-specs/**/*.ts",
+        "lib/**/*.ts",
+        "fixtures/**/*.ts",
+        "fixtures/**/*.tsx",
+        "*.config.ts"
+    ],
     "exclude": ["node_modules"]
 }

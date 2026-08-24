@@ -3,26 +3,53 @@
     "ui": "stream",
     "tasks": {
         "build": {
-            "dependsOn": ["^build"],
-            "outputs": ["dist/**", "dist/**/*", ".astro/**", "src/content/docs/api/**"]
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "dist/**",
+                "dist/**/*",
+                ".astro/**",
+                "src/content/docs/api/**"
+            ]
         },
         "typecheck": {
-            "dependsOn": ["^build"],
+            "dependsOn": [
+                "^build"
+            ],
             "outputs": []
         },
         "test": {
-            "dependsOn": ["^build"],
+            "dependsOn": [
+                "^build"
+            ],
             "outputs": []
         },
         "e2e": {
-            "dependsOn": ["^build"],
-            "outputs": ["playwright-report/**", "test-results/**"],
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "playwright-report/**",
+                "test-results/**"
+            ],
             "cache": false
         },
         "lint": {
             "outputs": []
         },
         "clean": {
+            "cache": false
+        },
+        "e2e:docs": {
+            "dependsOn": [
+                "^build",
+                "@select-box/docs-starlight#build"
+            ],
+            "outputs": [
+                "playwright-report-docs/**",
+                "test-results/**"
+            ],
             "cache": false
         }
     }
