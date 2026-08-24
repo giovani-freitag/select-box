@@ -482,6 +482,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     ): TemplateResult {
         const view = new SelectBoxSnapshotView(state);
         const inputValue = view.triggerInputValue;
+        const clearControl = view.clearControl;
         const placeholderText = state.open && state.selectedOption
             ? state.selectedOption.label
             : (this.placeholder ?? "Select…");
@@ -518,6 +519,19 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     @mousedown=${this.handleCaretMouseDown}
                     @click=${this.handleCaretClick}
                 >▾</button>
+                ${clearControl.visible
+                    ? html`
+                        <button
+                            type="button"
+                            class="select-box-clear"
+                            aria-label=${clearControl.ariaLabel}
+                            tabindex="-1"
+                            data-select-clear
+                            @mousedown=${(event: Event) => event.stopPropagation()}
+                            @click=${this.handleClearAll}
+                        >${clearControl.label}</button>
+                    `
+                    : nothing}
             </div>
         `;
     }
@@ -527,6 +541,9 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     ): TemplateResult {
         const hasSelection = state.selectedOptions.length > 0;
         const placeholderText = hasSelection ? "" : (this.placeholder ?? "Select…");
+        const view = new SelectBoxSnapshotView<TExtra, SelectionValue>(state);
+        const clearControl = view.clearControl;
+        const removeControl = view.removeControl;
         return html`
             <div
                 class="select-box-trigger"
@@ -547,7 +564,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                                 <button
                                     type="button"
                                     class="select-box-chip-remove"
-                                    aria-label=${`Remove ${option.label}`}
+                                    aria-label=${removeControl.ariaLabelFor(option.label)}
                                     data-select-chip-remove
                                     @mousedown=${(event: Event) => event.stopPropagation()}
                                     @click=${(event: MouseEvent) => this.handleChipRemove(option, event)}
@@ -571,17 +588,17 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                         @keydown=${this.handleKeyDown}
                     />
                 </div>
-                ${hasSelection
+                ${clearControl.visible
                     ? html`
                         <button
                             type="button"
                             class="select-box-clear"
-                            aria-label="Clear all"
+                            aria-label=${clearControl.ariaLabel}
                             tabindex="-1"
                             data-select-clear
                             @mousedown=${(event: Event) => event.stopPropagation()}
                             @click=${this.handleClearAll}
-                        >×</button>
+                        >${clearControl.label}</button>
                     `
                     : nothing}
             </div>

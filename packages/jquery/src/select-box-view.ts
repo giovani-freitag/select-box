@@ -595,6 +595,9 @@ export class SelectBoxView<TExtra extends object = object>
         // the trigger while the controller still holds a selection.
         this.input!.defaultValue = inputValue;
         const hasSelection = snapshot.selectedOptions.length > 0;
+        const clearControl = view.clearControl;
+        this.clearButton!.textContent = clearControl.label;
+        this.clearButton!.setAttribute("aria-label", clearControl.ariaLabel);
         this.input!.disabled = snapshot.disabled;
         this.input!.readOnly = snapshot.readOnly;
         if (snapshot.readOnly) this.input!.setAttribute("aria-readonly", "true");
@@ -608,7 +611,7 @@ export class SelectBoxView<TExtra extends object = object>
         this.paintComboboxRole(snapshot.open, isMulti);
 
         this.chipPainter.paintTriggerChips(this.tagsContainer!, snapshot);
-        this.setTriggerButtonPresent(this.clearButton!, isMulti && hasSelection);
+        this.setTriggerButtonPresent(this.clearButton!, view.clearControl.visible);
 
         this.popover!.hidden = !snapshot.open;
         if (!snapshot.open) return;

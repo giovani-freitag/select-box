@@ -1,6 +1,8 @@
 import {
     optionElementId,
+    SelectBoxSnapshotView,
     TextHighlighter,
+    type RemoveControlView,
     type SelectBoxController,
     type SelectionValue,
     type SelectOption,
@@ -120,12 +122,13 @@ export class SelectBoxNodeFactory<TExtra extends object = object> {
         chip.dataset["selectChip"] = "";
         chip.append(document.createTextNode(option.label));
 
+        const control = this.removeControl();
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "select-box-chip-remove";
-        remove.setAttribute("aria-label", `Remove ${option.label}`);
+        remove.setAttribute("aria-label", control.ariaLabelFor(option.label));
         remove.dataset["selectChipRemove"] = "";
-        remove.textContent = "×";
+        remove.textContent = control.label;
         // Without this the trigger's own mousedown would reopen the popover
         // underneath the click that is removing the chip.
         remove.addEventListener("mousedown", (event) => event.stopPropagation());
@@ -221,6 +224,24 @@ export class SelectBoxNodeFactory<TExtra extends object = object> {
 
     private isMulti(): boolean {
         return this.getController()?.mode === "multi";
+    }
+
+    /**
+     * How the remove control should read right now.
+     *
+     * Derived from the live snapshot rather than hardcoded, so an addon that
+     * translates the control reaches these nodes too.
+     */
+    private removeControl(): RemoveControlView {
+        const state = this.getController()?.getState();
+        if (state === undefined) {
+            return {
+                enabled: true,
+                label: "×",
+                ariaLabelFor: (optionLabel) => `Remove ${optionLabel}`,
+            };
+        }
+        return new SelectBoxSnapshotView(state).removeControl;
     }
 
     private isInteractive(): boolean {

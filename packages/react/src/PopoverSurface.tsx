@@ -155,6 +155,13 @@ function SingleTrigger<TExtra extends object>({
     activeDescendant,
 }: SingleTriggerProps<TExtra>): JSX.Element {
     const view = new SelectBoxSnapshotView(state);
+    const clearControl = view.clearControl;
+
+    function handleClear(event: MouseEvent<HTMLButtonElement>): void {
+        event.stopPropagation();
+        controller.clear();
+        inputRef.current?.focus({ preventScroll: true });
+    }
 
     function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
         if (!state.open) controller.open();
@@ -225,6 +232,19 @@ function SingleTrigger<TExtra extends object>({
             >
                 ▾
             </button>
+            {clearControl.visible && (
+                <button
+                    type="button"
+                    className="select-box-clear"
+                    aria-label={clearControl.ariaLabel}
+                    tabIndex={-1}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={handleClear}
+                    data-select-clear
+                >
+                    {clearControl.label}
+                </button>
+            )}
         </div>
     );
 }
@@ -290,6 +310,9 @@ function MultiTrigger<TExtra extends object>({
 
     const hasSelection = state.selectedOptions.length > 0;
     const placeholderText = hasSelection ? "" : (placeholder ?? "Select…");
+    const view = new SelectBoxSnapshotView<TExtra, SelectionValue>(state);
+    const clearControl = view.clearControl;
+    const removeControl = view.removeControl;
 
     return (
         <div
@@ -310,7 +333,7 @@ function MultiTrigger<TExtra extends object>({
                         <button
                             type="button"
                             className="select-box-chip-remove"
-                            aria-label={`Remove ${option.label}`}
+                            aria-label={removeControl.ariaLabelFor(option.label)}
                             data-select-chip-remove
                             onMouseDown={(event) => event.stopPropagation()}
                             onClick={(event) => handleChipRemove(option, event)}
@@ -336,17 +359,17 @@ function MultiTrigger<TExtra extends object>({
                     data-select-input
                 />
             </div>
-            {hasSelection && (
+            {clearControl.visible && (
                 <button
                     type="button"
                     className="select-box-clear"
-                    aria-label="Clear all"
+                    aria-label={clearControl.ariaLabel}
                     tabIndex={-1}
                     onMouseDown={(event) => event.stopPropagation()}
                     onClick={handleClearAll}
                     data-select-clear
                 >
-                    ×
+                    {clearControl.label}
                 </button>
             )}
         </div>

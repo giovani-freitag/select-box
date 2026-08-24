@@ -642,6 +642,128 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(chipLabels(mounted)).toEqual(["Pear"]);
         });
 
+        describe("addon-driven controls", () => {
+            /**
+             * A clear-button addon, structurally. Every wrapper reads the same
+             * slice, so the assertion is that all five light up the control the
+             * addon asked for — in single mode, where none ships one.
+             */
+            const clearButtonAddon = {
+                name: "clear-button",
+                extendSnapshot: () => ({
+                    visible: true,
+                    label: "⨯",
+                    ariaLabel: "Limpar tudo",
+                }),
+            };
+
+            async function mountWithAddons(options: {
+                readonly multi: boolean;
+                readonly addons: ReadonlyArray<ParityAddon>;
+            }): Promise<ParityHandle> {
+                handle = await adapter.mount({
+                    options: PARITY_FRUITS,
+                    placeholder: PARITY_PLACEHOLDER,
+                    multi: options.multi,
+                    surface: "popover",
+                    addons: options.addons,
+                });
+                return handle;
+            }
+
+            test("single mode offers no clear control on its own", async () => {
+                const mounted = await mountSingle();
+                await mounted.setValue("apple");
+
+                expect(clearControl(mounted)).toBeNull();
+            });
+
+            test("the addon brings the clear control to single mode", async () => {
+                const mounted = await mountWithAddons({
+                    multi: false,
+                    addons: [clearButtonAddon],
+                });
+                await mounted.setValue("apple");
+
+                expect(clearControl(mounted)).not.toBeNull();
+            });
+
+            test("the control carries the glyph and name the addon published", async () => {
+                const mounted = await mountWithAddons({
+                    multi: false,
+                    addons: [clearButtonAddon],
+                });
+                await mounted.setValue("apple");
+
+                const control = clearControl(mounted)!;
+                expect((control.textContent ?? "").trim()).toBe("⨯");
+                expect(control.getAttribute("aria-label")).toBe("Limpar tudo");
+            });
+
+            test("the control the addon added still clears", async () => {
+                const mounted = await mountWithAddons({
+                    multi: false,
+                    addons: [clearButtonAddon],
+                });
+                await mounted.setValue("apple");
+
+                await mounted.clickElement(clearControl(mounted)!);
+
+                expect(
+                    mounted.queryScope().querySelector("[data-select-selected]"),
+                ).toBeNull();
+            });
+
+            test("the addon can take the control away in multi mode", async () => {
+                const mounted = await mountWithAddons({
+                    multi: true,
+                    addons: [
+                        {
+                            name: "clear-button",
+                            extendSnapshot: () => ({
+                                visible: false,
+                                label: "×",
+                                ariaLabel: "x",
+                            }),
+                        },
+                    ],
+                });
+                await mounted.setValue(["apple"]);
+
+                expect(clearControl(mounted)).toBeNull();
+            });
+
+            test("a remove-button addon renames the chip's remove control", async () => {
+                const mounted = await mountWithAddons({
+                    multi: true,
+                    addons: [
+                        {
+                            name: "remove-button",
+                            extendSnapshot: () => ({
+                                enabled: true,
+                                label: "×",
+                                removable: [
+                                    {
+                                        value: "apple",
+                                        label: "Apple",
+                                        ariaLabel: "Remover Apple",
+                                    },
+                                ],
+                            }),
+                        },
+                    ],
+                });
+                await mounted.setValue(["apple"]);
+
+                expect(
+                    mounted
+                        .queryScope()
+                        .querySelector("[data-select-chip-remove]")
+                        ?.getAttribute("aria-label"),
+                ).toBe("Remover Apple");
+            });
+        });
+
         describe("inline surface", () => {
             test("renders one chip per option, with no popover and no trigger input", async () => {
                 const mounted = await mountInline({ multi: false });

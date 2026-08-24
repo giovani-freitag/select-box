@@ -54,6 +54,8 @@ const view = computed(
 );
 const inputValue = computed(() => view.value.triggerInputValue);
 const hasSelection = computed(() => props.state.selectedOptions.length > 0);
+const clearControl = computed(() => view.value.clearControl);
+const removeControl = computed(() => view.value.removeControl);
 const placeholderText = computed(() => {
     if (isMulti.value) {
         return hasSelection.value ? "" : (props.placeholder ?? "Select…");
@@ -208,7 +210,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                     <button
                         type="button"
                         class="select-box-chip-remove"
-                        :aria-label="`Remove ${option.label}`"
+                        :aria-label="removeControl.ariaLabelFor(option.label)"
                         data-select-chip-remove
                         @mousedown.stop
                         @click="(event) => handleChipRemove(option, event)"
@@ -232,15 +234,15 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 />
             </div>
             <button
-                v-if="hasSelection"
+                v-if="clearControl.visible"
                 type="button"
                 class="select-box-clear"
-                aria-label="Clear all"
+                :aria-label="clearControl.ariaLabel"
                 tabindex="-1"
                 data-select-clear
                 @mousedown.stop
                 @click="handleClearAll"
-            >×</button>
+            >{{ clearControl.label }}</button>
         </div>
 
         <!-- Single-mode trigger: plain input + caret button -->
@@ -276,6 +278,16 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 @mousedown.prevent
                 @click="handleCaretClick"
             >▾</button>
+            <button
+                v-if="clearControl.visible"
+                type="button"
+                class="select-box-clear"
+                :aria-label="clearControl.ariaLabel"
+                tabindex="-1"
+                data-select-clear
+                @mousedown.stop
+                @click="handleClearAll"
+            >{{ clearControl.label }}</button>
         </div>
 
         <div

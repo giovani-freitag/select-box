@@ -5,6 +5,7 @@ import {
     isMultiSelection,
     nextSelectBoxId,
     optionElementId,
+    type ClearControlView,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxSnapshot,
@@ -582,7 +583,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
 
         this.chipPainter.paintTriggerChips(this.refs.tagsContainer, snapshot);
         this.refs.caret.hidden = isMulti;
-        this.paintClearButton(hasSelection, isMulti);
+        this.paintClearButton(view.clearControl);
 
         // The popover is the listbox, so multi-selectability is announced there —
         // the inline surface sets its own copy separately.
@@ -593,9 +594,11 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.listPainter.paint(snapshot, view);
     }
 
-    private paintClearButton(hasSelection: boolean, isMulti: boolean): void {
+    private paintClearButton(control: ClearControlView): void {
         if (!this.refs) return;
-        const visible = isMulti && hasSelection;
+        this.refs.clearButton.textContent = control.label;
+        this.refs.clearButton.setAttribute("aria-label", control.ariaLabel);
+        const visible = control.visible;
         if (visible) {
             this.refs.clearButton.removeAttribute("hidden");
             this.refs.clearButton.dataset["hasSelection"] = "";
