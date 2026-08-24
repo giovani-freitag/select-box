@@ -18,6 +18,7 @@ function mount(): SelectBoxView {
         surface,
         name: config.name,
         required: config.required,
+        initialValue: config.initialValue,
     });
     host.on("change", (_event: unknown, value: unknown) => reportChange(value));
     host.on("selectbox:change", (_event: unknown, values: unknown) => reportChange(values));

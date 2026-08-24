@@ -321,10 +321,7 @@ describe("form participation", () => {
         expect(controller.getState().value).toBe("pear");
     });
 
-    // A native <select> would come back to its preselected option; every wrapper
-    // here empties instead, because core's reset() empties. Pinned so the
-    // divergence is a decision on record rather than an accident.
-    test("empties the selection even when an initial value was given", () => {
+    test("restores the initial value, the way a native select does", () => {
         const form = formWith("fruit");
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
@@ -335,7 +332,24 @@ describe("form participation", () => {
 
         form.reset();
 
-        expect(box.controller.getState().value).toBeNull();
+        expect(box.controller.getState().value).toBe("apple");
+        expect(
+            document.querySelector<HTMLInputElement>("#fruit [data-select-input]")?.value,
+        ).toBe("Apple");
+    });
+
+    test("submits the restored default after a reset", () => {
+        const form = formWith("fruit");
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+        box.controller.commitValue("pear");
+
+        form.reset();
+
+        expect([...new FormData(form).entries()]).toEqual([["fruit", "apple"]]);
     });
 });
 
@@ -424,5 +438,75 @@ describe("legacy method-string calls", () => {
         expect(() =>
             (jQuery("#fruit").selectBox as unknown as (method: string) => void)("destroy"),
         ).toThrow(/\.destroy\(\)/);
+    });
+});
+
+describe("the form mirror's reset baseline", () => {
+    function defaults(): ReadonlyArray<string> {
+        const mirror = document.querySelector<HTMLSelectElement>(
+            "#fruit [data-select-form-mirror]",
+        )!;
+        return [...mirror.options]
+            .filter((option) => option.defaultSelected)
+            .map((option) => option.value);
+    }
+
+    /**
+     * The browser resets the mirror to its attribute-defined default, so that
+     * default has to track what the widget holds — otherwise a reset lands on the
+     * empty option while the controller restores its own default.
+     */
+    test("marks the current selection as the default", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+
+        expect(defaults()).toEqual(["apple"]);
+    });
+
+    test("follows the selection as it moves", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+
+        box.controller.commitValue("pear");
+
+        expect(defaults()).toEqual(["pear"]);
+    });
+
+    test("survives an option list replaced at runtime", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        const box = jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+
+        box.setOptions([
+            { value: "apple", label: "Apple", group: "Pomes", id: 1, name: "apple" },
+            { value: "fig", label: "Fig", id: 9, name: "fig" },
+        ]);
+
+        expect(defaults()).toEqual(["apple"]);
+    });
+
+    test("keeps the trigger text as its own reset baseline", () => {
+        document.body.innerHTML = `<form id="host-form"><div id="fruit"></div></form>`;
+        jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            name: "fruit",
+            initialValue: "apple",
+        });
+
+        expect(
+            document.querySelector<HTMLInputElement>("#fruit [data-select-input]")
+                ?.defaultValue,
+        ).toBe("Apple");
     });
 });

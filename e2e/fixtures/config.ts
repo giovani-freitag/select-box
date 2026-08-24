@@ -20,6 +20,11 @@ export interface FixtureConfig {
     /** Submitted field name. Empty means the control stays out of the form data. */
     readonly name: string;
     readonly required: boolean;
+    /**
+     * Preselection the control is built with, which a form reset restores the
+     * way a native control returns to its default. Undefined means none.
+     */
+    readonly initialValue: string | ReadonlyArray<string> | undefined;
 }
 
 const FRUITS: ReadonlyArray<FixtureOption> = [
@@ -54,6 +59,14 @@ function buildOptions(params: URLSearchParams): ReadonlyArray<FixtureOption> {
     }));
 }
 
+function readInitialValue(
+    params: URLSearchParams,
+): string | ReadonlyArray<string> | undefined {
+    const raw = params.get("value");
+    if (raw === null || raw === "") return undefined;
+    return params.get("multi") === "1" ? raw.split(",") : raw;
+}
+
 export function readFixtureConfig(): FixtureConfig {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -63,6 +76,7 @@ export function readFixtureConfig(): FixtureConfig {
         placeholder: params.get("placeholder") ?? "Pick a fruit",
         name: params.get("name") ?? "",
         required: params.get("required") === "1",
+        initialValue: readInitialValue(params),
     };
 }
 

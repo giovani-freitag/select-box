@@ -79,6 +79,45 @@ test("resetting the form clears the selection", async ({ selectBox, page }) => {
     expect(await submitted(page)).toEqual([["fruit", ""]]);
 });
 
+test("resetting restores the preselected option, the way a native select does", async ({
+    selectBox,
+    page,
+}) => {
+    await selectBox.open({ name: "fruit", value: "apple" });
+    expect(await submitted(page)).toEqual([["fruit", "apple"]]);
+    await selectBox.openPopover();
+    await selectBox.options.filter({ hasText: "Pear" }).click();
+    expect(await submitted(page)).toEqual([["fruit", "pear"]]);
+
+    await page.locator("#reset").click();
+
+    expect(await submitted(page)).toEqual([["fruit", "apple"]]);
+    await expect(selectBox.input).toHaveValue("Apple");
+});
+
+test("resetting restores every preselected option in multi mode", async ({
+    selectBox,
+    page,
+}) => {
+    await selectBox.open({ multi: true, name: "fruit", value: "apple,pear" });
+    await selectBox.openPopover();
+    await selectBox.options.filter({ hasText: "Grape" }).click();
+    expect(await submitted(page)).toEqual([
+        ["fruit", "apple"],
+        ["fruit", "pear"],
+        ["fruit", "grape"],
+    ]);
+
+    // Multi keeps the popover open across commits, and it covers the button.
+    await page.keyboard.press("Escape");
+    await page.locator("#reset").click();
+
+    expect(await submitted(page)).toEqual([
+        ["fruit", "apple"],
+        ["fruit", "pear"],
+    ]);
+});
+
 test("blocks submission while required and empty", async ({ selectBox, page }) => {
     await selectBox.open({ name: "fruit", required: true });
 

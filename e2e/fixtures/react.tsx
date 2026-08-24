@@ -8,6 +8,11 @@ import { reportChange } from "./report.js";
 
 const config = readFixtureConfig();
 
+// The prop is mode-shaped, so the scenario's raw value is narrowed per branch
+// rather than cast.
+const defaultMulti = Array.isArray(config.initialValue) ? config.initialValue : [];
+const defaultSingle = typeof config.initialValue === "string" ? config.initialValue : null;
+
 function Fixture(): React.JSX.Element {
     const [surface, setSurface] = useState<SelectBoxSurface>(config.surface);
     (window as unknown as { toggleSurface: () => void }).toggleSurface = () => {
@@ -23,6 +28,7 @@ function Fixture(): React.JSX.Element {
                 surface={surface}
                 name={config.name}
                 required={config.required}
+                defaultValue={defaultMulti}
                 onChange={(values) => reportChange(values)}
             />
         );
@@ -34,6 +40,7 @@ function Fixture(): React.JSX.Element {
             surface={surface}
             name={config.name}
             required={config.required}
+            defaultValue={defaultSingle}
             onChange={(value) => reportChange(value)}
         />
     );

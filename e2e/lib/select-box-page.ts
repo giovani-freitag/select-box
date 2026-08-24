@@ -8,6 +8,8 @@ export interface ScenarioQuery {
     readonly disabled?: boolean;
     readonly name?: string;
     readonly required?: boolean;
+    /** Preselection to build the control with; a comma-separated list in multi mode. */
+    readonly value?: string;
 }
 
 /**
@@ -39,6 +41,7 @@ export class SelectBoxPage {
         if (scenario.disabled === true) params.set("disabled", "1");
         if (scenario.name !== undefined) params.set("name", scenario.name);
         if (scenario.required === true) params.set("required", "1");
+        if (scenario.value !== undefined) params.set("value", scenario.value);
         const query = params.toString();
         await this.page.goto(`/${this.framework}.html${query === "" ? "" : `?${query}`}`);
         await this.root.waitFor();

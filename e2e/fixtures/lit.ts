@@ -14,6 +14,7 @@ if (config.required) element.setAttribute("required", "");
 element.options = config.options;
 element.surface = config.surface;
 if (config.multi) element.multi = true;
+if (config.initialValue !== undefined) element.value = config.initialValue;
 element.addEventListener("change", () => reportChange(element.value));
 document.querySelector("#mount")!.append(element);
 
