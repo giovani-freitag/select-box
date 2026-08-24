@@ -11,6 +11,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scope:
+    name: Decide the E2E scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      frameworks: ${{ steps.decide.outputs.frameworks }}
+      docs: ${{ steps.decide.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Collect changed paths
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+          # A branch's first push reports an all-zero base; there is nothing to
+          # diff against, so fall back to running everything.
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            echo "files=__all__" >> "$GITHUB_OUTPUT"
+          else
+            echo "files=$(git diff --name-only "$base" "$head" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decide
+        id: decide
+        env:
+          CHANGED: ${{ steps.changes.outputs.files }}
+        run: pnpm --filter @select-box/ci run scope
+
   verify:
     name: Lint, typecheck, test
     runs-on: ubuntu-latest
@@ -45,15 +93,19 @@ jobs:
 
   e2e:
     name: Matrix E2E (${{ matrix.framework }})
+    needs: scope
+    if: needs.scope.outputs.frameworks != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     strategy:
       # One job per wrapper: a core regression turns every column red at once,
-      # a wrapper regression only its own, so the failure names the layer.
+      # a wrapper regression only its own, so the failure names the layer. The
+      # column list comes from the scope job, so a wrapper-only change pays for
+      # one browser run instead of five.
       fail-fast: false
       matrix:
-        framework: [react, vue, lit, webcomponents, jquery]
+        framework: ${{ fromJSON(needs.scope.outputs.frameworks) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -93,4 +145,51 @@ jobs:
         with:
           name: playwright-report-${{ matrix.framework }}
           path: e2e/playwright-report/
+          retention-days: 7
+
+  docs-demos:
+    name: Docs demos
+    needs: scope
+    if: needs.scope.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chromium
+        run: pnpm --filter @select-box/e2e exec playwright install --with-deps chromium
+
+      # The site's <script> blocks are the only code the type checker used not to
+      # reach, and a demo that throws at load still builds clean — so the built
+      # site gets driven in a browser.
+      - name: Run the demo guard
+        run: pnpm e2e:docs
+        env:
+          CI: "true"
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-docs
+          path: e2e/playwright-report-docs/
           retention-days: 7
