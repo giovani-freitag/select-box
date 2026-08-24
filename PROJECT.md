@@ -613,19 +613,38 @@ cross-realm identity check.
 `SelectBoxView` carries `root` and `controller` as getters, so §5.2 reads
 the same in jQuery as everywhere else.
 
-### 5.5 Form reset is not native reset
+### 5.5 Form reset restores the default
 
-Every wrapper answers a form reset by calling `controller.reset()`, which
-**empties** the selection. A native `<select>` would come back to its
-preselected option instead. The divergence is uniform across all five and
-pinned by tests, so it is a decision on record rather than an accident — but
-it is a decision: a consumer who mounts with `initialValue: 'apple'`, picks
-`pear`, then resets the form ends up with nothing selected, where a native
-control would show `apple` again.
+`form.reset()` behaves like a native control: the selection comes back to the
+value the box was built with, not to empty. `clear()` is the other operation —
+it empties whatever the default was, and it is the one a user gesture triggers.
 
-Changing it means changing core's `reset()` for all five wrappers at once.
+| Call | Result | Gated by disabled/readOnly |
+|---|---|---|
+| `controller.clear()` | empty | yes |
+| `controller.reset()` | the default it was built with | no |
 
-## 6. Testing strategy
+The default is stored as handed in and **re-resolved against the options
+loaded at reset time**, the way a native control's default lives in its markup
+rather than in a snapshot taken at startup. So a default whose option has since
+been removed or disabled resolves to empty, and one whose option arrives later
+starts working.
+
+Making this true in a browser took more than core: the three DOM-tree wrappers
+submit through a mirrored native `<select>`, and **the browser resets that
+mirror to its attribute-defined default**, not to whatever property the wrapper
+last wrote. Setting `option.selected` alone therefore loses the race — the
+platform wipes it after the widget restored it. Each mirror now stamps
+`defaultSelected` onto whatever it currently shows, so the platform's reset and
+the controller's reset land on the same option whichever runs first. jQuery does
+the same for the trigger `<input>`, whose `defaultValue` the browser restores
+just as literally. Vue needs neither: its render flush lands after the reset
+algorithm, so its repaint is already the last word — and rather than keep an
+untestable guard, it does without.
+
+The two custom elements sidestep all of it through `formResetCallback`.
+
+## 6. Testing strategy## 6. Testing strategy
 
 Layered, from cheap-and-fast to expensive-and-thorough. We follow
 TanStack's approach: the bulk of the verification happens in unit +
@@ -943,7 +962,7 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` Spec set covers what JSDOM can't simulate: real-CSS
   visibility, arrow navigation and focus, popover layout and paint
   order, virtualization over 10k options, teardown and runtime surface
-  switching, form submission and appearance. 39 specs × 5 wrappers.
+  switching, form submission and appearance. 41 specs × 5 wrappers.
 - `[done]` CI runs one job per wrapper with `fail-fast: false`, browsers
   cached, report uploaded on failure.
 - `[plan]` Paths-filter so per-wrapper PRs run only that wrapper's
