@@ -901,10 +901,11 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[wip]` Test coverage depth (see §6.1 + §6.2):
   - `[done]` Expand `packages/core/tests/` to cover virtualizer math +
     addon-host ordering + snapshot stability edges.
-  - `[wip]` Lift each wrapper's `tests/` from smoke-only to the
+  - `[done]` Lift each wrapper's `tests/` from smoke-only to the
     full per-adapter integration checklist. Popover, multi and inline
-    suites are in place for all five; arrow-key navigation and unmount
-    cleanup are the remaining gaps.
+    suites are in place for all five; arrow-key navigation and addon
+    teardown are covered by the parity suite each package runs (§6.2.1)
+    and again in a real browser by the keyboard and lifecycle specs.
   - `[done]` Shared cross-wrapper parity suite in `tooling/parity/`
     (§6.2.1), 56 scenarios per wrapper across both surfaces, including addons
     passed through each wrapper's own door and the full ARIA wiring. Closed the
