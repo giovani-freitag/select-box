@@ -37,7 +37,7 @@ framework-specific logic in the core, no behavioural drift across wrappers.
 - **Option groups** — flat-with-`group` or nested `groups`; filtered snapshot exposes `filteredGroups` so wrappers render headers; nav skips disabled rows and headers.
 - **One markup source per rendering style** — the four declarative wrappers render from their own templates; the web component and the jQuery plugin share `@select-box/dom`, so a row, a chip or a virtualized list exists once, not twice.
 - **Addon system** — opt-in `.use(new Addon(config))` chain. Hooks are pure transformers (reentrancy structurally impossible). Snapshot extension is typed via TypeScript declaration merging.
-- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 56 behavioural scenarios per wrapper in Vitest; `e2e/` runs 41 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown. A core regression fails all five columns at once; a wrapper regression fails only its own.
+- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 62 behavioural scenarios per wrapper in Vitest; `e2e/` runs 52 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown, and the accessibility mapping the browser itself computes. A core regression fails all five columns at once; a wrapper regression fails only its own.
 
 ## Quick start
 
@@ -192,10 +192,11 @@ the browser exercises what a consumer installs rather than the source tree.
 Pilot project. The select-box pulled out of `the-origin-app` is the first
 component; conventions and tooling established here become the template for
 future components. Single and multi mode are feature-complete across all five
-wrappers, in both the popover and the inline-chip surface, with `addon-fuzzy`
-and `addon-hoist-selected` shipped. Two matrix suites pin the same behaviour
-on every wrapper — one in Vitest, one in a real browser. Packages stay
-private for now; the remaining first-party addons are next.
+wrappers, in both the popover and the inline-chip surface, and seven
+first-party addons ship on a complete hook surface. Two matrix suites pin the
+same behaviour on every wrapper — one in Vitest, one in a real browser — plus a
+third that drives the demos the docs site actually publishes. Packages stay
+private for now.
 
 See [PROJECT.md](./PROJECT.md) for the full architectural spec, milestones, and
 open decisions.

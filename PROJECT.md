@@ -72,6 +72,11 @@ select-box/
 │   ├── jquery/                    # @select-box/jquery — $.fn.selectBox()
 │   ├── addon-fuzzy/               # @select-box/addon-fuzzy — FuzzyFilterStrategy + FuzzyAddon
 │   ├── addon-hoist-selected/      # @select-box/addon-hoist-selected — pins selection to top
+│   ├── addon-clear-button/        # @select-box/addon-clear-button — clear control in single mode
+│   ├── addon-create-option/       # @select-box/addon-create-option — "add the query" row
+│   ├── addon-remove-button/       # @select-box/addon-remove-button — per-selection remove control
+│   ├── addon-restore-on-backspace/ # @select-box/addon-restore-on-backspace — Backspace pops a chip
+│   ├── addon-persist/             # @select-box/addon-persist — selection through web storage
 │   └── styles/                    # @select-box/styles — base stylesheet for every wrapper
 ├── docs-starlight/                # Astro + Starlight site (current)
 │   ├── astro.config.mjs
@@ -81,21 +86,22 @@ select-box/
 │   └── src/styles/                # brand.css + demo.css (theme layer only)
 ├── e2e/                           # @select-box/e2e — Playwright matrix (§6.3)
 │   ├── playwright.config.ts       # one project per wrapper
+│   ├── playwright.docs.config.ts  # the built docs site (§6.4)
 │   ├── fixtures/                  # per-framework mount, URL-configured
 │   ├── lib/                       # page object over the data-select-* contract
-│   └── specs/                     # framework-agnostic specs
+│   ├── specs/                     # framework-agnostic specs
+│   └── docs-specs/                # guard over the demos the site ships
 ├── tooling/                       # shared dev-time packages
 │   ├── eslint-config/             # flat config preset
 │   ├── tsconfig/                  # base + library presets
-│   └── parity/                    # @select-box/parity — shared behaviour suite
+│   ├── parity/                    # @select-box/parity — shared behaviour suite
+│   └── ci/                        # @select-box/ci — tested E2E-scope routing (§6.5)
 ├── turbo.json
 ├── pnpm-workspace.yaml
 └── package.json                   # root scripts only
 ```
 
-Planned but not yet created: the remaining `packages/addon-*`
-(clear-button, inline-search, create-option, remove-button,
-restore-on-backspace, persist).
+Planned but not yet created: `packages/addon-inline-search`.
 
 ## 4. Core architecture
 
@@ -301,10 +307,10 @@ Status key: `[done]` wired in core · `[plan]` typed but not invoked yet.
 | `extendSnapshot` | `[done]` | `(ctx) => addonState` | Return the slice to publish under `snapshot.addons[name]` |
 | `provideFilter` | `[done]` | `() => OptionFilterStrategy` | Contribute a filter strategy; last provider wins, explicit `setFilter`/`config.filter` overrides |
 | `transformGroups` | `[done]` | `(groups, ctx) => groups` | Reorder, inject, hide groups (used by hoist). Composes in registration order; `ctx` is `AddonTransformContext` (settled pre-snapshot state, no `filteredGroups`/`activeIndex`) |
-| `transformOptions` | `[plan]` | `(options, group, ctx) => options` | Reorder/inject within a group |
-| `interceptCommit` | `[plan]` | `(option, ctx) => option \| null` | Replace (return new) or veto (return `null`) a commit |
-| `interceptOpen` / `interceptClose` | `[plan]` | `(ctx) => boolean \| Promise<boolean>` | Async gate (e.g. load options before open) |
-| `onKeyDown` | `[plan]` | `(event, ctx) => "handled" \| "pass"` | Custom shortcut without mutating during the call |
+| `transformOptions` | `[done]` | `(options, group, ctx) => options` | Reorder/inject within a group. Runs after `transformGroups`, so a group the first injected is still offered to the second |
+| `interceptCommit` | `[done]` | `(option, ctx) => option \| null` | Replace (return new) or veto (return `null`) a commit. Composes in order; each sees the previous replacement, the first `null` stops the chain |
+| `interceptOpen` / `interceptClose` | `[done]` | `(ctx) => boolean \| Promise<boolean>` | Gate the transition. A synchronous answer keeps it synchronous; a promise publishes `snapshot.pending` while it waits, and a stale answer is dropped so the last request wins |
+| `onKeyDown` | `[done]` | `(key, ctx) => "handled" \| "pass" \| AddonKeyEffect` | Consulted before the built-in bindings. Returning an effect (`commitOption` / `clear` / `query` / `open`) is how an addon changes state without holding the controller |
 
 **Rules**:
 
@@ -317,6 +323,17 @@ Status key: `[done]` wired in core · `[plan]` typed but not invoked yet.
   read-only `ctx` (snapshot fields + addon's own state slice) and return
   new data. The core applies the return value. No reentrancy guards
   needed because no hook holds a mutable handle.
+- That rule is what shapes `onKeyDown`: an addon that has to *change*
+  something returns an `AddonKeyEffect` describing it, and the core
+  applies it through the same gated methods a user gesture goes through.
+  `clear` exists on the effect because single mode cannot express "drop
+  the selection" as a commit — committing the selected option replaces it
+  with itself.
+- An addon that has to add an option (create-option) takes a callback in
+  its **config** instead. The consumer owns the option list, so it is the
+  consumer that calls `setOptions` and hands the new option back. That
+  keeps `attach()` argument-free, which
+  `packages/core/tests/arch/addon-contract.test.ts` enforces.
 - The order of `use()` calls is the order hooks fire. Documented and
   asserted in tests.
 - Snapshot extension is **typed via declaration merging**, same as
@@ -333,11 +350,12 @@ Status key: `[done]` wired in core · `[plan]` typed but not invoked yet.
 key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
 `[plan]` planned, no design yet.
 
-- `[plan]` `@select-box/addon-clear-button` — clear-selection affordance.
-  Default wrappers render an `×` next to the trigger value when the addon
-  is installed and there is a selection. Config:
-  `{ label?: string; ariaLabel?: string }`. Exposes
-  `snapshot.addons["clear-button"]: { visible, label, ariaLabel }`.
+- `[done]` `@select-box/addon-clear-button` — clear-selection affordance.
+  Multi mode ships one natively; this is what brings it to **single** mode
+  and what carries a translated glyph and name. Config:
+  `{ label?: string; ariaLabel?: string; when?: "whenSelected" | "always" }`.
+  Exposes `snapshot.addons["clear-button"]: { visible, label, ariaLabel }`,
+  and never offers the control while the box refuses input.
 - `[plan]` `@select-box/addon-inline-search` — Selectize-style "search input
   *is* the trigger". When installed, the trigger renders a text input
   in place of the static label; focusing it puts the controller into
@@ -357,18 +375,35 @@ key: `[done]` implemented · `[wip]` spec'd or scaffolded, not finished ·
   default `when: "always"`. Exposes
   `snapshot.addons["hoist-selected"]: { pinnedKeys, separator }`. Drives
   the `transformGroups` hook in core.
-- `[plan]` `@select-box/addon-create-option` — adds an "Add `<query>`" row
-  when the query has no match. Requires `interceptCommit` + a snapshot
-  flag for the synthetic row.
-- `[plan]` `@select-box/addon-remove-button` — per-row remove affordance for
-  multi mode (chip-list trigger). Activates with the multi-mode
-  milestone (M2).
-- `[plan]` `@select-box/addon-restore-on-backspace` — selectize parity:
-  Backspace on empty query in multi mode pops the last chip back into
-  the input as editable text. Requires `onKeyDown` + `interceptCommit`.
-- `[plan]` `@select-box/addon-persist` — saves/restores selection to
-  `localStorage` (wrapped behind a `StorageService`, per service-layer
-  pattern). Config: `{ key: string; storage?: "local" | "session" }`.
+- `[done]` `@select-box/addon-create-option` — adds an `Add "<query>"` row
+  when the query has no match. The row is synthetic: it lives in the
+  filtered list only, and committing it hands the text to the config's
+  `onCreate`, whose returned option is what actually gets committed.
+  Config: `{ onCreate; label?; groupLabel?; when?: "whenEmpty" | "always";
+  trim? }`. Exposes
+  `snapshot.addons["create-option"]: { pendingQuery, rowValue }`.
+- `[done]` `@select-box/addon-remove-button` — per-selection remove
+  affordance. The chip's `×` ships natively; the addon is what translates
+  it and what can take it away on a control that refuses input, and it
+  publishes the accessible name per entry so the five stop inventing their
+  own. Config: `{ label?; ariaLabel?: (optionLabel) => string;
+  when?: "multi" | "always" }`. Exposes
+  `snapshot.addons["remove-button"]: { enabled, label, removable }`.
+- `[done]` `@select-box/addon-restore-on-backspace` — selectize parity:
+  Backspace on an empty query pops the last selection back into the input
+  as editable text. Only fires while the query is empty, so it never eats
+  a Backspace meant for the text. Config:
+  `{ restoreAs?: "query" | "remove"; key? }`. Exposes
+  `snapshot.addons["restore-on-backspace"]: { nextToRestore }`.
+- `[done]` `@select-box/addon-persist` — saves the selection to web
+  storage as it changes, behind a `SelectionStorageService` that swallows a
+  blocked or full storage rather than taking the widget down. **Restoring
+  is not the addon's job**: an addon never holds the controller, so
+  `restoreSelection({ key, mode })` returns the stored value shaped for the
+  mode and the consumer passes it as `initialValue` — which also puts the
+  restore inside the first snapshot instead of flashing an empty box.
+  Config: `{ key; area?: "local" | "session"; storage? }`. Exposes
+  `snapshot.addons["persist"]: { key, stored }`.
 
 ## 5. Wrapper consistency
 
@@ -639,7 +674,29 @@ untestable guard, it does without.
 
 The two custom elements sidestep all of it through `formResetCallback`.
 
-## 6. Testing strategy## 6. Testing strategy
+### 5.6 Addon-driven controls
+
+Two addons render an affordance rather than transforming data, and neither
+should force five wrappers to learn an addon's slice shape.
+`SelectBoxSnapshotView` resolves both once:
+
+| Getter | Falls back to |
+|---|---|
+| `clearControl` | multi mode with a selection; `×`; `"Clear all"` |
+| `removeControl` | enabled; `×`; `Remove <label>` |
+
+Each getter reads the optional slice by name, validates its shape, and falls
+back **per field**, so a partial slice cannot blank a label. Every wrapper
+renders from the getter, which is what makes "install the addon and the
+control appears" true in all five without any of them depending on the addon
+package. Core honouring a slice by name is the one coupling this costs, and
+it is the mechanism the promise rests on.
+
+Wiring it exposed that the clear control only ever existed inside the
+multi-mode trigger in React, Vue and Lit — single mode had no node to light
+up at all. It has one now.
+
+## 6. Testing strategy
 
 Layered, from cheap-and-fast to expensive-and-thorough. We follow
 TanStack's approach: the bulk of the verification happens in unit +
@@ -786,6 +843,39 @@ was absent — and the missing invariant that the highlighted row is the one
 `Enter` commits, which is the only assertion that notices the controller's
 navigable list and the row model disagreeing about which rows are skipped.
 
+### 6.4 Docs demos — `e2e/docs-specs/` (Playwright)
+
+The site's `<script>` blocks were the one place no checker reached, and it
+cost three live demos: `.selectBox({…}).on(…)` kept working as a snippet
+long after the plugin stopped returning a jQuery collection, so the demos
+mounted and their scripts died. The build stayed green.
+
+Two layers close it:
+
+- **`astro check`** is now the docs package's `typecheck`. It reaches
+  `<script>` blocks, and it catches exactly that call — `Property 'on' does
+  not exist on type 'SelectBoxView'`. It was off because Starlight's
+  component overrides import a virtual module it cannot see; declaring that
+  module in `src/env.d.ts` took the run from 8 errors to 0 across 57 files.
+- **A browser guard** over the built site, in its own Playwright config so
+  the wrapper matrix never has to build the docs. It loads every example
+  page, drives all five demos on it, and fails on any `pageerror` or
+  console error. It catches what types cannot: a demo wired to an event the
+  wrapper never fires, which is the other bug those pages had.
+
+Verified by reintroducing the original defect: the guard fails three ways
+(the error at load, the commit, and the `<output>` never updating).
+
+### 6.5 CI routing — `tooling/ci/`
+
+Which columns a change has to run is a decision, so it is a tested function
+rather than a YAML expression: anything shared (core, dom, styles, addons,
+tooling, e2e, lockfile, workflows) runs all five columns, a wrapper-only
+change runs its own, and a prose-only change runs no browser at all. An
+unknown diff — a branch's first push, where there is no base to diff
+against — is treated as shared. Misrouting under-tests silently, which is
+why this has 22 tests of its own.
+
 ## 7. Documentation site
 
 Canonical going forward: **`docs-starlight/`**. The VitePress site stays
@@ -896,16 +986,15 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
     teardown are covered by the parity suite each package runs (§6.2.1)
     and again in a real browser by the keyboard and lifecycle specs.
   - `[done]` Shared cross-wrapper parity suite in `tooling/parity/`
-    (§6.2.1), 56 scenarios per wrapper across both surfaces, including addons
+    (§6.2.1), 62 scenarios per wrapper across both surfaces, including addons
     passed through each wrapper's own door and the full ARIA wiring. Closed the
     click-outside gap in the Vue and Lit suites, brought the
     `data-select-*` contract to 17/17 attributes in all five wrappers,
     and gave every wrapper `root` + `controller` accessors (§5.2) verified
     against the node and the live controller they hand over.
-- `[wip]` Addon surface: `attach`/`detach`/`provideFilter`/`transformGroups`/`extendSnapshot` live
-  (the latter two arch-tested in `packages/core/tests/arch/addon-contract.test.ts`).
-  Remaining hooks (`interceptCommit`, `interceptOpen/Close`, `onKeyDown`)
-  postponed until the first-party addon that needs them is in flight (M2).
+- `[done]` Addon surface: all nine hooks live and arch-tested in
+  `packages/core/tests/arch/addon-contract.test.ts`, which locks the exact
+  member set so a refactor cannot widen the published contract by accident.
 
 **M2 — Multi mode + inline UI variant + first-party addons** — `[wip]`
 - `[done]` `MultiSelectBoxController` sugar over the unified controller,
@@ -924,10 +1013,12 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` Inline chip surface as an alternative trigger render, shipped in
   all five wrappers behind a `surface: "popover" | "inline"` flag and
   orthogonal to `multi`. Each wrapper has an inline parity suite.
-- `[wip]` First-party addon packages (shipped: `@select-box/addon-fuzzy`,
-  `@select-box/addon-hoist-selected`). Remaining: clear-button,
-  create-option, remove-button, restore-on-backspace, persist (see §4.6).
-  Each one pulls in the matching controller hook from §4.6.
+- `[done]` First-party addon packages: `addon-fuzzy`,
+  `addon-hoist-selected`, `addon-clear-button`, `addon-create-option`,
+  `addon-remove-button`, `addon-restore-on-backspace`, `addon-persist`
+  (see §4.6). The two that render an affordance are wired through
+  `SelectBoxSnapshotView` so installing them lights the control up in all
+  five wrappers (§5.6); `addon-inline-search` stays planned.
 
 **M3 — Docs site live** — `[wip]`
 - `[done]` `docs-starlight/` site builds (Astro + Starlight + MDX + TypeDoc).
@@ -938,7 +1029,12 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` Example demos self-contained: data inlined per framework,
   displayed snippet extracted from the same source file via
   `// #region snippet` markers.
-- `[plan]` Production hosting + custom domain.
+- `[wip]` Production hosting. `.github/workflows/docs.yml` builds the site
+  and publishes it to GitHub Pages on every push that touches it. It cannot
+  be switched on yet: the repository has no remote, Pages has to be enabled
+  in its settings, and `astro.config.mjs` points `site` at
+  `https://select-box.dev` — a domain that has to be owned, or changed to
+  the Pages URL (with a `base` when it is served from a repo subpath).
 - `[done]` Retired `docs-vitepress/`; Starlight carries every example.
 
 **M4 — Replace the legacy combobox in `the-origin-app`** — `[plan]`
@@ -952,14 +1048,21 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
 - `[done]` Spec set covers what JSDOM can't simulate: real-CSS
   visibility, arrow navigation and focus, popover layout and paint
   order, virtualization over 10k options, teardown and runtime surface
-  switching, form submission and appearance. 41 specs × 5 wrappers.
+  switching, form submission, appearance and the accessibility mapping.
+  52 specs × 5 wrappers, plus 19 docs-demo specs (§6.4).
 - `[done]` CI runs one job per wrapper with `fail-fast: false`, browsers
   cached, report uploaded on failure.
-- `[plan]` Paths-filter so per-wrapper PRs run only that wrapper's
-  project; full matrix only when `packages/core/`, `packages/styles/` or
-  `e2e/` change.
-- `[plan]` Screen-reader / ARIA announcement assertions, which need more
-  than DOM queries.
+- `[done]` Paths-filter: a `scope` job resolves the matrix from the diff,
+  so a wrapper-only change runs one column instead of five. The routing
+  logic lives in `@select-box/ci` with its own tests rather than inline in
+  YAML, because a misrouting silently under-tests (§6.5).
+- `[done]` Accessibility-mapping assertions in `specs/aria.spec.ts`: role
+  queries go through the browser's own mapping, so a role that never made
+  it out of the markup or a control with no accessible name fails there.
+  They found two real holes — `SelectBoxPluginConfig` never declared
+  `ariaLabel`, and the chip remove control had a hardcoded English name.
+- `[plan]` Announcement-order assertions (what a reader says, in what
+  order) still need a real screen reader in the loop.
 
 ## 10. Open risks
 
@@ -987,10 +1090,16 @@ Status key: `[done]` shipped · `[wip]` in progress · `[plan]` not started.
    row. Variable row heights work out of the box via the library's
    built-in `ResizeObserver` measurement — no inline `style.height`
    forced on options.
-3. **Matrix CI minutes cost** — `[deferred]` 5 frameworks × 2 browsers ×
-   N specs gets expensive. Mitigation: only run full matrix on PRs that
-   touch `packages/core` or `e2e/`; per-wrapper changes only run that
-   wrapper's column. To revisit when the E2E suite ships.
+3. **Matrix CI minutes cost** — `[resolved]` The `scope` job resolves the
+   matrix from the diff: a wrapper-only change runs one column, anything
+   shared runs all five, and an unknown diff is treated as shared. The
+   decision is a tested function in `@select-box/ci`, not a YAML
+   expression, and a prose-only change runs no browser at all.
+4. **Suite flakiness** — `[characterised]` 1697 browser test executions
+   with retries disabled produced zero failures: 615 from
+   `--repeat-each=3`, 1025 from five sequential full runs, 57 from three
+   docs-guard runs. CI keeps `retries: 1`, so a flake would still be
+   visible as a retry rather than hidden as a pass.
 
 ## 11. Conventions inherited from the consumer (the-origin-app)
 
