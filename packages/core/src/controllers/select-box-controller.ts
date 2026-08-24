@@ -61,6 +61,7 @@ export class SelectBoxController<
     private currentDisabled: boolean;
     private currentReadOnly: boolean;
     private currentQuery = "";
+    private readonly defaultValueInput: SelectionValueInput;
     private pipelineCache: PipelineCache<TExtra> | null = null;
     private currentOpen = false;
     private currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
@@ -79,6 +80,10 @@ export class SelectBoxController<
         this.defaultFilter = new SubstringFilterStrategy<TExtra>();
         this.explicitFilter = config.filter ?? null;
         this.filterStrategy = this.explicitFilter ?? this.defaultFilter;
+        // Kept as handed in, not as resolved: a form reset re-resolves it against
+        // whatever options are loaded then, the way a native control's default
+        // lives in the markup rather than in a snapshot taken at startup.
+        this.defaultValueInput = config.initialValue ?? null;
         this.currentValue = this.resolveValueFromInput(config.initialValue);
         this.currentDisabled = config.disabled ?? false;
         this.currentReadOnly = config.readOnly ?? false;
@@ -289,15 +294,19 @@ export class SelectBoxController<
     }
 
     /**
-     * Restores the empty selection regardless of the interaction flags.
+     * Restores the default selection regardless of the interaction flags.
+     *
+     * The default is the value the controller was built with, which is what a
+     * native control comes back to — resetting a `<select>` restores its
+     * preselected option rather than emptying it. Use `clear()` for the
+     * emptying a user asks for.
      *
      * A form reset is not a user interaction: the platform resets read-only and
      * disabled controls too, so this deliberately bypasses the gate that
      * `clear()` respects.
      */
     reset(): void {
-        const empty = this.driver.empty();
-        this.currentValue = empty;
+        this.currentValue = this.resolveValueFromInput(this.defaultValueInput);
         this.currentQuery = "";
         this.currentOpen = false;
         this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
