@@ -3,6 +3,7 @@ import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { SelectBoxSnapshotView } from "../snapshot-view.js";
 import { Store } from "../store.js";
 import type {
+    AddonKeyOutcome,
     AddonTransformContext,
     OptionFilterStrategy,
     SearchMatchRange,
@@ -62,6 +63,14 @@ export class SelectBoxController<
     private currentReadOnly: boolean;
     private currentQuery = "";
     private readonly defaultValueInput: SelectionValueInput;
+    /** Which transition an async gate is currently deciding, if any. */
+    private pendingKind: "open" | "close" | null = null;
+    /**
+     * Bumped by every open/close request so a resolved async gate can tell
+     * whether it is still the latest one. Without it a slow gate would apply its
+     * decision on top of whatever the user did while it was in flight.
+     */
+    private gateGeneration = 0;
     private pipelineCache: PipelineCache<TExtra> | null = null;
     private currentOpen = false;
     private currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
@@ -213,18 +222,25 @@ export class SelectBoxController<
 
     open(): void {
         if (!this.canChange) return;
+        // An open already being decided stays in flight; the opposite request
+        // cancels it and leaves the state where it already is.
+        if (this.pendingKind === "open") return;
+        if (this.pendingKind === "close") {
+            this.cancelPendingGate();
+            return;
+        }
         if (this.currentOpen) return;
-        this.currentOpen = true;
-        this.currentActiveIndex = this.initialActiveIndexOnOpen();
-        this.publish();
+        this.runGate("open", () => this.applyOpen());
     }
 
     close(): void {
+        if (this.pendingKind === "close") return;
+        if (this.pendingKind === "open") {
+            this.cancelPendingGate();
+            return;
+        }
         if (!this.currentOpen) return;
-        this.currentOpen = false;
-        this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
-        this.currentQuery = "";
-        this.publish();
+        this.runGate("close", () => this.applyClose());
     }
 
     toggle(): void {
@@ -263,6 +279,10 @@ export class SelectBoxController<
 
     commitOption(option: SelectOption<TExtra>): void {
         if (!this.canChange) return;
+        if (option.disabled) return;
+        const intercepted = this.applyInterceptCommit(option);
+        if (intercepted === null) return;
+        option = intercepted;
         if (option.disabled) return;
         const next = this.driver.commit(this.currentValue, option);
         if (Object.is(next, this.currentValue)) return;
@@ -413,6 +433,7 @@ export class SelectBoxController<
             isEmpty,
             disabled: this.currentDisabled,
             readOnly: this.currentReadOnly,
+            pending: this.pendingKind !== null,
             addons: {},
         };
         return this.applyAddonSnapshots(baseSnapshot);
@@ -505,7 +526,124 @@ export class SelectBoxController<
             if (!addon.transformGroups) continue;
             current = addon.transformGroups(current, context);
         }
+        return this.applyTransformOptions(current, context);
+    }
+
+    /**
+     * Runs the per-group transformers over the settled group list.
+     *
+     * Ordered after `transformGroups` on purpose: one decides which groups
+     * exist, the other what sits inside them, so a group injected by the first
+     * is still offered to the second.
+     */
+    private applyTransformOptions(
+        groups: ReadonlyArray<SelectGroup<TExtra>>,
+        context: AddonTransformContext<TExtra>,
+    ): ReadonlyArray<SelectGroup<TExtra>> {
+        const anyTransformer = this.registeredAddons.some(
+            (addon) => addon.transformOptions !== undefined,
+        );
+        if (!anyTransformer) return groups;
+        return groups.map((group) => {
+            let options = group.options;
+            for (const addon of this.registeredAddons) {
+                if (addon.transformOptions === undefined) continue;
+                options = addon.transformOptions(options, group, context);
+            }
+            return options === group.options ? group : { ...group, options };
+        });
+    }
+
+    private applyInterceptCommit(
+        option: SelectOption<TExtra>,
+    ): SelectOption<TExtra> | null {
+        if (this.registeredAddons.length === 0) return option;
+        const context = this.buildTransformContext();
+        let current: SelectOption<TExtra> | null = option;
+        for (const addon of this.registeredAddons) {
+            if (!addon.interceptCommit) continue;
+            current = addon.interceptCommit(current, context);
+            if (current === null) return null;
+        }
         return current;
+    }
+
+    /**
+     * Offers a key to the addons before the built-in bindings see it.
+     *
+     * @param key - The `KeyboardEvent.key` value being dispatched.
+     * @returns `"handled"` when an addon claimed the key.
+     */
+    offerKey(key: string): AddonKeyOutcome {
+        for (const addon of this.registeredAddons) {
+            if (!addon.onKeyDown) continue;
+            if (addon.onKeyDown(key, this.buildTransformContext()) === "handled") {
+                return "handled";
+            }
+        }
+        return "pass";
+    }
+
+    /**
+     * Runs an open/close gate, then applies the transition if it was allowed.
+     *
+     * A gate that answers synchronously keeps the whole transition synchronous —
+     * the common case, and the one every wrapper's paint already assumes. Only a
+     * promise puts the controller into `pending`, and a stale answer is dropped
+     * so the last request wins.
+     */
+    private runGate(kind: "open" | "close", apply: () => void): void {
+        const hook = kind === "open" ? "interceptOpen" : "interceptClose";
+        const generation = ++this.gateGeneration;
+        const answers: Array<boolean | Promise<boolean>> = [];
+        for (const addon of this.registeredAddons) {
+            const gate = addon[hook];
+            if (!gate) continue;
+            answers.push(gate.call(addon, this.buildTransformContext()));
+        }
+        if (answers.some((answer) => answer === false)) return;
+        const pendingAnswers = answers.filter(
+            (answer): answer is Promise<boolean> => answer !== true && answer !== false,
+        );
+        if (pendingAnswers.length === 0) {
+            apply();
+            return;
+        }
+
+        this.pendingKind = kind;
+        this.publish();
+        void Promise.all(pendingAnswers).then(
+            (resolved) => {
+                if (generation !== this.gateGeneration) return;
+                this.pendingKind = null;
+                if (resolved.every((answer) => answer)) apply();
+                else this.publish();
+            },
+            () => {
+                if (generation !== this.gateGeneration) return;
+                this.pendingKind = null;
+                this.publish();
+            },
+        );
+    }
+
+    private cancelPendingGate(): void {
+        this.gateGeneration += 1;
+        this.pendingKind = null;
+        this.publish();
+    }
+
+    private applyOpen(): void {
+        this.currentOpen = true;
+        this.currentActiveIndex = this.initialActiveIndexOnOpen();
+        this.publish();
+    }
+
+    private applyClose(): void {
+        this.currentOpen = false;
+        this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
+        this.currentQuery = "";
+        this.publish();
     }
 
     private buildTransformContext(): AddonTransformContext<TExtra> {

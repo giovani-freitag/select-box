@@ -19,6 +19,7 @@ function snapshot(
         isEmpty: true,
         disabled: false,
         readOnly: false,
+        pending: false,
         highlightRanges: () => [],
         addons: {},
         ...overrides,

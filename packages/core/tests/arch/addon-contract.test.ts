@@ -68,9 +68,14 @@ describe("addon contract", () => {
             "attach",
             "detach",
             "extendSnapshot",
+            "interceptClose",
+            "interceptCommit",
+            "interceptOpen",
             "name",
+            "onKeyDown",
             "provideFilter",
             "transformGroups",
+            "transformOptions",
         ]);
     });
 

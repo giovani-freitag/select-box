@@ -26,6 +26,7 @@ export type {
 } from "./virtualizer/index.js";
 export type {
     AddonHookContext,
+    AddonKeyOutcome,
     AddonTransformContext,
     MultiSelectBoxControllerConfig,
     OptionFilterStrategy,

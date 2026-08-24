@@ -35,6 +35,9 @@ export class SelectBoxKeyDispatcher<
      * controller consumed the key — the caller should `preventDefault()`.
      */
     dispatch(key: string): DispatchKeyOutcome {
+        // Addons see the key first, so one can claim Backspace or a shortcut
+        // without having to reimplement the combobox bindings around it.
+        if (this.controller.offerKey(key) === "handled") return "handled";
         const state = this.controller.getState();
         switch (key) {
             case "ArrowDown":

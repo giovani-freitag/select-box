@@ -120,6 +120,14 @@ export interface SelectBoxSnapshot<
     readonly disabled: boolean;
     /** Allows looking but not changing: no typing, no commit, no clear. */
     readonly readOnly: boolean;
+    /**
+     * An open or close is waiting on an addon's async gate.
+     *
+     * Only ever `true` while an `interceptOpen`/`interceptClose` promise is in
+     * flight, which is what lets a wrapper show progress for a gate that loads
+     * options before opening.
+     */
+    readonly pending: boolean;
     /** Highlight ranges the active strategy draws for `label` under the current query. */
     readonly highlightRanges: (label: string) => ReadonlyArray<SearchMatchRange>;
     readonly addons: Readonly<SelectBoxAddonSnapshots>;
@@ -180,9 +188,50 @@ export interface SelectBoxAddon<TExtra extends object = object> {
         groups: ReadonlyArray<SelectGroup<TExtra>>,
         context: AddonTransformContext<TExtra>,
     ): ReadonlyArray<SelectGroup<TExtra>>;
+    /**
+     * Optional pure transformer over one group's options, after
+     * `transformGroups` has settled which groups exist. Composes in
+     * registration order, like every other transformer.
+     */
+    transformOptions?(
+        options: ReadonlyArray<SelectOption<TExtra>>,
+        group: SelectGroup<TExtra>,
+        context: AddonTransformContext<TExtra>,
+    ): ReadonlyArray<SelectOption<TExtra>>;
+    /**
+     * Optional gate over a commit. Return the option to commit (the same one, or
+     * a replacement), or `null` to veto it. Composes in registration order: each
+     * addon sees the previous one's replacement, and the first `null` stops the
+     * chain.
+     */
+    interceptCommit?(
+        option: SelectOption<TExtra>,
+        context: AddonTransformContext<TExtra>,
+    ): SelectOption<TExtra> | null;
+    /**
+     * Optional gate over opening the popover. Return `false` to refuse. A
+     * promise defers the decision: the controller publishes `pendingOpen` while
+     * it waits, so a wrapper can show progress, and drops the result if the box
+     * was opened or closed again meanwhile.
+     */
+    interceptOpen?(context: AddonTransformContext<TExtra>): boolean | Promise<boolean>;
+    /** Optional gate over closing the popover, with the same semantics as `interceptOpen`. */
+    interceptClose?(context: AddonTransformContext<TExtra>): boolean | Promise<boolean>;
+    /**
+     * Optional key handler, consulted before the built-in combobox bindings.
+     * Return `"handled"` to claim the key, `"pass"` to fall through. Composes in
+     * registration order and stops at the first addon that claims it.
+     */
+    onKeyDown?(
+        key: string,
+        context: AddonTransformContext<TExtra>,
+    ): AddonKeyOutcome;
     /** Optional snapshot extension; return value lands at `snapshot.addons[name]`. */
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }
+
+/** What an addon reports about a key it was offered. */
+export type AddonKeyOutcome = "handled" | "pass";
 
 /** Options + filter + addon configuration shared by every controller flavour. */
 export interface SelectBoxControllerCommonConfig<TExtra extends object = object> {
