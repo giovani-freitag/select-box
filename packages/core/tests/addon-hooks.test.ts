@@ -580,3 +580,184 @@ describe("onKeyDown", () => {
         expect(dispatcher.dispatch("q")).toBe("pass");
     });
 });
+
+describe("onKeyDown effects", () => {
+    test("commits the option the addon named", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["apple"],
+            addons: [
+                {
+                    name: "pop",
+                    onKeyDown: (key, context) =>
+                        key === "Backspace" && context.selectedOptions.length > 0
+                            ? { commitOption: context.selectedOptions.at(-1)! }
+                            : "pass",
+                },
+            ],
+        });
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toEqual([]);
+    });
+
+    test("replaces the query the addon named", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            addons: [{ name: "seed", onKeyDown: () => ({ query: "lem" }) }],
+        });
+        controller.open();
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().query).toBe("lem");
+    });
+
+    test("applies a commit and a query together, commit first", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["lemon"],
+            addons: [
+                {
+                    name: "restore",
+                    onKeyDown: (_key, context) => ({
+                        commitOption: context.selectedOptions[0]!,
+                        query: context.selectedOptions[0]!.label,
+                    }),
+                },
+            ],
+        });
+        controller.open();
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toEqual([]);
+        expect(controller.getState().query).toBe("Lemon");
+    });
+
+    test("a query set alongside a commit survives the commit that closes", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            addons: [
+                {
+                    name: "restore",
+                    onKeyDown: () => ({ commitOption: fruits[0]!, query: "keep me" }),
+                },
+            ],
+        });
+        controller.open();
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        // Single mode clears the query as part of committing, so the effect's
+        // query has to land after it or it is silently thrown away.
+        expect(controller.getState().value).toBe("apple");
+        expect(controller.getState().query).toBe("keep me");
+    });
+
+    test("empties the selection when the effect asks to clear", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            initialValue: "apple",
+            addons: [{ name: "wipe", onKeyDown: () => ({ clear: true }) }],
+        });
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toBeNull();
+    });
+
+    test("a query set alongside a clear survives it", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            initialValue: "apple",
+            addons: [
+                { name: "wipe", onKeyDown: () => ({ clear: true, query: "Apple" }) },
+            ],
+        });
+        controller.open();
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toBeNull();
+        expect(controller.getState().query).toBe("Apple");
+    });
+
+    test("a clear through an effect respects the interaction gate", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            initialValue: "apple",
+            readOnly: true,
+            addons: [{ name: "wipe", onKeyDown: () => ({ clear: true }) }],
+        });
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toBe("apple");
+    });
+
+    test("opens and closes on request", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            addons: [
+                {
+                    name: "toggler",
+                    onKeyDown: (key) =>
+                        key === "F2" ? { open: true } : key === "F3" ? { open: false } : "pass",
+                },
+            ],
+        });
+        const dispatcher = new SelectBoxKeyDispatcher(controller);
+
+        dispatcher.dispatch("F2");
+        expect(controller.getState().open).toBe(true);
+
+        dispatcher.dispatch("F3");
+        expect(controller.getState().open).toBe(false);
+    });
+
+    test("an effect counts as handled, so the built-in binding stays out", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            addons: [{ name: "claim", onKeyDown: () => ({ query: "x" }) }],
+        });
+
+        const outcome = new SelectBoxKeyDispatcher(controller).dispatch("ArrowDown");
+
+        expect(outcome).toBe("handled");
+        expect(controller.getState().open).toBe(false);
+    });
+
+    test("an empty effect claims the key without changing anything", () => {
+        const controller = new SingleSelectBoxController({
+            options: fruits,
+            addons: [{ name: "swallow", onKeyDown: () => ({}) }],
+        });
+
+        const outcome = new SelectBoxKeyDispatcher(controller).dispatch("ArrowDown");
+
+        expect(outcome).toBe("handled");
+        expect(controller.getState()).toMatchObject({ open: false, query: "" });
+    });
+
+    test("a commit through an effect still goes through the commit gate", () => {
+        const controller = new MultiSelectBoxController({
+            options: fruits,
+            initialValue: ["apple"],
+            addons: [
+                { name: "veto", interceptCommit: () => null },
+                {
+                    name: "pop",
+                    onKeyDown: (_key, context) => ({
+                        commitOption: context.selectedOptions[0]!,
+                    }),
+                },
+            ],
+        });
+
+        new SelectBoxKeyDispatcher(controller).dispatch("Backspace");
+
+        expect(controller.getState().value).toEqual(["apple"]);
+    });
+});

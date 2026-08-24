@@ -3,7 +3,7 @@ import { indexOptionsByValue, normalizeOptionsToGroups } from "../normalize.js";
 import { SelectBoxSnapshotView } from "../snapshot-view.js";
 import { Store } from "../store.js";
 import type {
-    AddonKeyOutcome,
+    AddonKeyEffect,
     AddonTransformContext,
     OptionFilterStrategy,
     SearchMatchRange,
@@ -574,14 +574,30 @@ export class SelectBoxController<
      * @param key - The `KeyboardEvent.key` value being dispatched.
      * @returns `"handled"` when an addon claimed the key.
      */
-    offerKey(key: string): AddonKeyOutcome {
+    offerKey(key: string): "handled" | "pass" {
         for (const addon of this.registeredAddons) {
-            if (!addon.onKeyDown) continue;
-            if (addon.onKeyDown(key, this.buildTransformContext()) === "handled") {
-                return "handled";
-            }
+            if (addon.onKeyDown === undefined) continue;
+            const outcome = addon.onKeyDown(key, this.buildTransformContext());
+            if (outcome === "pass") continue;
+            if (outcome !== "handled") this.applyKeyEffect(outcome);
+            return "handled";
         }
         return "pass";
+    }
+
+    /**
+     * Applies what an addon asked for in response to a key.
+     *
+     * Selection first, then the query: both a commit and a clear reset the query
+     * as part of their own semantics, so a query set alongside either has to
+     * land after it or it is silently thrown away.
+     */
+    private applyKeyEffect(effect: AddonKeyEffect<TExtra>): void {
+        if (effect.commitOption !== undefined) this.commitOption(effect.commitOption);
+        if (effect.clear === true) this.clear();
+        if (effect.query !== undefined) this.setQuery(effect.query);
+        if (effect.open === true) this.open();
+        else if (effect.open === false) this.close();
     }
 
     /**

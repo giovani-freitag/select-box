@@ -225,13 +225,38 @@ export interface SelectBoxAddon<TExtra extends object = object> {
     onKeyDown?(
         key: string,
         context: AddonTransformContext<TExtra>,
-    ): AddonKeyOutcome;
+    ): AddonKeyOutcome<TExtra>;
     /** Optional snapshot extension; return value lands at `snapshot.addons[name]`. */
     extendSnapshot?(context: AddonHookContext<TExtra>): unknown;
 }
 
-/** What an addon reports about a key it was offered. */
-export type AddonKeyOutcome = "handled" | "pass";
+/**
+ * What an addon reports about a key it was offered.
+ *
+ * `"pass"` lets the built-in bindings have it. `"handled"` claims it and does
+ * nothing else. An effect object claims it and asks the core to apply the
+ * change — addons stay pure transformers, describing what should happen instead
+ * of holding a controller to do it with.
+ */
+export type AddonKeyOutcome<TExtra extends object = object> =
+    | "handled"
+    | "pass"
+    | AddonKeyEffect<TExtra>;
+
+/** A change an addon asks the core to apply in response to a key. */
+export interface AddonKeyEffect<TExtra extends object = object> {
+    /** Commit this option, with the active driver's replace-or-toggle semantics. */
+    readonly commitOption?: SelectOption<TExtra>;
+    /**
+     * Empty the selection. Single mode needs it: committing the option that is
+     * already selected replaces it with itself rather than toggling it off.
+     */
+    readonly clear?: boolean;
+    /** Replace the query text. */
+    readonly query?: string;
+    /** Open or close the popover. */
+    readonly open?: boolean;
+}
 
 /** Options + filter + addon configuration shared by every controller flavour. */
 export interface SelectBoxControllerCommonConfig<TExtra extends object = object> {

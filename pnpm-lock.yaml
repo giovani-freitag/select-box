@@ -184,6 +184,56 @@ importers:
         specifier: ^2.2.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/addon-clear-button:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
+  packages/addon-create-option:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
   packages/addon-fuzzy:
     dependencies:
       '@select-box/core':
@@ -213,6 +263,81 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-hoist-selected:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
+  packages/addon-persist:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
+  packages/addon-remove-button:
+    dependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@select-box/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint-config
+      '@select-box/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.4
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.14)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.8.4)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
+
+  packages/addon-restore-on-backspace:
     dependencies:
       '@select-box/core':
         specifier: workspace:*
@@ -3030,6 +3155,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
