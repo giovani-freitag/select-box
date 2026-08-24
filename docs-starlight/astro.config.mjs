@@ -62,6 +62,9 @@ export default defineConfig({
             expressiveCode: {
                 themes: ["github-dark", "github-light"],
                 shiki: {
+                    // Expressive Code documents bundled-language shorthand, but
+                    // its types only admit full registration objects.
+                    // @ts-expect-error -- dependency types are narrower than its API
                     langs: ["vue", "astro"],
                 },
                 styleOverrides: {

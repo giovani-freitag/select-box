@@ -5,13 +5,14 @@
     "license": "UNLICENSED",
     "type": "module",
     "scripts": {
-        "dev": "pnpm run typedoc && astro dev",
-        "start": "astro dev",
-        "build": "pnpm run typedoc && astro build",
-        "preview": "astro preview",
         "astro": "astro",
-        "typedoc": "typedoc --options typedoc.json && node scripts/typedoc-frontmatter.mjs",
-        "lint": "eslint src --ext .ts,.tsx"
+        "build": "pnpm run typedoc && astro build",
+        "dev": "pnpm run typedoc && astro dev",
+        "lint": "eslint src --ext .ts,.tsx",
+        "preview": "astro preview",
+        "start": "astro dev",
+        "typecheck": "astro check",
+        "typedoc": "typedoc --options typedoc.json && node scripts/typedoc-frontmatter.mjs"
     },
     "dependencies": {
         "@astrojs/check": "^0.9.4",
