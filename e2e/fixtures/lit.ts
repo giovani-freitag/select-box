@@ -15,6 +15,7 @@ element.options = config.options;
 element.surface = config.surface;
 if (config.multi) element.multi = true;
 if (config.initialValue !== undefined) element.value = config.initialValue;
+if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
 element.addEventListener("change", () => reportChange(element.value));
 document.querySelector("#mount")!.append(element);
 

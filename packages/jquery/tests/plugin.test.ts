@@ -510,3 +510,32 @@ describe("the form mirror's reset baseline", () => {
         ).toBe("Apple");
     });
 });
+
+describe("accessible naming", () => {
+    test("forwards the accessible name a consumer configured", () => {
+        jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            ariaLabel: "Favourite fruit",
+        });
+
+        expect(
+            document
+                .querySelector("#fruit [role='combobox']")
+                ?.getAttribute("aria-label"),
+        ).toBe("Favourite fruit");
+    });
+
+    test("forwards a labelledby reference instead", () => {
+        document.body.innerHTML = `<span id="fruit-label">Fruit</span><div id="fruit"></div>`;
+        jQuery("#fruit").selectBox<FruitExtra>({
+            options: fruits,
+            ariaLabelledby: "fruit-label",
+        });
+
+        expect(
+            document
+                .querySelector("#fruit [role='combobox']")
+                ?.getAttribute("aria-labelledby"),
+        ).toBe("fruit-label");
+    });
+});

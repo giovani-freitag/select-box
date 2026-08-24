@@ -25,6 +25,8 @@ export interface FixtureConfig {
      * way a native control returns to its default. Undefined means none.
      */
     readonly initialValue: string | ReadonlyArray<string> | undefined;
+    /** Accessible name a consumer put on the box, if any. */
+    readonly ariaLabel: string | undefined;
 }
 
 const FRUITS: ReadonlyArray<FixtureOption> = [
@@ -77,6 +79,7 @@ export function readFixtureConfig(): FixtureConfig {
         name: params.get("name") ?? "",
         required: params.get("required") === "1",
         initialValue: readInitialValue(params),
+        ariaLabel: params.get("label") ?? undefined,
     };
 }
 

@@ -13,6 +13,10 @@ export interface SelectBoxPluginConfig<TExtra extends object = object>
     readonly name?: string;
     /** Blocks submission while nothing is selected, natively. */
     readonly required?: boolean;
+    /** Accessible name for the combobox, when no visible label points at it. */
+    readonly ariaLabel?: string;
+    /** Id of the element that labels the combobox. */
+    readonly ariaLabelledby?: string;
 }
 
 /**

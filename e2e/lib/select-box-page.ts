@@ -10,6 +10,8 @@ export interface ScenarioQuery {
     readonly required?: boolean;
     /** Preselection to build the control with; a comma-separated list in multi mode. */
     readonly value?: string;
+    /** Accessible name a consumer put on the box. */
+    readonly label?: string;
 }
 
 /**
@@ -42,6 +44,7 @@ export class SelectBoxPage {
         if (scenario.name !== undefined) params.set("name", scenario.name);
         if (scenario.required === true) params.set("required", "1");
         if (scenario.value !== undefined) params.set("value", scenario.value);
+        if (scenario.label !== undefined) params.set("label", scenario.label);
         const query = params.toString();
         await this.page.goto(`/${this.framework}.html${query === "" ? "" : `?${query}`}`);
         await this.root.waitFor();
@@ -61,6 +64,17 @@ export class SelectBoxPage {
 
     get caret(): Locator {
         return this.page.locator("[data-select-caret]");
+    }
+
+    /**
+     * The element carrying `role="combobox"`.
+     *
+     * Single mode puts the role on the input; multi puts it on the trigger,
+     * because the chips live inside it. Addressing it by role rather than by node
+     * is what lets one spec assert against both.
+     */
+    get combobox(): Locator {
+        return this.page.locator('[role="combobox"]');
     }
 
     get clear(): Locator {

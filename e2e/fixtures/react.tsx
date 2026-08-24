@@ -29,6 +29,7 @@ function Fixture(): React.JSX.Element {
                 name={config.name}
                 required={config.required}
                 defaultValue={defaultMulti}
+                aria-label={config.ariaLabel}
                 onChange={(values) => reportChange(values)}
             />
         );
@@ -41,6 +42,7 @@ function Fixture(): React.JSX.Element {
             name={config.name}
             required={config.required}
             defaultValue={defaultSingle}
+            aria-label={config.ariaLabel}
             onChange={(value) => reportChange(value)}
         />
     );

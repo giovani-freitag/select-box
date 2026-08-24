@@ -19,6 +19,9 @@ function mount(): SelectBoxView {
         name: config.name,
         required: config.required,
         initialValue: config.initialValue,
+        // `exactOptionalPropertyTypes` draws the line between "absent" and
+        // "present but undefined", so an unset scenario omits the key.
+        ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
     });
     host.on("change", (_event: unknown, value: unknown) => reportChange(value));
     host.on("selectbox:change", (_event: unknown, values: unknown) => reportChange(values));
