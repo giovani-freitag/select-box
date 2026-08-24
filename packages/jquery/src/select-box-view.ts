@@ -364,6 +364,10 @@ export class SelectBoxView<TExtra extends object = object>
                 option.value = entry.value;
                 option.textContent = entry.label;
                 option.selected = selected.has(entry.value);
+                // The widget owns the reset, so the mirror's default is whatever
+                // it currently holds: the browser's own reset then lands on the
+                // same option the controller restores, whichever runs first.
+                option.defaultSelected = option.selected;
                 return option;
             }),
         );
@@ -586,6 +590,10 @@ export class SelectBoxView<TExtra extends object = object>
         if (this.input!.value !== inputValue) {
             this.input!.value = inputValue;
         }
+        // The browser resets a text input to its attribute default, so the
+        // default has to follow the painted text — otherwise a form reset blanks
+        // the trigger while the controller still holds a selection.
+        this.input!.defaultValue = inputValue;
         const hasSelection = snapshot.selectedOptions.length > 0;
         this.input!.disabled = snapshot.disabled;
         this.input!.readOnly = snapshot.readOnly;

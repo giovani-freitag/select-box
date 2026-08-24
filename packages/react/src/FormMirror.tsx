@@ -27,6 +27,14 @@ export function FormMirror<TExtra extends object>({
     required,
 }: FormMirrorProps<TExtra>): JSX.Element | null {
     const mirrorRef = useRef<HTMLSelectElement>(null);
+    // The widget owns the reset, so the mirror's default is whatever it holds
+    // right now. Without this the browser's reset lands on the empty option
+    // while the controller restores its default, and the two disagree.
+    useEffect(() => {
+        const mirror = mirrorRef.current;
+        if (mirror === null) return;
+        for (const option of mirror.options) option.defaultSelected = option.selected;
+    });
     useEffect(() => {
         const form = mirrorRef.current?.form;
         if (!form) return;
