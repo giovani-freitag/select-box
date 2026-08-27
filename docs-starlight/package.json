@@ -28,6 +28,7 @@
         "@astrojs/react": "^4.2.0",
         "@astrojs/starlight": "^0.32.0",
         "@astrojs/vue": "^5.0.0",
+        "@select-box/addon-clear-button": "workspace:*",
         "@select-box/addon-fuzzy": "workspace:*",
         "@select-box/addon-hoist-selected": "workspace:*",
         "@select-box/core": "workspace:*",

@@ -1,0 +1,27 @@
+---
+title: Build your own
+description: Turn the knobs and watch the component and its code change together.
+---
+
+import Playground from "../../../components/playground/Playground.tsx";
+
+Every knob below is itself a select box, driving the one under **Live preview**.
+The code panel is what you would write to get exactly what you are looking at.
+
+<Playground client:only="react" />
+
+## What just happened
+
+Surface, selection, options and state all changed on a **live instance** — the
+component never remounted, because those are the things the controller can
+change at runtime. Flipping to multi keeps whatever was already picked, the way
+the browser does when a `<select>` gains `multiple`.
+
+Addons are the exception: they attach when the controller is built, so changing
+that set rebuilds the preview.
+
+## Next steps
+
+- [Headless vs ready](../../guides/headless-vs-ready/) — render your own markup on the same controller.
+- [Styling](../../guides/styling/) — retheme the component with `--sb-*` tokens.
+- [Multi-select](../multi-select/) — the multi surface in every wrapper.

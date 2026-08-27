@@ -44,6 +44,7 @@ export default defineConfig({
                 {
                     label: "Examples",
                     items: [
+                        { label: "Build your own", link: "/examples/playground/" },
                         { label: "Simple", link: "/examples/simple/" },
                         { label: "Multi-select", link: "/examples/multi-select/" },
                         { label: "Inline chips", link: "/examples/inline-select/" },
