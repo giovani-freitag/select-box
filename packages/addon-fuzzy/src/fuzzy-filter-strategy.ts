@@ -3,6 +3,7 @@ import {
     type SearchMatchRange,
     type SelectOption,
 } from "@select-box/core";
+import { runWhenIdle, type IdleWork } from "@select-box/core";
 import Fuse, { type FuseOptionKey, type IFuseOptions } from "fuse.js";
 
 /** Any fuse.js option; the strategy merges them with its own required defaults. */
@@ -34,6 +35,8 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
         Fuse<SelectOption<TExtra>>
     >();
 
+    private pending: IdleWork | null = null;
+
     constructor(config: FuzzyFilterStrategyConfig<TExtra> = {}) {
         super();
         this.fuseOptions = {
@@ -51,7 +54,16 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
      * @param options - One group's options, as the filter will receive them.
      */
     override prepare(options: ReadonlyArray<SelectOption<TExtra>>): void {
-        this.indexFor(options);
+        if (this.indexes.has(options)) return;
+
+        // Bitap indexing wants the whole list at once, so it cannot be sliced —
+        // but it can wait for a gap, which keeps it off the frame that handed
+        // the options over. `filter` builds it on the spot if a query lands first.
+        this.pending?.cancel();
+        this.pending = runWhenIdle(() => {
+            this.indexFor(options);
+            return false;
+        });
     }
 
     override filter(

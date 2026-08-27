@@ -47,3 +47,4 @@ export type {
 } from "./types.js";
 
 export const packageName = "@select-box/core" as const;
+export { runWhenIdle, type IdleStep, type IdleWork } from "./scheduling/idle-work.js";

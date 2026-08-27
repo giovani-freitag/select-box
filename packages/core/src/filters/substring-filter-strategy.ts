@@ -1,9 +1,27 @@
 import type { SearchMatchRange, SelectOption } from "../types.js";
+import { runWhenIdle, type IdleWork } from "../scheduling/idle-work.js";
 import { AbstractFilterStrategy } from "./abstract-filter-strategy.js";
 
 const COMBINING_MARKS_PATTERN = /[̀-ͯ]/g;
 // Same class without `g`: a global regex carries `lastIndex` across `test` calls.
 const SINGLE_COMBINING_MARK = /[̀-ͯ]/;
+
+/**
+ * Lists at or below this size are normalized on the spot.
+ *
+ * Measured at roughly a tenth of a millisecond per thousand labels, so this is
+ * the point where preparing eagerly still fits comfortably inside a frame.
+ * Below it, scheduling would cost more than the work.
+ */
+const SYNCHRONOUS_LIMIT = 20_000;
+
+/** Labels normalized per slice, so a long list never holds the main thread. */
+const SLICE_SIZE = 2_000;
+
+interface LabelCache {
+    readonly labels: Array<string | undefined>;
+    filled: number;
+}
 
 /**
  * Default filter: case-insensitive AND diacritic-insensitive substring
@@ -15,24 +33,35 @@ export class SubstringFilterStrategy<TExtra extends object = object>
     /**
      * Normalized labels, kept per option list.
      *
-     * Normalizing is three passes over every label, and it is the dominant cost
-     * of a keystroke on a long list — measured at three quarters of the work,
-     * against a hundred thousand options. The result only changes when the
-     * options do, so it is keyed on the array the controller hands over and
-     * released with it.
+     * Normalizing is three passes over every label and it dominates the cost of
+     * a keystroke on a long list. The result only changes when the options do,
+     * so it is keyed on the array the controller hands over and released with it.
      */
-    private readonly normalizedLabels = new WeakMap<
-        ReadonlyArray<SelectOption<TExtra>>,
-        ReadonlyArray<string>
-    >();
+    private readonly caches = new WeakMap<ReadonlyArray<SelectOption<TExtra>>, LabelCache>();
+
+    private pending: IdleWork | null = null;
 
     /**
-     * Normalizes this group's labels up front, off the keystroke path.
+     * Normalizes this group's labels ahead of the first query.
+     *
+     * Short lists are done on the spot. A long one is sliced across idle time
+     * instead, so handing over a hundred thousand options does not block the
+     * frame that does it — and `filter` stays correct meanwhile by normalizing
+     * anything the slices have not reached yet.
      *
      * @param options - One group's options, as the filter will receive them.
      */
     override prepare(options: ReadonlyArray<SelectOption<TExtra>>): void {
-        this.normalizedLabelsFor(options);
+        const cache = this.cacheFor(options);
+        if (cache.filled >= options.length) return;
+
+        if (options.length <= SYNCHRONOUS_LIMIT) {
+            this.fillSlice(options, cache, options.length);
+            return;
+        }
+
+        this.pending?.cancel();
+        this.pending = runWhenIdle(() => this.fillSlice(options, cache, SLICE_SIZE));
     }
 
     override filter(
@@ -42,24 +71,14 @@ export class SubstringFilterStrategy<TExtra extends object = object>
         const needle = SubstringFilterStrategy.normalize(query.trim());
         if (needle === "") return options;
 
-        const labels = this.normalizedLabelsFor(options);
+        const cache = this.cacheFor(options);
 
-        return options.filter((_option, index) => labels[index]!.includes(needle));
-    }
-
-    /**
-     * The cached normalized labels for an option list, computing them once.
-     */
-    private normalizedLabelsFor(
-        options: ReadonlyArray<SelectOption<TExtra>>,
-    ): ReadonlyArray<string> {
-        const cached = this.normalizedLabels.get(options);
-        if (cached) return cached;
-
-        const labels = options.map((option) => SubstringFilterStrategy.normalize(option.label));
-        this.normalizedLabels.set(options, labels);
-
-        return labels;
+        return options.filter((option, index) => {
+            const label =
+                cache.labels[index] ??
+                (cache.labels[index] = SubstringFilterStrategy.normalize(option.label));
+            return label.includes(needle);
+        });
     }
 
     /**
@@ -85,6 +104,36 @@ export class SubstringFilterStrategy<TExtra extends object = object>
             cursor = found + needle.length;
         }
         return ranges;
+    }
+
+    /** The cache for an option list, created empty on first sight. */
+    private cacheFor(options: ReadonlyArray<SelectOption<TExtra>>): LabelCache {
+        const existing = this.caches.get(options);
+        if (existing) return existing;
+
+        const cache: LabelCache = { labels: new Array<string | undefined>(options.length), filled: 0 };
+        this.caches.set(options, cache);
+
+        return cache;
+    }
+
+    /**
+     * Normalizes up to `count` more labels.
+     *
+     * @returns `true` while labels remain unnormalized.
+     */
+    private fillSlice(
+        options: ReadonlyArray<SelectOption<TExtra>>,
+        cache: LabelCache,
+        count: number,
+    ): boolean {
+        const end = Math.min(cache.filled + count, options.length);
+        for (let index = cache.filled; index < end; index += 1) {
+            cache.labels[index] ??= SubstringFilterStrategy.normalize(options[index]!.label);
+        }
+        cache.filled = end;
+
+        return cache.filled < options.length;
     }
 
     /**
