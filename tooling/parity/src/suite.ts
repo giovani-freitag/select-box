@@ -338,6 +338,26 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(input(mounted).value).toBe("");
         });
 
+        // The addons insist the consumer passes translated text and stay
+        // locale-agnostic; a wrapper that hardcodes English undoes that.
+        test("shows the empty-state text the consumer supplied", async () => {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS,
+                placeholder: PARITY_PLACEHOLDER,
+                multiple: false,
+                surface: "popover",
+                emptyMessage: "Nada encontrado",
+            });
+            const mounted = handle;
+            await mounted.focusInput();
+
+            await mounted.typeIntoInput("zzz");
+
+            expect(
+                mounted.queryScope().querySelector("[data-select-empty]")?.textContent?.trim(),
+            ).toBe("Nada encontrado");
+        });
+
         test("reports an empty state when the query matches nothing", async () => {
             const mounted = await mountSingle();
             await mounted.focusInput();

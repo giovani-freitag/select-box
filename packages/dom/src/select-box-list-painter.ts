@@ -37,6 +37,14 @@ export interface SelectBoxListPainterConfig<TExtra extends object> {
     readonly optionHeight?: number;
     /** Text for the empty state. Defaults to `"No matches"`. */
     readonly emptyMessage?: string;
+    /**
+     * Resolves the empty-state text at paint time.
+     *
+     * Read lazily, like `getListElement`, so a wrapper whose text comes from an
+     * attribute can change it without rebuilding the painter. Takes precedence
+     * over `emptyMessage` when it returns something.
+     */
+    readonly getEmptyMessage?: () => string | undefined;
 }
 
 /**
@@ -54,6 +62,7 @@ export class SelectBoxListPainter<TExtra extends object = object> {
     private readonly headerHeight: number;
     private readonly optionHeight: number;
     private readonly emptyMessage: string;
+    private readonly getEmptyMessage: (() => string | undefined) | undefined;
     private readonly listViewportHeight: number;
     private readonly virtualizer: SelectBoxListVirtualizer;
 
@@ -72,6 +81,7 @@ export class SelectBoxListPainter<TExtra extends object = object> {
         this.headerHeight = config.headerHeight ?? ESTIMATED_HEADER_HEIGHT;
         this.optionHeight = config.optionHeight ?? ESTIMATED_OPTION_HEIGHT;
         this.emptyMessage = config.emptyMessage ?? EMPTY_MESSAGE;
+        this.getEmptyMessage = config.getEmptyMessage;
         this.listViewportHeight = config.viewportHeight ?? LIST_VIEWPORT_HEIGHT;
         this.virtualizer = new SelectBoxListVirtualizer({
             getScrollElement: this.getListElement,
@@ -131,7 +141,9 @@ export class SelectBoxListPainter<TExtra extends object = object> {
         this.virtualizer.sync();
 
         if (snapshot.isEmpty) {
-            list.replaceChildren(this.factory.createEmptyState(this.emptyMessage));
+            list.replaceChildren(
+                this.factory.createEmptyState(this.getEmptyMessage?.() ?? this.emptyMessage),
+            );
             this.innerWrapper = null;
             return;
         }

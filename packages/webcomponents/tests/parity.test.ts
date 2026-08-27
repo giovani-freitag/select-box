@@ -26,6 +26,7 @@ describeParitySuite({
         element.options = config.options;
         if (config.addons !== undefined) element.addons = config.addons;
         if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
+        if (config.emptyMessage !== undefined) element.setAttribute("empty-message", config.emptyMessage);
         const reported: unknown[] = [];
         element.addEventListener("change", () => reported.push(element.value));
         document.body.append(element);

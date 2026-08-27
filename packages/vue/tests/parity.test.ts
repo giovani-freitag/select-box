@@ -25,6 +25,7 @@ describeParitySuite({
                 surface: config.surface,
                 ...(config.addons !== undefined ? { addons: config.addons } : {}),
                 ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
+                ...(config.emptyMessage !== undefined ? { emptyMessage: config.emptyMessage } : {}),
                 disabled: config.disabled === true,
                 readOnly: config.readOnly === true,
             },

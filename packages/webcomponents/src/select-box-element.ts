@@ -32,6 +32,7 @@ const OBSERVED_ATTRIBUTES = [
     "multiple",
     "surface",
     "value",
+    "empty-message",
 ] as const;
 
 /**
@@ -78,6 +79,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             factory: this.nodeFactory,
             getListElement: () => this.refs?.list ?? null,
             onWindowChange: this.handleSnapshotChange,
+            getEmptyMessage: () => this.getAttribute("empty-message") ?? undefined,
         });
         this.chipPainter = new SelectBoxChipPainter<TExtra>({
             factory: this.nodeFactory,

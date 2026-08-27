@@ -43,6 +43,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         required: { type: Boolean, reflect: true },
         readOnly: { type: Boolean, reflect: true, attribute: "readonly" },
         multiple: { type: Boolean, reflect: true },
+        emptyMessage: { type: String, attribute: "empty-message" },
         surface: { type: String, reflect: true },
     } as const;
 
@@ -56,6 +57,14 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     required = false;
     readOnly = false;
     multiple = false;
+
+    /**
+     * Text shown when the query matches nothing.
+     *
+     * Pass it already translated; the element stays locale-agnostic, the same
+     * way the addons do.
+     */
+    emptyMessage = "No matches";
     /** Rendering style. `"popover"` (default) shows a combobox dropdown; `"inline"`
      * renders every option as a toggleable chip with no popover/input/search. */
     surface: "popover" | "inline" = "popover";
@@ -625,7 +634,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     style="max-height: ${LIST_VIEWPORT_HEIGHT}px; overflow-y: auto;"
                 >
                     ${state.isEmpty
-                        ? html`<p class="select-box-empty" data-select-empty>No matches</p>`
+                        ? html`<p class="select-box-empty" data-select-empty>${this.emptyMessage}</p>`
                         : this.renderVirtualRows(state)}
                 </div>
             </div>

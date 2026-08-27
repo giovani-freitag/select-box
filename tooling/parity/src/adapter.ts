@@ -23,6 +23,8 @@ export interface ParityMountConfig {
     readonly addons?: ReadonlyArray<ParityAddon>;
     /** Accessible name a consumer asked for. */
     readonly ariaLabel?: string;
+    /** Empty-state text a consumer supplied, already translated. */
+    readonly emptyMessage?: string;
 }
 
 /**

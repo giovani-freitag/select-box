@@ -19,6 +19,7 @@ describeParitySuite({
         element.surface = config.surface;
         if (config.addons !== undefined) element.addons = config.addons;
         if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
+        if (config.emptyMessage !== undefined) element.setAttribute("empty-message", config.emptyMessage);
         if (config.multiple) element.multiple = true;
         if (config.disabled === true) element.disabled = true;
         if (config.readOnly === true) element.readOnly = true;

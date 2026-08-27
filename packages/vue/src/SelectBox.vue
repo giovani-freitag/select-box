@@ -42,6 +42,13 @@ export interface SelectBoxProps<TExtra extends object = object> {
     /** Initial selection for an uncontrolled box. Ignored once `value` is supplied. */
     defaultValue?: string | number | null | ReadonlyArray<string | number>;
     placeholder?: string;
+    /**
+     * Text shown when the query matches nothing.
+     *
+     * Pass it already translated; the component stays locale-agnostic, the same
+     * way the addons do.
+     */
+    emptyMessage?: string;
     ungroupedLabel?: string;
     addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
     filter?: OptionFilterStrategy<TExtra>;
@@ -203,6 +210,7 @@ defineExpose({
         :state="state"
         :controller="controller"
         :placeholder="placeholder"
+        :empty-message="emptyMessage"
         :name="name"
         :required="required"
         :aria-label-text="ariaLabel"

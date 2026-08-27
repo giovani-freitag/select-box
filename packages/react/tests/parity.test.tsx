@@ -109,6 +109,7 @@ describeParitySuite({
                     surface={config.surface}
                     addons={config.addons}
                     aria-label={config.ariaLabel}
+                    emptyMessage={config.emptyMessage}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                     onChange={(values) => reported.push(values)}
@@ -121,6 +122,7 @@ describeParitySuite({
                     surface={config.surface}
                     addons={config.addons}
                     aria-label={config.ariaLabel}
+                    emptyMessage={config.emptyMessage}
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                     onChange={(value) => reported.push(value)}

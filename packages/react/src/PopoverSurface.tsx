@@ -40,6 +40,7 @@ export interface PopoverSurfaceProps<TExtra extends object> {
     readonly name: string | undefined;
     readonly required: boolean | undefined;
     readonly placeholder: string | undefined;
+    readonly emptyMessage: string | undefined;
     readonly className: string | undefined;
     readonly style: CSSProperties | undefined;
     readonly id: string | undefined;
@@ -64,6 +65,7 @@ export function PopoverSurface<TExtra extends object>({
     name,
     required,
     placeholder,
+    emptyMessage,
     className,
     style,
     id,
@@ -148,6 +150,7 @@ export function PopoverSurface<TExtra extends object>({
                     state={state}
                     controller={controller}
                     instanceId={instanceId}
+                    emptyMessage={emptyMessage}
                     onAfterCommit={isMulti ? focusInput : undefined}
                 />
             ) : null}
@@ -434,6 +437,7 @@ interface PopoverListboxProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
     readonly instanceId: string;
+    readonly emptyMessage?: string | undefined;
     readonly onAfterCommit: (() => void) | undefined;
 }
 
@@ -441,6 +445,7 @@ function PopoverListbox<TExtra extends object>({
     state,
     controller,
     instanceId,
+    emptyMessage,
     onAfterCommit,
 }: PopoverListboxProps<TExtra>): JSX.Element {
     const isMulti = state.mode === "multi";
@@ -454,7 +459,7 @@ function PopoverListbox<TExtra extends object>({
             >
                 <div className="select-box-list" data-select-list>
                     <p className="select-box-empty" data-select-empty>
-                        No matches
+                        {emptyMessage ?? "No matches"}
                     </p>
                 </div>
             </div>

@@ -24,6 +24,7 @@ const props = defineProps<{
     state: SelectBoxSnapshot<TExtra, SelectionValue>;
     controller: SelectBoxController<TExtra, SelectionValue>;
     placeholder: string | undefined;
+    emptyMessage: string | undefined;
     name: string | undefined;
     required: boolean | undefined;
     ariaLabelText: string | undefined;
@@ -303,7 +304,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                 data-select-list
                 :style="{ maxHeight: `${LIST_VIEWPORT_HEIGHT}px`, overflowY: 'auto' }"
             >
-                <p v-if="state.isEmpty" class="select-box-empty" data-select-empty>No matches</p>
+                <p v-if="state.isEmpty" class="select-box-empty" data-select-empty>{{ emptyMessage ?? "No matches" }}</p>
                 <div
                     v-else
                     :style="{

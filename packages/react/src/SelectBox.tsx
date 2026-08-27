@@ -49,6 +49,13 @@ export interface SelectBoxHandle<TExtra extends object = object> {
 interface SelectBoxBaseProps<TExtra extends object> {
     readonly options?: ReadonlyArray<SelectOption<TExtra>> | undefined;
     readonly placeholder?: string | undefined;
+    /**
+     * Text shown when the query matches nothing.
+     *
+     * Pass it already translated; the component stays locale-agnostic, the same
+     * way the addons do.
+     */
+    readonly emptyMessage?: string | undefined;
     readonly ungroupedLabel?: string | undefined;
     readonly addons?: ReadonlyArray<SelectBoxAddon<TExtra>> | undefined;
     readonly filter?: OptionFilterStrategy<TExtra> | undefined;
@@ -230,6 +237,7 @@ export function SelectBox<TExtra extends object = object, TMultiple extends bool
             name={props.name}
             required={props.required}
             placeholder={props.placeholder}
+            emptyMessage={props.emptyMessage}
             className={props.className}
             style={props.style}
             id={props.id}

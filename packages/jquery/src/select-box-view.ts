@@ -150,6 +150,7 @@ export class SelectBoxView<TExtra extends object = object>
     constructor(
         config: SelectBoxControllerConfig<TExtra> & {
             readonly placeholder?: string;
+            readonly emptyMessage?: string;
             readonly surface?: SelectBoxSurface;
             readonly name?: string;
             readonly required?: boolean;
@@ -225,6 +226,7 @@ export class SelectBoxView<TExtra extends object = object>
             factory: this.nodeFactory,
             getListElement: () => this.list,
             onWindowChange: this.handleSnapshotChange,
+            ...(config.emptyMessage !== undefined ? { emptyMessage: config.emptyMessage } : {}),
         });
         this.list.style.maxHeight = `${this.listPainter.viewportHeight}px`;
         this.list.style.overflowY = "auto";

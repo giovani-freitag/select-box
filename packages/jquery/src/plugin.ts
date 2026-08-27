@@ -14,6 +14,13 @@ export interface SelectBoxPluginConfig<TExtra extends object = object>
      */
     readonly multiple?: boolean;
     readonly placeholder?: string;
+    /**
+     * Text shown when the query matches nothing.
+     *
+     * Pass it already translated; the plugin stays locale-agnostic, the same way
+     * the addons do.
+     */
+    readonly emptyMessage?: string;
     readonly surface?: SelectBoxSurface;
     /** Field name under which the selection is submitted. Omit to stay out of the form. */
     readonly name?: string;
