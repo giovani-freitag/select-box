@@ -369,18 +369,14 @@ describe("document listeners", () => {
         const removed: string[] = [];
         const originalAdd = document.addEventListener.bind(document);
         const originalRemove = document.removeEventListener.bind(document);
-        vi.spyOn(document, "addEventListener").mockImplementation(
-            (type: string, ...rest: unknown[]) => {
-                added.push(type);
-                return originalAdd(type, ...rest);
-            },
-        );
-        vi.spyOn(document, "removeEventListener").mockImplementation(
-            (type: string, ...rest: unknown[]) => {
-                removed.push(type);
-                return originalRemove(type, ...rest);
-            },
-        );
+        vi.spyOn(document, "addEventListener").mockImplementation((type, listener, options) => {
+            added.push(type);
+            originalAdd(type, listener, options);
+        });
+        vi.spyOn(document, "removeEventListener").mockImplementation((type, listener, options) => {
+            removed.push(type);
+            originalRemove(type, listener, options);
+        });
         return { added, removed };
     }
 
