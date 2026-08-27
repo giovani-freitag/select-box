@@ -51,7 +51,7 @@
         "happy-dom": "^15.11.7",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
-        "vitest": "^2.1.9"
+        "vitest": "^3.2.6"
     },
     "dependencies": {
         "@tanstack/virtual-core": "^3.17.8"
