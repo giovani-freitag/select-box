@@ -10,6 +10,29 @@ import {
 const DEFAULT_OVERSCAN = 3;
 
 /**
+ * Reports a row's height, from the resize entry when there is one.
+ *
+ * Rows are also measured by handing TanStack the element alone, and its own
+ * default answers that call from its size cache — which leaves the list
+ * re-rendering every frame for as long as the popover is open. Reading the
+ * element is what the ref-style measurement means to ask for.
+ *
+ * A row measured before its first paint answers zero, and a zero is kept: the
+ * row then occupies no space and drops out of the window for good. The
+ * estimate stands in until a real height arrives.
+ */
+function measureRowHeight(
+    element: HTMLElement,
+    entry: ResizeObserverEntry | undefined,
+    instance: Virtualizer<HTMLElement, HTMLElement>,
+): number {
+    const box = entry?.borderBoxSize?.[0];
+    const measured = box ? Math.round(box.blockSize) : element.offsetHeight;
+    if (measured > 0) return measured;
+    return instance.options.estimateSize(instance.indexFromElement(element));
+}
+
+/**
  * Wraps TanStack's `observeElementRect` and forces a non-zero height: when the
  * underlying layout reports `height: 0` (notably under jsdom/happy-dom where
  * CSS layout doesn't run) the virtualizer can't decide which items intersect
@@ -67,6 +90,7 @@ export class SelectBoxListVirtualizer {
                     ? createObserveElementRect(fallbackViewport)
                     : observeElementRect,
             observeElementOffset,
+            measureElement: measureRowHeight,
             scrollToFn: elementScroll,
             onChange: (_instance, sync) => this.handleChange(sync),
             ...(fallbackViewport !== undefined
