@@ -16,8 +16,14 @@ updates:
     # a security fix is never delayed by it.
     cooldown:
       default-days: 7
+    # Minor and patch only. A single breaking major otherwise holds the whole
+    # group hostage, security patches included; majors arrive as their own PRs
+    # so one can be triaged without blocking the rest.
     groups:
       npm-dependencies:
+        update-types:
+          - "minor"
+          - "patch"
         patterns:
           - "*"
 
@@ -33,5 +39,8 @@ updates:
       default-days: 7
     groups:
       github-actions:
+        update-types:
+          - "minor"
+          - "patch"
         patterns:
           - "*"
