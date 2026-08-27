@@ -305,7 +305,7 @@ export class SelectBoxController<
     commitValue(input: SelectionValueInput): void {
         if (!this.canChange) return;
         const next = this.resolveValueFromInput(input);
-        if (Object.is(next, this.currentValue)) return;
+        if (this.isSameSelection(next, this.currentValue)) return;
         this.currentValue = next;
         if (this.driver.closeOnCommit) {
             this.currentOpen = false;
@@ -395,6 +395,26 @@ export class SelectBoxController<
         return validKeys.length === 0
             ? this.driver.empty()
             : this.commitFromKeys(validKeys);
+    }
+
+    /**
+     * Whether two values name the same selection, in the same order.
+     *
+     * `Object.is` settles it in single mode, where the value is a string. Multi
+     * mode rebuilds its array on every resolve, so an unchanged selection would
+     * look new and publish a snapshot every wrapper re-renders on — and would
+     * make a caller that pushes its own value back in loop forever.
+     */
+    private isSameSelection(left: TValue, right: TValue): boolean {
+        if (Object.is(left, right)) return true;
+
+        const leftKeys = this.driver.keys(left);
+        const rightKeys = this.driver.keys(right);
+
+        return (
+            leftKeys.length === rightKeys.length &&
+            leftKeys.every((key, index) => key === rightKeys[index])
+        );
     }
 
     /** Replays a list of selection keys through `driver.commit` to produce the canonical value. */
