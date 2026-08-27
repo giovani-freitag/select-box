@@ -30,7 +30,7 @@ Behaviour every wrapper owes its users equally goes in `packages/core`, and its
 test goes in the shared parity list under `tooling/parity/` — never hand-written
 five times. Only what is genuinely specific to one binding belongs in that
 wrapper's own `tests/`. The reasoning is in
-[ADR 9](docs/adr/0009-layer-the-test-suites.md); the rest of the design is in
+[ADR 8](docs/adr/0008-tests-prove-every-wrapper-has-every-feature.md); the rest of the design is in
 [docs/adr/](docs/adr/).
 
 Anything a wrapper renders is addressed through the `data-select-*` attribute
@@ -60,8 +60,10 @@ These apply by default; a deviation needs a comment saying why.
 
 Commit messages are [Conventional Commits](https://www.conventionalcommits.org),
 one line, imperative, no scope. Only `feat:`, `fix:` and breaking changes cut a
-release — see [ADR 13](docs/adr/0013-release-the-workspace-as-one-version.md).
+release; `chore:`, `docs:`, `test:`, `ci:`, `refactor:` and `perf:` land without
+one.
 
-Releases are automated: release-please keeps a release PR open against `main`,
-and merging it stamps the new version into every package, updates the changelog
-and cuts the tag.
+Releases are automated and cover the workspace as a unit: release-please keeps a
+release PR open against `main`, and merging it stamps one new version into every
+package, updates the changelog and cuts a single tag. A package with no changes
+still bumps — the version identifies a tested combination, not a diff.
