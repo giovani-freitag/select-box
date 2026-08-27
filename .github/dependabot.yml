@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  # `increase` rather than the npm default `widen`: these are published
+  # packages with pinned versions, and widening a range would leave the
+  # lockfile as the only record of what was tested.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # A buffer against a freshly-compromised release. Version updates only —
+    # a security fix is never delayed by it.
+    cooldown:
+      default-days: 7
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+
+  # `package-ecosystem` takes one string, so keeping the workflow actions
+  # current needs its own entry rather than another pattern.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
