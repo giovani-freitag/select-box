@@ -44,7 +44,7 @@
     },
     "peerDependencies": {
         "@select-box/core": "workspace:*",
-        "react": "^19.0.0"
+        "react": "^19.2.8"
     },
     "devDependencies": {
         "@select-box/core": "workspace:*",
@@ -52,14 +52,14 @@
         "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "@testing-library/react": "^16.1.0",
-        "@types/react": "^19.0.2",
-        "@types/react-dom": "^19.0.2",
-        "eslint": "^9.17.0",
-        "happy-dom": "^15.11.7",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.4",
+        "eslint": "^10.8.1",
+        "happy-dom": "^20.11.6",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
         "tsup": "^8.3.5",
-        "typescript": "^5.7.2",
-        "vitest": "^2.1.8"
+        "typescript": "^7.0.2",
+        "vitest": "^4.1.11"
     }
 }
