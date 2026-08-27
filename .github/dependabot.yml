@@ -16,6 +16,12 @@ updates:
     # a security fix is never delayed by it.
     cooldown:
       default-days: 7
+    # `@select-box/webcomponents` holds happy-dom at an exact version because
+    # every release from 20.3.3 on livelocks its suite. Without this, the same
+    # broken bump is proposed every week.
+    ignore:
+      - dependency-name: "happy-dom"
+        versions: [">20.3.2"]
     # Minor and patch only. A single breaking major otherwise holds the whole
     # group hostage, security patches included; majors arrive as their own PRs
     # so one can be triaged without blocking the rest.
