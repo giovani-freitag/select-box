@@ -47,7 +47,7 @@ describeParitySuite({
                 void wrapper.setProps({ multi });
             },
             setValue: (value) => {
-                exposed?.controller.commitValue(value);
+                exposed?.controller.setValue(value);
             },
             reportedChanges: () =>
                 [

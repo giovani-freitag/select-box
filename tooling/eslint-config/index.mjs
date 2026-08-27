@@ -57,9 +57,14 @@ export default tsEslint.config(
             "**/*.{test,spec}.{ts,tsx}",
             "**/specs/**/*.ts",
         ],
+        // Test files reach for framework test utilities and single-file
+        // components whose types the project service cannot see, so everything
+        // that crosses that boundary reads as `any` here even though `tsc` and
+        // `vue-tsc` type it fine.
         rules: {
             "@typescript-eslint/no-unsafe-assignment": "off",
             "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
         },
     },
 );

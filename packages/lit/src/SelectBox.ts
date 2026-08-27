@@ -107,11 +107,12 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     /**
      * Sets the selection, matching the getter every other wrapper pairs with one.
      *
-     * Committed through the controller rather than by rebuilding, so the value is
-     * pruned against the current options the same way any other commit is.
+     * Owner-driven, so it goes through `setValue` rather than a commit: the value
+     * is still pruned against the current options, but a disabled control accepts
+     * it, the way a disabled `<select>` accepts what its page assigns.
      */
     set value(next: SelectionValueInput) {
-        if (this.reactiveController) this.reactiveController.core.commitValue(next);
+        if (this.reactiveController) this.reactiveController.core.setValue(next);
         else this.pendingValue = next;
     }
 

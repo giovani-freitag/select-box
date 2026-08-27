@@ -7,6 +7,7 @@ import {
     type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
     type SelectionValue,
+    type SelectionValueInput,
     type SelectOption,
 } from "@select-box/core";
 import {
@@ -42,6 +43,15 @@ export interface SelectBoxElementHandle {
      * @param mode - Selection mode to move to.
      */
     setMode(mode: "single" | "multi"): void;
+    /**
+     * Sets the selection on the caller's behalf.
+     *
+     * Applied even while the widget refuses input, the way a disabled `<select>`
+     * still takes the value its page assigns. `clear()` is the user's gesture.
+     *
+     * @param value - Selection to hold; unknown or disabled keys are dropped.
+     */
+    setValue(value: SelectionValueInput): void;
     /** Tears the view down and takes its markup out of the document. */
     destroy(): void;
 }
@@ -99,6 +109,18 @@ export class SelectBoxView<TExtra extends object = object>
      */
     setMode(nextMode: "single" | "multi"): void {
         this.coreController.setMode(nextMode);
+    }
+
+    /**
+     * Sets the selection on the caller's behalf.
+     *
+     * Goes through the controller's owner-facing door rather than a commit, so a
+     * disabled or read-only widget still shows what its page assigned.
+     *
+     * @param value - Selection to hold; unknown or disabled keys are dropped.
+     */
+    setValue(value: SelectionValueInput): void {
+        this.coreController.setValue(value);
     }
 
     private readonly onDestroy: (() => void) | undefined;

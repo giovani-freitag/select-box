@@ -13,6 +13,7 @@ import { useFilterReactivity } from "./composables/use-filter-reactivity.js";
 import { useInteractivityReactivity } from "./composables/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./composables/use-options-reactivity.js";
 import { useNotifyChange } from "./composables/use-notify-change.js";
+import { useValueReactivity, type OwnerEcho } from "./composables/use-value-reactivity.js";
 import { useSelectBox } from "./composables/use-select-box.js";
 import InlineSurface from "./InlineSurface.vue";
 import PopoverSurface from "./PopoverSurface.vue";
@@ -25,7 +26,14 @@ export type SelectBoxSurface = "popover" | "inline";
 
 export interface SelectBoxProps<TExtra extends object = object> {
     options?: ReadonlyArray<SelectOption<TExtra>>;
-    /** Single mode: `string | number | null`. Multi mode: `ReadonlyArray<string | number>`. */
+    /**
+     * Selection owned by the caller, applied even while the control refuses input.
+     *
+     * Makes the box controlled: a pick the owner does not answer through the
+     * `change` event is reverted to what the prop still says.
+     */
+    value?: string | number | null | ReadonlyArray<string | number>;
+    /** Initial selection for an uncontrolled box. Ignored once `value` is supplied. */
     defaultValue?: string | number | null | ReadonlyArray<string | number>;
     placeholder?: string;
     ungroupedLabel?: string;
@@ -90,15 +98,15 @@ const useResult = props.multi
     ? useSelectBox<TExtra>({
         mode: "multi",
         ...commonConfig(),
-        initialValue: Array.isArray(props.defaultValue)
+        initialValue: (props.value ?? (Array.isArray(props.defaultValue)
             ? (props.defaultValue as ReadonlyArray<string | number>)
-            : [],
+            : [])) as ReadonlyArray<string | number>,
     })
     : useSelectBox<TExtra>({
         ...commonConfig(),
-        initialValue: Array.isArray(props.defaultValue)
+        initialValue: (props.value ?? (Array.isArray(props.defaultValue)
             ? null
-            : (props.defaultValue as string | number | null),
+            : props.defaultValue)) as string | number | null,
     });
 
 const state = useResult.state as ShallowRef<SelectBoxSnapshot<TExtra, SelectionValue>>;
@@ -118,10 +126,26 @@ useInteractivityReactivity(
     computed(() => props.disabled),
     computed(() => props.readOnly),
 );
-useNotifyChange(state, {
-    single: (value, option) => emit("change", value, option),
-    multi: (values, options) => emit("change-multi", values, options),
-});
+// Shared between the two directions of a controlled value: what the owner
+// pushed in, so the notifier does not read it back out as a fresh change.
+const ownerEcho: OwnerEcho = { current: null };
+
+// Order matters. Watchers run in creation order, so the announcement has to be
+// registered before the push that stamps the next echo.
+useNotifyChange(
+    state,
+    {
+        single: (value, option) => emit("change", value, option),
+        multi: (values, options) => emit("change-multi", values, options),
+    },
+    ownerEcho,
+);
+useValueReactivity(
+    controller,
+    computed(() => props.value),
+    state,
+    ownerEcho,
+);
 
 const isInline = computed(() => props.surface === "inline");
 

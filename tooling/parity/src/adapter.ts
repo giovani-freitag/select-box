@@ -33,7 +33,10 @@ export interface ParityMountConfig {
  */
 export interface ParityController {
     open(): void;
+    /** The user-gesture door: refused while the control is disabled or read-only. */
     commitValue(value: string | ReadonlyArray<string> | null): void;
+    /** The owner door: applied whatever the interaction flags say. */
+    setValue(value: string | ReadonlyArray<string> | null): void;
     getState(): {
         readonly open: boolean;
         readonly addons: Readonly<Record<string, unknown>>;

@@ -343,12 +343,23 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(mounted.reportedChanges()).toEqual([]);
         });
 
-        test("a disabled control refuses a value set through its own API", async () => {
+        // The flags refuse the user, not the page. A disabled `<select>` still
+        // takes what its owner assigns, and a control that could not be given a
+        // value while disabled could never render as a filled, read-only field.
+        test("a disabled control still takes a value set by its owner", async () => {
             const mounted = await mountWithFlags({ disabled: true });
 
             await mounted.setValue("grape");
 
-            expect(input(mounted).value).toBe("");
+            expect(input(mounted).value).toBe("Grape");
+        });
+
+        test("a read-only control still takes a value set by its owner", async () => {
+            const mounted = await mountWithFlags({ readOnly: true });
+
+            await mounted.setValue("grape");
+
+            expect(input(mounted).value).toBe("Grape");
         });
 
         test("detaches its addons when the instance goes away", async () => {

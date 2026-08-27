@@ -49,7 +49,7 @@ function createReactHandle(
         },
 
         async setValue(value: string | ReadonlyArray<string> | null): Promise<void> {
-            act(() => handleRef.current!.controller.commitValue(value));
+            act(() => handleRef.current!.controller.setValue(value));
             await flush();
         },
 

@@ -42,7 +42,7 @@ describeParitySuite({
                     box.setMode(multi ? "multi" : "single");
                 },
                 setValue: (value) => {
-                    box.controller.commitValue(value);
+                    box.setValue(value);
                 },
                 reportedChanges: () => reported,
                 // Root comes through the element door and the controller through

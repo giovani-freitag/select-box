@@ -300,9 +300,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
     set value(next: SelectionValueInput) {
         this.pendingValue = next;
-        // Committed through the controller so the interaction gate applies: a
-        // rebuild would seed `initialValue` and let a disabled control take one.
-        if (this.coreController) this.coreController.commitValue(next);
+        // Owner-driven, so it goes through `setValue` rather than a commit: a
+        // disabled `<select>` still accepts the value its page assigns, because
+        // the attribute refuses the user, not the code.
+        if (this.coreController) this.coreController.setValue(next);
         else this.rebuildControllerIfConnected();
     }
 
