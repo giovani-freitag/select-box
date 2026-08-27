@@ -41,6 +41,17 @@ export interface OptionFilterStrategy<TExtra extends object = object> {
         query: string,
     ): ReadonlyArray<SelectOption<TExtra>>;
     match(label: string, query: string): ReadonlyArray<SearchMatchRange>;
+    /**
+     * Optional: build whatever this strategy needs before the first query.
+     *
+     * Called with each group's options when the list changes, so a strategy that
+     * normalizes labels or builds an index pays for it while the list is being
+     * loaded rather than on the keystroke that first needs it. Strategies that
+     * need no preparation simply leave it out.
+     *
+     * @param options - One group's options, as the filter will receive them.
+     */
+    prepare?(options: ReadonlyArray<SelectOption<TExtra>>): void;
 }
 
 /**

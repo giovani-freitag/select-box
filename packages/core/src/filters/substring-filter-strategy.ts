@@ -26,6 +26,15 @@ export class SubstringFilterStrategy<TExtra extends object = object>
         ReadonlyArray<string>
     >();
 
+    /**
+     * Normalizes this group's labels up front, off the keystroke path.
+     *
+     * @param options - One group's options, as the filter will receive them.
+     */
+    override prepare(options: ReadonlyArray<SelectOption<TExtra>>): void {
+        this.normalizedLabelsFor(options);
+    }
+
     override filter(
         options: ReadonlyArray<SelectOption<TExtra>>,
         query: string,

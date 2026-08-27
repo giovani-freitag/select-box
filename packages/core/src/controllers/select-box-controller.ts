@@ -150,6 +150,7 @@ export class SelectBoxController<
         this.optionsByValue = indexOptionsByValue(this.allGroups);
         this.currentValue = this.resolveValueFromInput(this.currentValue);
         this.currentActiveIndex = this.indexOfActiveCandidate(previousActive);
+        this.prepareFilterStrategy();
         this.publish();
     }
 
@@ -389,6 +390,7 @@ export class SelectBoxController<
     private resolveFilterStrategy(): void {
         if (this.explicitFilter !== null) {
             this.filterStrategy = this.explicitFilter;
+            this.prepareFilterStrategy();
             return;
         }
         let chosen: OptionFilterStrategy<TExtra> | null = null;
@@ -397,6 +399,20 @@ export class SelectBoxController<
             if (provided) chosen = provided;
         }
         this.filterStrategy = chosen ?? this.defaultFilter;
+        this.prepareFilterStrategy();
+    }
+
+    /**
+     * Lets the active strategy index the current options before anyone types.
+     *
+     * Whatever a strategy has to derive from the labels — a normalized form, a
+     * search index — costs the same whenever it runs, so it runs here, while the
+     * list is being loaded, rather than on the keystroke that first needs it.
+     */
+    private prepareFilterStrategy(): void {
+        for (const group of this.allGroups) {
+            this.filterStrategy.prepare?.(group.options);
+        }
     }
 
     /**

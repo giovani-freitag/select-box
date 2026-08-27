@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { SubstringFilterStrategy } from "../src/index.js";
+import { SingleSelectBoxController, SubstringFilterStrategy } from "../src/index.js";
 
 function optionsOf(count: number): ReadonlyArray<{ value: string; label: string }> {
     return Array.from({ length: count }, (_, index) => ({
@@ -58,5 +58,52 @@ describe("SubstringFilterStrategy over a long list", () => {
         const coldRun = performance.now() - freshStarted;
 
         expect(cachedRun).toBeLessThan(coldRun);
+    });
+});
+
+describe("preparing a strategy before the first query", () => {
+    test("a prepared list costs the filter nothing to normalize", () => {
+        const strategy = new SubstringFilterStrategy();
+        const options = optionsOf(20_000);
+
+        strategy.prepare(options);
+        const preparedStart = performance.now();
+        strategy.filter(options, "y");
+        const prepared = performance.now() - preparedStart;
+
+        const coldStart = performance.now();
+        new SubstringFilterStrategy().filter(optionsOf(20_000), "y");
+        const cold = performance.now() - coldStart;
+
+        expect(prepared).toBeLessThan(cold);
+    });
+
+    test("the controller prepares the strategy when the options arrive", () => {
+        const prepared: number[] = [];
+        const strategy = new SubstringFilterStrategy();
+        const spy = Object.assign(Object.create(Object.getPrototypeOf(strategy) as object), strategy, {
+            prepare(options: ReadonlyArray<{ value: string; label: string }>): void {
+                prepared.push(options.length);
+            },
+        }) as SubstringFilterStrategy;
+
+        new SingleSelectBoxController({ options: optionsOf(3), filter: spy });
+
+        expect(prepared).toEqual([3]);
+    });
+
+    test("it prepares again when the option list is replaced", () => {
+        const prepared: number[] = [];
+        const strategy = new SubstringFilterStrategy();
+        const spy = Object.assign(Object.create(Object.getPrototypeOf(strategy) as object), strategy, {
+            prepare(options: ReadonlyArray<{ value: string; label: string }>): void {
+                prepared.push(options.length);
+            },
+        }) as SubstringFilterStrategy;
+        const controller = new SingleSelectBoxController({ options: optionsOf(3), filter: spy });
+
+        controller.setOptions(optionsOf(7));
+
+        expect(prepared).toEqual([3, 7]);
     });
 });

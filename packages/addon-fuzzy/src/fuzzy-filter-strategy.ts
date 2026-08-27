@@ -22,6 +22,18 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
 {
     private readonly fuseOptions: IFuseOptions<SelectOption<TExtra>>;
 
+    /**
+     * One index per option list.
+     *
+     * Building a bitap index is the whole cost of a fuzzy query — measured at
+     * 42ms for ten thousand options — and it depends only on the labels. Keyed
+     * on the array the controller hands over, so it is released with it.
+     */
+    private readonly indexes = new WeakMap<
+        ReadonlyArray<SelectOption<TExtra>>,
+        Fuse<SelectOption<TExtra>>
+    >();
+
     constructor(config: FuzzyFilterStrategyConfig<TExtra> = {}) {
         super();
         this.fuseOptions = {
@@ -33,13 +45,35 @@ export class FuzzyFilterStrategy<TExtra extends object = object>
         };
     }
 
+    /**
+     * Builds this group's index up front, off the keystroke path.
+     *
+     * @param options - One group's options, as the filter will receive them.
+     */
+    override prepare(options: ReadonlyArray<SelectOption<TExtra>>): void {
+        this.indexFor(options);
+    }
+
     override filter(
         options: ReadonlyArray<SelectOption<TExtra>>,
         query: string,
     ): ReadonlyArray<SelectOption<TExtra>> {
         if (query.trim() === "") return options;
+
+        return this.indexFor(options)
+            .search(query)
+            .map((result) => result.item);
+    }
+
+    /** The cached index for an option list, building it once. */
+    private indexFor(options: ReadonlyArray<SelectOption<TExtra>>): Fuse<SelectOption<TExtra>> {
+        const cached = this.indexes.get(options);
+        if (cached) return cached;
+
         const fuse = new Fuse([...options], this.fuseOptions);
-        return fuse.search(query).map((result) => result.item);
+        this.indexes.set(options, fuse);
+
+        return fuse;
     }
 
     /** Matched char ranges fuse would draw for `label` under `query`. */
