@@ -18,7 +18,7 @@ import {
 import { html, LitElement, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { createRef, ref, type Ref } from "lit/directives/ref.js";
 
-import { SelectBoxController } from "./select-box-controller.js";
+import { SelectBoxReactiveController } from "./select-box-reactive-controller.js";
 
 const ESTIMATED_OPTION_HEIGHT = 36;
 const ESTIMATED_HEADER_HEIGHT = 28;
@@ -65,7 +65,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private readonly internals = this.attachInternals();
-    private reactiveController: SelectBoxController<TExtra, SelectionValue> | null = null;
+    private reactiveController: SelectBoxReactiveController<TExtra, SelectionValue> | null = null;
     private readonly instanceId = nextSelectBoxId();
     private pendingValue: SelectionValueInput = null;
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
@@ -255,7 +255,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private rebuildController(): void {
-        this.reactiveController = new SelectBoxController<TExtra, SelectionValue>(this, {
+        this.reactiveController = new SelectBoxReactiveController<TExtra, SelectionValue>(this, {
             mode: this.multiple ? "multi" : "single",
             ...(this.options !== undefined ? { options: this.options } : {}),
             ...(this.addons !== undefined ? { addons: this.addons } : {}),

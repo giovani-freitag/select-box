@@ -14,8 +14,12 @@ import type { ReactiveController, ReactiveControllerHost } from "lit";
  * re-render on every snapshot change. Generic over the value type so single-
  * (`string | null`) and multi-mode (`ReadonlyArray<string>`) hosts both share
  * this one adapter.
+ *
+ * Named for what Lit calls the pattern, so it does not take the name every
+ * other wrapper uses for the core class — which would leave the type of
+ * `element.controller` unnameable from this package.
  */
-export class SelectBoxController<
+export class SelectBoxReactiveController<
     TExtra extends object = object,
     TValue extends SelectionValue = string | null,
 > implements ReactiveController {

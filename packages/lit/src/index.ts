@@ -1,7 +1,7 @@
 import { SelectBox } from "./SelectBox.js";
 
 export { SelectBox } from "./SelectBox.js";
-export { SelectBoxController } from "./select-box-controller.js";
+export { SelectBoxReactiveController } from "./select-box-reactive-controller.js";
 
 const TAG_NAME = "select-box";
 
@@ -15,6 +15,7 @@ export function defineSelectBoxElement(tagName: string = TAG_NAME): void {
 
 export {
     MultiSelectBoxController,
+    SelectBoxController,
     SelectBoxKeyDispatcher,
     SelectBoxSnapshotView,
     SingleSelectBoxController,

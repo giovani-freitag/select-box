@@ -1,10 +1,10 @@
 import { LitElement } from "lit";
 import { describe, expect, test } from "vitest";
 
-import { packageName, SelectBoxController } from "../src/index.js";
+import { packageName, SelectBoxReactiveController } from "../src/index.js";
 
 class TestHost extends LitElement {
-    selectBox = new SelectBoxController(this, {
+    selectBox = new SelectBoxReactiveController(this, {
         options: [
             { value: "a", label: "Apple" },
             { value: "b", label: "Banana" },
@@ -17,7 +17,7 @@ customElements.define("test-host", TestHost);
 describe("@select-box/lit", () => {
     test("exports the controller class and the package name", () => {
         expect(packageName).toBe("@select-box/lit");
-        expect(typeof SelectBoxController).toBe("function");
+        expect(typeof SelectBoxReactiveController).toBe("function");
     });
 
     test("ReactiveController exposes the initial snapshot through state", () => {
