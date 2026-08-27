@@ -55,7 +55,7 @@ wrapper gets it in the same commit.
 ## 🚀 Quick start
 
 ```bash
-pnpm add @select-box/react @select-box/styles     # or /vue, /lit, /webcomponents, /jquery
+pnpm add @select-box/core @select-box/react @select-box/styles   # swap /react for /vue, /lit, /webcomponents, /jquery
 ```
 
 > Not on a registry yet. Until it is, consume it from a checkout — `pnpm link` or a
