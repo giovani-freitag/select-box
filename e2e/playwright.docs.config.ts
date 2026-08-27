@@ -24,7 +24,9 @@ export default defineConfig({
     },
     webServer: {
         command: "pnpm --filter docs-starlight exec astro preview --port 4331",
-        url: "http://localhost:4331/",
+        // The site is served under a sub-path, so the root 404s and Playwright
+        // would wait out the whole timeout on a server that is already up.
+        url: "http://localhost:4331/select-box/",
         reuseExistingServer: process.env["CI"] !== "true",
         timeout: 120_000,
     },

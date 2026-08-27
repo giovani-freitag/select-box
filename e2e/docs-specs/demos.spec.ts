@@ -9,6 +9,12 @@ import { expect, test, type ConsoleMessage, type Page } from "@playwright/test";
  */
 const FRAMEWORK_TABS = ["jQuery", "Lit", "React", "Vue", "Web Components"] as const;
 
+/**
+ * The sub-path the built site is served under, mirroring `base` in the Astro
+ * config. Paths below stay site-root so they read as the site's own routes.
+ */
+const SITE_BASE = "/select-box";
+
 /** Pages carrying a framework demo group, each with what a commit should do. */
 const DEMO_PAGES = [
     { path: "/", surface: "popover" },
@@ -39,7 +45,7 @@ for (const demo of DEMO_PAGES) {
     test(`every framework demo renders on ${demo.path}`, async ({ page }) => {
         const failures = watchForFailures(page);
 
-        await page.goto(demo.path);
+        await page.goto(`${SITE_BASE}${demo.path}`);
         const roots = page.locator("[data-select-root]");
         await expect(roots.first()).toBeAttached();
 
@@ -50,7 +56,7 @@ for (const demo of DEMO_PAGES) {
 
     test(`every framework demo on ${demo.path} commits a selection`, async ({ page }) => {
         const failures = watchForFailures(page);
-        await page.goto(demo.path);
+        await page.goto(`${SITE_BASE}${demo.path}`);
 
         for (const tab of FRAMEWORK_TABS) {
             await page.getByRole("tab", { name: tab, exact: true }).first().click();
@@ -92,7 +98,7 @@ for (const demo of DEMO_PAGES) {
 
 test("the demo output reports the committed value", async ({ page }) => {
     const failures = watchForFailures(page);
-    await page.goto("/examples/simple/");
+    await page.goto(`${SITE_BASE}/examples/simple/`);
 
     for (const tab of FRAMEWORK_TABS) {
         await page.getByRole("tab", { name: tab, exact: true }).first().click();
