@@ -28,6 +28,7 @@ export {
     type SelectGroup,
     type SelectionMode,
     type SelectionValue,
+    type SelectionValueInput,
     type SelectOption,
     type SingleSelectBoxControllerConfig,
 } from "@select-box/core";

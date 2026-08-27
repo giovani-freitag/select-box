@@ -153,14 +153,23 @@ to `onChange` / `selectedOption`.
 
 | Field | React prop | Custom-element |
 |---|---|---|
-| Options (flat) | `options` | `.options` (property) |
-| Options (grouped) | `groups` | `.groups` (property) |
-| Initial value | `defaultValue` (`string \| number`) | `.value` (property — string) |
+| Options | `options` | `.options` (property) |
+| Grouping | a `group` key on each option | same, on `.options` |
+| Ungrouped heading | `ungroupedLabel` | `ungrouped-label` attribute |
+| Selection you own | `value` | `.value` (property) |
+| Selection it owns | `defaultValue` | — |
 | Change callback | `onChange(value, option)` | `change` event (read `event.target.value` / `event.target.selectedOption`) |
+| Multi-select | `multi` | `multi` attribute |
+| Surface | `surface` (`"popover"` \| `"inline"`) | `surface` attribute |
 | Placeholder | `placeholder` | `placeholder` attribute |
-| Ungrouped label | `ungroupedLabel` | `ungrouped-label` attribute |
+| Submitted under | `name` | `name` attribute |
+| Required | `required` | `required` attribute |
+| Refuses everything | `disabled` | `disabled` attribute |
+| Refuses edits, still submits | `readOnly` | `readonly` attribute |
+| Accessible name | `aria-label` / `aria-labelledby` | same attributes |
 | Addons | `addons` | `.addons` (property) |
 | Custom filter | `filter` | `.filter` (property) |
+| Root and controller | `ref` yields `{ root, controller }` | `.root` / `.controller` (getters) |
 
 ## Keyboard
 

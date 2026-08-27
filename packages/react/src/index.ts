@@ -1,5 +1,6 @@
 export {
     SelectBox,
+    type SelectBoxHandle,
     type SelectBoxMultiProps,
     type SelectBoxProps,
     type SelectBoxSingleProps,
