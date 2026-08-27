@@ -28,7 +28,9 @@ const view = computed(
 );
 
 function commitInlineChip(option: SelectOption<TExtra>): void {
-    if (option.disabled) return;
+    // The chips carry `aria-disabled` rather than the native attribute, so
+    // refusing the click is this handler's job now.
+    if (option.disabled === true || props.state.disabled || props.state.readOnly) return;
     props.controller.commitOption(option);
 }
 
@@ -74,7 +76,7 @@ function inlineChipClass(isSelected: boolean, disabled: boolean | undefined): st
                     role="option"
                     :aria-selected="view.isSelected(option.value)"
                     :aria-pressed="view.isSelected(option.value)"
-                    :disabled="option.disabled === true || state.disabled || state.readOnly"
+                    :aria-disabled="option.disabled === true || state.disabled || state.readOnly ? 'true' : undefined"
                     :class="inlineChipClass(view.isSelected(option.value), option.disabled)"
                     data-select-chip
                     data-select-option

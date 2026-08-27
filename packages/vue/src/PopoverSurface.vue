@@ -329,7 +329,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                             role="option"
                             :aria-selected="entry.isSelected"
                             :class="optionClasses(entry.isActive, entry.isSelected, entry.row.option.disabled)"
-                            :disabled="entry.row.option.disabled"
+                            :aria-disabled="entry.row.option.disabled ? 'true' : undefined"
                             tabindex="-1"
                             :id="optionElementId(instanceId, entry.row.option.value)"
                             data-select-option

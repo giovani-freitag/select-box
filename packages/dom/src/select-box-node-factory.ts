@@ -102,7 +102,12 @@ export class SelectBoxNodeFactory<TExtra extends object = object> {
         button.dataset["selectOption"] = "";
         if (state.active) button.dataset["selectActive"] = "";
         if (state.selected) button.dataset["selectSelected"] = "";
-        if (option.disabled === true) button.disabled = true;
+        // `aria-disabled` rather than the native attribute: the role is already
+        // overridden to `option`, so the state belongs in ARIA beside it, and a
+        // read-only control keeps rows focusable the way a readonly input is.
+        // The refusal moves into the click handler, one path for the option's
+        // own flag and the control's.
+        if (option.disabled === true) button.setAttribute("aria-disabled", "true");
         if (isMulti) button.append(this.createTick(state.selected));
         button.append(...this.createLabelNodes(option.label));
         button.addEventListener("mousedown", (event) => event.preventDefault());
@@ -172,10 +177,12 @@ export class SelectBoxNodeFactory<TExtra extends object = object> {
         // The inline surface has no input to carry the control's own disabled
         // state, so each chip mirrors it — otherwise a disabled control still
         // takes clicks here.
-        if (option.disabled === true || !this.isInteractive()) button.disabled = true;
+        if (option.disabled === true || !this.isInteractive()) {
+            button.setAttribute("aria-disabled", "true");
+        }
         button.textContent = option.label;
         button.addEventListener("click", () => {
-            if (option.disabled === true) return;
+            if (option.disabled === true || !this.isInteractive()) return;
             this.getController()?.commitOption(option);
         });
         return button;

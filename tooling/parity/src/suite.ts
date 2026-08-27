@@ -277,7 +277,11 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             return handle;
         }
 
-        test("renders a disabled option as a disabled control, so a click cannot reach it", async () => {
+        // The role is already overridden to `option`, so the disabled state
+        // belongs in ARIA beside it rather than in the native attribute. That
+        // also means the platform no longer swallows the click, so the refusal
+        // has to be explicit in code.
+        test("marks a disabled option with the ARIA state, not the native attribute", async () => {
             handle = await adapter.mount({
                 options: PARITY_FRUITS_WITH_DISABLED,
                 placeholder: PARITY_PLACEHOLDER,
@@ -290,8 +294,22 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             const row = optionByLabel(mounted, "Pear");
 
             expect(row).toBeInstanceOf(HTMLButtonElement);
-            expect((row as HTMLButtonElement).disabled).toBe(true);
-            await mounted.clickElement(row);
+            expect(row.getAttribute("aria-disabled")).toBe("true");
+            expect((row as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        test("commits nothing when a disabled option is clicked anyway", async () => {
+            handle = await adapter.mount({
+                options: PARITY_FRUITS_WITH_DISABLED,
+                placeholder: PARITY_PLACEHOLDER,
+                multi: false,
+                surface: "popover",
+            });
+            const mounted = handle;
+            await mounted.focusInput();
+
+            await mounted.clickElement(optionByLabel(mounted, "Pear"));
+
             expect(input(mounted).value).toBe("");
         });
 

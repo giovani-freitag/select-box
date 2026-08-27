@@ -124,14 +124,27 @@ describe("SelectBoxNodeFactory", () => {
             expect(inSingle.querySelector(".select-box-option-tick")).toBeNull();
         });
 
-        test("refuses a disabled option", () => {
+        test("marks a disabled option with the ARIA state rather than the native one", () => {
             const row = build(single()).createOptionRow(FIG, {
                 active: false,
                 selected: false,
             });
 
-            expect(row.disabled).toBe(true);
+            expect(row.getAttribute("aria-disabled")).toBe("true");
+            expect(row.disabled).toBe(false);
             expect(row.classList.contains("select-box-option-disabled")).toBe(true);
+        });
+
+        test("commits nothing when a disabled option is clicked anyway", () => {
+            const controller = single();
+            const row = build(controller).createOptionRow(FIG, {
+                active: false,
+                selected: false,
+            });
+
+            row.click();
+
+            expect(controller.getState().value).toBeNull();
         });
 
         test("commits its option on click", () => {
@@ -280,13 +293,14 @@ describe("SelectBoxNodeFactory", () => {
             expect(controller.getState().value).toEqual([]);
         });
 
-        test("refuses a disabled option", () => {
+        test("refuses a disabled option through the handler, not the native attribute", () => {
             const controller = multi();
             const chip = build(controller).createSelectableChip(FIG, { selected: false });
 
             chip.click();
 
-            expect(chip.disabled).toBe(true);
+            expect(chip.getAttribute("aria-disabled")).toBe("true");
+            expect(chip.disabled).toBe(false);
             expect(controller.getState().value).toEqual([]);
         });
 
@@ -296,7 +310,7 @@ describe("SelectBoxNodeFactory", () => {
 
             const chip = build(controller).createSelectableChip(APPLE, { selected: false });
 
-            expect(chip.disabled).toBe(true);
+            expect(chip.getAttribute("aria-disabled")).toBe("true");
         });
 
         test("mirrors a read-only control the same way", () => {
@@ -305,13 +319,23 @@ describe("SelectBoxNodeFactory", () => {
 
             const chip = build(controller).createSelectableChip(APPLE, { selected: false });
 
-            expect(chip.disabled).toBe(true);
+            expect(chip.getAttribute("aria-disabled")).toBe("true");
+        });
+
+        test("refuses the click a mirrored disabled state no longer blocks natively", () => {
+            const controller = multi();
+            controller.setInteractivity({ disabled: true, readOnly: false });
+            const chip = build(controller).createSelectableChip(APPLE, { selected: false });
+
+            chip.click();
+
+            expect(controller.getState().value).toEqual([]);
         });
 
         test("stays enabled while the control accepts input", () => {
             const chip = build(multi()).createSelectableChip(APPLE, { selected: false });
 
-            expect(chip.disabled).toBe(false);
+            expect(chip.hasAttribute("aria-disabled")).toBe(false);
         });
     });
 

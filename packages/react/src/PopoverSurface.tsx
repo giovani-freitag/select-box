@@ -498,10 +498,14 @@ function VirtualizedOptionList<TExtra extends object>({
                             type="button"
                             role="option"
                             aria-selected={selected}
+                            // `aria-disabled` rather than the native attribute: the
+                            // role is already overridden to `option`, so the state
+                            // belongs in ARIA beside it. The click handler refuses.
+                            aria-disabled={row.option.disabled === true ? true : undefined}
                             className={classes}
-                            disabled={row.option.disabled}
                             onMouseDown={handleOptionMouseDown}
                             onClick={() => {
+                                if (row.option.disabled === true) return;
                                 controller.commitOption(row.option);
                                 onAfterCommit?.();
                             }}

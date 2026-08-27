@@ -459,7 +459,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                                     aria-selected=${isSelected}
                                     aria-pressed=${isSelected}
                                     class=${chipClasses}
-                                    ?disabled=${option.disabled}
+                                    aria-disabled=${option.disabled === true || this.disabled || this.readOnly ? "true" : nothing}
                                     data-select-chip
                                     data-select-option
                                     data-select-selected=${isSelected ? "" : nothing}
@@ -474,7 +474,9 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private commitInlineChip(option: SelectOption<TExtra>): void {
-        if (option.disabled) return;
+        // The chips carry `aria-disabled` rather than the native attribute, so
+        // refusing the click is this handler's job now.
+        if (option.disabled === true || this.disabled || this.readOnly) return;
         this.reactiveController?.commitOption(option);
     }
 
@@ -680,7 +682,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                 role="option"
                 aria-selected=${isSelected}
                 class=${this.optionClasses(isActive, isSelected, row.option.disabled, isMulti)}
-                ?disabled=${row.option.disabled}
+                aria-disabled=${row.option.disabled === true ? "true" : nothing}
                 tabindex="-1"
                 id=${optionElementId(this.instanceId, row.option.value)}
                 data-select-option

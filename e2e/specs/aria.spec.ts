@@ -102,3 +102,33 @@ test("the group header is not announced as an option", async ({ selectBox, page 
 
     expect(options.some((text) => text.trim() === "Pomes")).toBe(false);
 });
+
+/**
+ * A row that refuses input carries the ARIA state, not the native attribute.
+ *
+ * The role is already overridden to `option`, so the disabled state belongs in
+ * ARIA next to it. It also keeps the row focusable and hoverable, which is what
+ * a read-only control does — and it puts the refusal in the click handler, one
+ * path for both the option's own flag and the control's.
+ */
+test("marks a row that refuses input with the ARIA state", async ({ selectBox }) => {
+    await selectBox.open({ disabled: true });
+    await selectBox.openPopover();
+
+    const row = selectBox.options.filter({ hasText: "Pear" });
+
+    await expect(row).toHaveAttribute("aria-disabled", "true");
+});
+
+// `toBeEnabled` honours `aria-disabled`, so it cannot tell the two mechanisms
+// apart. The native property is what this pins.
+test("leaves the native disabled attribute off that row", async ({ selectBox }) => {
+    await selectBox.open({ disabled: true });
+    await selectBox.openPopover();
+
+    const natively = await selectBox.options
+        .filter({ hasText: "Pear" })
+        .evaluate((row) => (row as HTMLButtonElement).disabled);
+
+    expect(natively).toBe(false);
+});

@@ -51,7 +51,9 @@ export function InlineSurface<TExtra extends object>({
         .join(" ");
 
     function handleChipClick(option: SelectOption<TExtra>): void {
-        if (option.disabled) return;
+        // The chips carry `aria-disabled` rather than the native attribute, so
+        // refusing the click is this handler's job now.
+        if (option.disabled === true || state.disabled || state.readOnly) return;
         controller.commitOption(option);
     }
 
@@ -101,7 +103,11 @@ export function InlineSurface<TExtra extends object>({
                                     role="option"
                                     aria-selected={isSelected}
                                     aria-pressed={isSelected}
-                                    disabled={option.disabled === true || state.disabled || state.readOnly}
+                                    aria-disabled={
+                                        option.disabled === true || state.disabled || state.readOnly
+                                            ? true
+                                            : undefined
+                                    }
                                     className={chipClassName}
                                     onClick={() => handleChipClick(option)}
                                     data-select-chip
