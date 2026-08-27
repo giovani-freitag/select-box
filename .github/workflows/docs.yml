@@ -43,8 +43,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Through turbo, not pnpm's own filter: the site's TypeDoc pass reads the
+      # packages' built type declarations, so their builds have to run first.
       - name: Build the site
-        run: pnpm --filter @select-box/docs-starlight run build
+        run: pnpm exec turbo run build --filter=@select-box/docs-starlight
 
       - uses: actions/configure-pages@v5
 
