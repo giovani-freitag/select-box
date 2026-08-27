@@ -3,6 +3,12 @@ packages:
   - "tooling/*"
   - "docs-starlight"
   - "e2e"
+
+autoInstallPeers: true
+strictPeerDependencies: false
+sharedWorkspaceLockfile: true
+preferWorkspacePackages: true
+
 allowBuilds:
   esbuild: true
   sharp: true
