@@ -316,6 +316,25 @@ export class SelectBoxController<
     }
 
     /**
+     * Sets the selection on the owner's behalf, whatever the interaction flags say.
+     *
+     * `commitValue` answers a user gesture, so a disabled or read-only control
+     * refuses it. This is the other door: the consumer owns the value and pushes
+     * it in, the way a controlled form component does, and a control that refuses
+     * input still has to show what its owner says it holds. It is not a commit,
+     * so it never closes the popover.
+     *
+     * @param input - Raw selection input; the driver coerces it and unknown or
+     *   disabled keys are dropped.
+     */
+    setValue(input: SelectionValueInput): void {
+        const next = this.resolveValueFromInput(input);
+        if (this.isSameSelection(next, this.currentValue)) return;
+        this.currentValue = next;
+        this.publish();
+    }
+
+    /**
      * Restores the default selection regardless of the interaction flags.
      *
      * The default is the value the controller was built with, which is what a

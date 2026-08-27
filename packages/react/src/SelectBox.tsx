@@ -14,6 +14,7 @@ import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity
 import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
+import { useValueReactivity } from "./hooks/use-value-reactivity.js";
 import { InlineSurface } from "./InlineSurface.js";
 import { PopoverSurface } from "./PopoverSurface.js";
 
@@ -61,7 +62,14 @@ interface SelectBoxBaseProps<TExtra extends object> {
 export interface SelectBoxSingleProps<TExtra extends object = object>
     extends SelectBoxBaseProps<TExtra> {
     readonly multi?: false;
-    /** Initial value (coerced to string). The component owns the selection internally; listen via `onChange`. */
+    /**
+     * Selection owned by the caller, applied even while the control refuses input.
+     *
+     * Makes the box controlled: a pick the owner does not answer through
+     * `onChange` is reverted to what the prop still says, as with `<select value>`.
+     */
+    readonly value?: string | number | null;
+    /** Initial value for an uncontrolled box (coerced to string). Ignored once `value` is supplied. */
     readonly defaultValue?: string | number | null;
     /**
      * Fires whenever the committed value changes (including `clear()`).
@@ -74,7 +82,14 @@ export interface SelectBoxSingleProps<TExtra extends object = object>
 export interface SelectBoxMultiProps<TExtra extends object = object>
     extends SelectBoxBaseProps<TExtra> {
     readonly multi: true;
-    /** Initial selection (each value coerced to string; duplicates dropped). */
+    /**
+     * Selection owned by the caller, applied even while the control refuses input.
+     *
+     * Makes the box controlled: a pick the owner does not answer through
+     * `onChange` is reverted to what the prop still says, as with `<select value>`.
+     */
+    readonly value?: ReadonlyArray<string | number>;
+    /** Initial selection for an uncontrolled box. Ignored once `value` is supplied. */
     readonly defaultValue?: ReadonlyArray<string | number>;
     /** Fires whenever the committed selection changes. Both args are stable per change. */
     readonly onChange?: (
@@ -103,9 +118,8 @@ export function SelectBox<TExtra extends object = object>(
     props: SelectBoxProps<TExtra>,
 ): JSX.Element {
     const initialMulti = props.multi === true;
-    const initialValue: SelectionValueInput = initialMulti
-        ? (props.defaultValue ?? [])
-        : (props.defaultValue ?? null);
+    const initialValue: SelectionValueInput =
+        props.value ?? (initialMulti ? (props.defaultValue ?? []) : (props.defaultValue ?? null));
 
     const controllerConfig: SelectBoxControllerConfig<TExtra> = {
         mode: initialMulti ? "multi" : "single",
@@ -130,10 +144,18 @@ export function SelectBox<TExtra extends object = object>(
         }
     }, [controller, wantMulti]);
 
+    // Shared between the two directions of a controlled value: what the owner
+    // pushed in, so the notifier does not read it back out as a fresh change.
+    const ownerEcho = useRef<string | null>(null);
+
+    // Order matters: the notifier reads the snapshot that just published, and
+    // the value sync overwrites the echo with what it is about to push. Announce
+    // first, assert second, or every announcement carries the next push's echo.
+    useNotifyChange(state, props.onChange, ownerEcho);
+    useValueReactivity(controller, props.value, state.value, ownerEcho);
     useFilterReactivity(controller, props.filter);
     useOptionsReactivity(controller, props.options);
     useInteractivityReactivity(controller, props.disabled, props.readOnly);
-    useNotifyChange(state, props.onChange);
 
     const rootRef = useRef<HTMLDivElement>(null);
     // `root` is a getter, not a captured value: switching surfaces mounts a
