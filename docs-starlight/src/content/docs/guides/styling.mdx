@@ -5,19 +5,17 @@ description: Theme select-box with CSS variables, target individual pieces with 
 
 import StylingPlayground from "../../../components/StylingPlayground.astro";
 
-Every wrapper ships **unstyled by default**. The defaults are intentionally
-neutral — they pick up your page's text color, system colors, and dark-mode
-preferences out of the box — so you can ship a working picker without
-writing a single line of CSS, then layer your design system on top.
+One stylesheet serves all five wrappers. It carries structure — layout,
+geometry, states — and takes every colour from system colours, so an
+untouched install already follows the reader's light/dark preference.
 
-Every wrapper renders the same markup into the light DOM, so there are two
-channels, used in this order from least to most invasive:
+Restyling has two channels, least invasive first:
 
-1. **CSS variables** (`--sb-*`) — design tokens. Colors, radius, spacing.
-2. **Class names** (`.select-box-*`) — the same names in all five wrappers.
+1. **CSS variables** (`--sb-*`) — colour, radius, spacing.
+2. **Class names** (`.select-box-*`) — identical in all five wrappers.
 
-You almost always want (1). Reach for (2) only when a structural rule
-(layout, animation, replacing an icon) is beyond what a token can express.
+Reach for (2) only when a structural rule — layout, animation, swapping an
+icon — is beyond what a token can say.
 
 :::caution
 Wrappers take a part away by flagging it `hidden` — the caret in multi mode, the
@@ -40,8 +38,8 @@ The shipped stylesheet already carries it.
 
 ## Try it live
 
-Tweak the tokens — the preview updates in place. The CSS block at the
-bottom is what you'd paste into your stylesheet.
+Tweak the tokens; the preview updates in place. The CSS at the bottom is what
+you would paste into your stylesheet.
 
 <StylingPlayground />
 

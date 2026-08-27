@@ -1,13 +1,13 @@
 ---
 title: Large list
-description: Hundreds of thousands of items in a popover. Virtualization keeps the DOM under control.
+description: 100 000 items in a popover, with only the visible rows in the DOM.
 ---
 
 import Demo from "../../../components/demos/large-list/Demo.astro";
 
-Pass a huge array to `options` — the popover still opens instantly and
-typing-to-filter stays responsive. Use the slider to regenerate the dataset
-and feel the cost.
+Pass a huge array to `options`. Only the rows on screen reach the DOM, so the
+popover opens instantly and filtering stays responsive. Drag the slider to
+regenerate the dataset.
 
 <Demo />
 

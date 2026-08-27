@@ -5,11 +5,8 @@ description: Install a select-box wrapper and render your first picker in under 
 
 import { Tabs, TabItem } from "@astrojs/starlight/components";
 
-`select-box` is a framework-agnostic select-box library (an ARIA-compliant
-combobox under the hood). `@select-box/core` owns state, behaviour, and
-keyboard nav; each per-framework wrapper translates the live snapshot into
-its native rendering. You install one wrapper — the one for your stack —
-and the rest of the documentation is the same component everywhere.
+Install the wrapper for your framework and the shared stylesheet. Everything
+after this page is the same component whichever one you picked.
 
 ## Install
 
@@ -17,54 +14,55 @@ and the rest of the documentation is the same component everywhere.
   <TabItem label="React">
 
 ```bash
-npm install @select-box/react
+npm install @select-box/react @select-box/styles
 ```
 
-Requires React 18 or later.
+Needs React 19.
 
   </TabItem>
   <TabItem label="Vue">
 
 ```bash
-npm install @select-box/vue
+npm install @select-box/vue @select-box/core @select-box/styles
 ```
 
-Requires Vue 3.4 or later.
+Needs Vue 3.5.
 
   </TabItem>
   <TabItem label="Lit">
 
 ```bash
-npm install @select-box/lit
+npm install @select-box/lit @select-box/core lit @select-box/styles
 ```
 
-Ships as a custom element — no Lit peer install needed in your app.
+Needs Lit 3.2. Registers a custom element, and also exports a
+`ReactiveController` you can host in your own `LitElement`.
 
   </TabItem>
   <TabItem label="Web Components">
 
 ```bash
-npm install @select-box/webcomponents
+npm install @select-box/webcomponents @select-box/core @select-box/dom @select-box/styles
 ```
 
-Zero runtime dependencies.
+No framework at all — just the custom element.
 
   </TabItem>
   <TabItem label="jQuery">
 
 ```bash
-npm install @select-box/jquery jquery
+npm install @select-box/jquery @select-box/core @select-box/dom jquery @select-box/styles
 ```
 
-Tested against jQuery 3.x.
+Needs jQuery 3.7.
 
   </TabItem>
 </Tabs>
 
 ## Add the stylesheet
 
-Every wrapper renders the same markup, so one stylesheet covers all of them.
-Import it once, anywhere in your app:
+One stylesheet covers all five wrappers, because they render the same markup.
+Import it once, anywhere:
 
 ```js
 import "@select-box/styles/select-box.css";
@@ -76,8 +74,8 @@ see [Styling](../styling/).
 
 ## Your first select
 
-Copy a snippet, drop it into your app, and you should see a working picker
-with grouped options, fuzzy search, and full keyboard navigation.
+Drop a snippet into your app. You get grouped options, substring search and
+full keyboard navigation, with no further wiring.
 
 <Tabs syncKey="framework">
   <TabItem label="React">
