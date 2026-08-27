@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# release-please opens and updates the release PR, then cuts the tag and the
+# GitHub release when that PR merges. Both need write access.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Two runs racing on the same release PR leave it half-updated, and a superseded
+# run has nothing useful to say, so the newer one waits rather than cancels.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Keep the release PR current
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

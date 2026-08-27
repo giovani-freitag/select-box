@@ -1,0 +1,130 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "release-type": "node",
+    "include-component-in-tag": false,
+    "changelog-sections": [
+        {
+            "type": "feat",
+            "section": "Features"
+        },
+        {
+            "type": "fix",
+            "section": "Bug fixes"
+        },
+        {
+            "type": "perf",
+            "section": "Performance"
+        },
+        {
+            "type": "refactor",
+            "section": "Refactors"
+        },
+        {
+            "type": "docs",
+            "section": "Documentation"
+        },
+        {
+            "type": "chore",
+            "hidden": true
+        },
+        {
+            "type": "style",
+            "hidden": true
+        },
+        {
+            "type": "test",
+            "hidden": true
+        },
+        {
+            "type": "build",
+            "hidden": true
+        },
+        {
+            "type": "ci",
+            "hidden": true
+        }
+    ],
+    "packages": {
+        ".": {
+            "package-name": "select-box",
+            "changelog-path": "CHANGELOG.md",
+            "extra-files": [
+                {
+                    "type": "json",
+                    "path": "packages/addon-clear-button/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-create-option/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-fuzzy/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-hoist-selected/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-persist/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-remove-button/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/addon-restore-on-backspace/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/core/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/dom/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/jquery/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/lit/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/react/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/styles/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/vue/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
+                    "path": "packages/webcomponents/package.json",
+                    "jsonpath": "$.version"
+                }
+            ]
+        }
+    }
+}
