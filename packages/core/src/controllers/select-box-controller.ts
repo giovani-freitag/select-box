@@ -681,9 +681,9 @@ export class SelectBoxController<
         const generation = ++this.gateGeneration;
         const answers: Array<boolean | Promise<boolean>> = [];
         for (const addon of this.registeredAddons) {
-            const gate = addon[hook];
+            const gate = addon[hook]?.bind(addon);
             if (!gate) continue;
-            answers.push(gate.call(addon, this.buildTransformContext()));
+            answers.push(gate(this.buildTransformContext()));
         }
         if (answers.some((answer) => answer === false)) return;
         const pendingAnswers = answers.filter(

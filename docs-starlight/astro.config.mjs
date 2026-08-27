@@ -22,9 +22,13 @@ export default defineConfig({
                 "@select-box/styles/select-box.css",
                 "./src/styles/demo.css",
             ],
-            social: {
-                github: "https://github.com/giovani-freitag/select-box",
-            },
+            social: [
+                {
+                    icon: "github",
+                    label: "GitHub",
+                    href: "https://github.com/giovani-freitag/select-box",
+                },
+            ],
             components: {
                 Header: "./src/components/starlight/Header.astro",
                 ThemeSelect: "./src/components/starlight/ThemeSelect.astro",
@@ -57,7 +61,7 @@ export default defineConfig({
                 },
                 {
                     label: "API reference",
-                    autogenerate: { directory: "api" },
+                    items: [{ autogenerate: { directory: "api" } }],
                     collapsed: true,
                 },
             ],
