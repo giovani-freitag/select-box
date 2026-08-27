@@ -2,7 +2,15 @@
     "name": "@select-box/addon-persist",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/addon-persist"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Select-box addon that saves and restores the selection through web storage.",
     "type": "module",
     "main": "./dist/index.cjs",

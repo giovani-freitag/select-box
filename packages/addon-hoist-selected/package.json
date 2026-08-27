@@ -2,7 +2,15 @@
     "name": "@select-box/addon-hoist-selected",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/addon-hoist-selected"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Select-box addon that pins the selected option to the top of the popover list.",
     "type": "module",
     "main": "./dist/index.cjs",

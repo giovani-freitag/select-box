@@ -2,7 +2,21 @@
     "name": "@select-box/dom",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/dom"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
+    "keywords": [
+        "select",
+        "combobox",
+        "dom",
+        "renderer"
+    ],
     "description": "Imperative light-DOM painters shared by the wrappers that build their own markup (jQuery, web components).",
     "type": "module",
     "main": "./dist/index.cjs",

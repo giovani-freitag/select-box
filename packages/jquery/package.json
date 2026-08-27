@@ -2,8 +2,22 @@
     "name": "@select-box/jquery",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
-    "description": "jQuery wrapper for the select-box library \u2014 registers $.fn.selectBox plugin.",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/jquery"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
+    "keywords": [
+        "select",
+        "combobox",
+        "jquery",
+        "jquery-plugin"
+    ],
+    "description": "jQuery wrapper for the select-box library — registers $.fn.selectBox plugin.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",

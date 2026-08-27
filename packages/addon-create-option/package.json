@@ -2,7 +2,15 @@
     "name": "@select-box/addon-create-option",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/addon-create-option"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Select-box addon that offers an \"add the query\" row when nothing matches.",
     "type": "module",
     "main": "./dist/index.cjs",

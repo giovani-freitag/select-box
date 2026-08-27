@@ -2,7 +2,15 @@
     "name": "@select-box/e2e",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "e2e"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Matrix E2E suite: one spec set run against every wrapper in a real browser.",
     "type": "module",
     "scripts": {

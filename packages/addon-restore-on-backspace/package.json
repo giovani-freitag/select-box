@@ -2,7 +2,15 @@
     "name": "@select-box/addon-restore-on-backspace",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/addon-restore-on-backspace"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Select-box addon that pops the last selection back into the query on Backspace.",
     "type": "module",
     "main": "./dist/index.cjs",

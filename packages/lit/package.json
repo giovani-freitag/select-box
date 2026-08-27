@@ -2,8 +2,23 @@
     "name": "@select-box/lit",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
-    "description": "Lit wrapper for the select-box library \u2014 ready <SelectBox /> element + ReactiveController for composing custom LitElements.",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/lit"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
+    "keywords": [
+        "select",
+        "combobox",
+        "lit",
+        "web-components",
+        "autocomplete"
+    ],
+    "description": "Lit wrapper for the select-box library — ready <SelectBox /> element + ReactiveController for composing custom LitElements.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",

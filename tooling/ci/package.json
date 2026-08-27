@@ -2,7 +2,15 @@
     "name": "@select-box/ci",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "tooling/ci"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Dev-time helpers the CI workflow calls, so the routing logic is testable.",
     "type": "module",
     "main": "./src/index.ts",

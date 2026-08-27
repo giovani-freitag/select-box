@@ -2,7 +2,15 @@
     "name": "@select-box/parity",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "tooling/parity"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Shared cross-wrapper behaviour suite every framework adapter runs.",
     "type": "module",
     "main": "./src/index.ts",

@@ -2,8 +2,22 @@
     "name": "@select-box/webcomponents",
     "version": "0.0.0",
     "private": true,
-    "license": "UNLICENSED",
-    "description": "Web Components wrapper for the select-box library \u2014 exports SelectBoxElement and defineSelectBoxElement.",
+    "license": "MIT",
+    "author": "giovani-freitag",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/giovani-freitag/select-box.git",
+        "directory": "packages/webcomponents"
+    },
+    "homepage": "https://giovani-freitag.github.io/select-box",
+    "bugs": "https://github.com/giovani-freitag/select-box/issues",
+    "keywords": [
+        "select",
+        "combobox",
+        "web-components",
+        "custom-elements"
+    ],
+    "description": "Web Components wrapper for the select-box library — exports SelectBoxElement and defineSelectBoxElement.",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
