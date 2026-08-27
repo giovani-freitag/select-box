@@ -12,15 +12,45 @@ const SINGLE_COMBINING_MARK = /[̀-ͯ]/;
 export class SubstringFilterStrategy<TExtra extends object = object>
     extends AbstractFilterStrategy<TExtra>
 {
+    /**
+     * Normalized labels, kept per option list.
+     *
+     * Normalizing is three passes over every label, and it is the dominant cost
+     * of a keystroke on a long list — measured at three quarters of the work,
+     * against a hundred thousand options. The result only changes when the
+     * options do, so it is keyed on the array the controller hands over and
+     * released with it.
+     */
+    private readonly normalizedLabels = new WeakMap<
+        ReadonlyArray<SelectOption<TExtra>>,
+        ReadonlyArray<string>
+    >();
+
     override filter(
         options: ReadonlyArray<SelectOption<TExtra>>,
         query: string,
     ): ReadonlyArray<SelectOption<TExtra>> {
         const needle = SubstringFilterStrategy.normalize(query.trim());
         if (needle === "") return options;
-        return options.filter((option) =>
-            SubstringFilterStrategy.normalize(option.label).includes(needle),
-        );
+
+        const labels = this.normalizedLabelsFor(options);
+
+        return options.filter((_option, index) => labels[index]!.includes(needle));
+    }
+
+    /**
+     * The cached normalized labels for an option list, computing them once.
+     */
+    private normalizedLabelsFor(
+        options: ReadonlyArray<SelectOption<TExtra>>,
+    ): ReadonlyArray<string> {
+        const cached = this.normalizedLabels.get(options);
+        if (cached) return cached;
+
+        const labels = options.map((option) => SubstringFilterStrategy.normalize(option.label));
+        this.normalizedLabels.set(options, labels);
+
+        return labels;
     }
 
     /**
