@@ -21,6 +21,7 @@ import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
 import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
+import { usePropWarnings } from "./hooks/use-prop-warnings.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
 import { useValueReactivity } from "./hooks/use-value-reactivity.js";
 import { InlineSurface } from "./InlineSurface.js";
@@ -88,63 +89,57 @@ interface SelectBoxBaseProps<TExtra extends object> {
     readonly "aria-labelledby"?: string | undefined;
 }
 
-export interface SelectBoxSingleProps<TExtra extends object = object>
-    extends SelectBoxBaseProps<TExtra> {
-    readonly multiple?: false;
+/**
+ * Props of `<SelectBox />`, shaped by the mode.
+ *
+ * `TMultiple` carries whether the box accumulates a selection, so `value`,
+ * `defaultValue` and `onChange` take the exact shape that mode uses rather than
+ * a union the consumer has to narrow. A literal `multiple` fixes it to `true` or
+ * `false` and the three are precise; a flag held in state widens it to `boolean`
+ * and they widen with it, which is what makes switching mode at runtime typeable
+ * at all.
+ */
+export interface SelectBoxProps<
+    TExtra extends object = object,
+    TMultiple extends boolean = false,
+> extends SelectBoxBaseProps<TExtra> {
+    /** Accumulates a selection instead of replacing it, like `<select multiple>`. */
+    readonly multiple?: TMultiple;
     /**
      * Selection owned by the caller, applied even while the control refuses input.
      *
      * Makes the box controlled: a pick the owner does not answer through
      * `onChange` is reverted to what the prop still says, as with `<select value>`.
      */
-    readonly value?: string | number | null;
-    /** Initial value for an uncontrolled box (coerced to string). Ignored once `value` is supplied. */
-    readonly defaultValue?: string | number | null;
-    /**
-     * Fires whenever the committed value changes (including `clear()`).
-     * Matches native `<select>` semantics: `value` is the canonical string
-     * identifier; `option` is the full option object (with any extra payload).
-     */
-    readonly onChange?: (value: string | null, option: SelectOption<TExtra> | null) => void;
-}
-
-export interface SelectBoxMultiProps<TExtra extends object = object>
-    extends SelectBoxBaseProps<TExtra> {
-    readonly multiple: true;
-    /**
-     * Selection owned by the caller, applied even while the control refuses input.
-     *
-     * Makes the box controlled: a pick the owner does not answer through
-     * `onChange` is reverted to what the prop still says, as with `<select value>`.
-     */
-    readonly value?: ReadonlyArray<string | number>;
+    readonly value?: TMultiple extends true
+        ? ReadonlyArray<string | number>
+        : string | number | null;
     /** Initial selection for an uncontrolled box. Ignored once `value` is supplied. */
-    readonly defaultValue?: ReadonlyArray<string | number>;
-    /** Fires whenever the committed selection changes. Both args are stable per change. */
-    readonly onChange?: (
-        values: ReadonlyArray<string>,
-        options: ReadonlyArray<SelectOption<TExtra>>,
-    ) => void;
+    readonly defaultValue?: TMultiple extends true
+        ? ReadonlyArray<string | number>
+        : string | number | null;
+    /**
+     * Fires whenever the committed selection changes, including `clear()`.
+     *
+     * Single mode passes the canonical string and the full option; multi passes
+     * the list of each.
+     */
+    readonly onChange?: TMultiple extends true
+        ? (
+              values: ReadonlyArray<string>,
+              options: ReadonlyArray<SelectOption<TExtra>>,
+          ) => void
+        : (value: string | null, option: SelectOption<TExtra> | null) => void;
 }
 
-/**
- * Discriminated union of single- and multi-select props. Set `multi` to `true`
- * for multi-select semantics; the rest of the surface stays consistent.
- */
-export type SelectBoxProps<TExtra extends object = object> =
-    | SelectBoxSingleProps<TExtra>
-    | SelectBoxMultiProps<TExtra>;
+/** Props of a single-select box. */
+export type SelectBoxSingleProps<TExtra extends object = object> = SelectBoxProps<TExtra, false>;
 
-/**
- * Default select-box component. `multi` switches between single-pick (replace
- * on commit, popover closes) and multi-pick (toggle on commit, popover stays
- * open). Toggling `multi` at runtime preserves the current selection
- * (single→multi wraps as singleton, multi→single keeps the first option),
- * mirroring how the browser handles `<select multiple>` toggle. Drop to
- * `useSelectBox()` for fully custom markup.
- */
-export function SelectBox<TExtra extends object = object>(
-    props: SelectBoxProps<TExtra>,
+/** Props of a multi-select box. */
+export type SelectBoxMultiProps<TExtra extends object = object> = SelectBoxProps<TExtra, true>;
+
+export function SelectBox<TExtra extends object = object, TMultiple extends boolean = false>(
+    props: SelectBoxProps<TExtra, TMultiple>,
 ): JSX.Element {
     const initialMulti = props.multiple === true;
     const defaultValue: SelectionValueInput =
@@ -172,6 +167,14 @@ export function SelectBox<TExtra extends object = object>(
             controller.setMode(wantMulti ? "multi" : "single");
         }
     }, [controller, wantMulti]);
+
+    usePropWarnings({
+        value: props.value,
+        defaultValue: props.defaultValue,
+        onChange: props.onChange,
+        disabled: props.disabled,
+        readOnly: props.readOnly,
+    });
 
     // Shared between the two directions of a controlled value: what the owner
     // pushed in, so the notifier does not read it back out as a fresh change.
