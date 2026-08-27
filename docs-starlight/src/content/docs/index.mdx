@@ -11,6 +11,7 @@ import Hero from "../../components/Hero.astro";
 import FrameworkChips from "../../components/FrameworkChips.astro";
 import FeatureGrid from "../../components/FeatureGrid.astro";
 import FrameworkDemo from "../../components/demos/grouped/Demo.astro";
+import { withBase } from "../../lib/site-path";
 
 <div class="sb-landing">
 
@@ -19,9 +20,9 @@ import FrameworkDemo from "../../components/demos/grouped/Demo.astro";
     title="One core."
     titleHighlight="Every wrapper."
     tagline="A framework-agnostic core with thin wrappers for React, Vue, Lit, Web Components, and jQuery. Same snapshot fields, same keyboard behaviour, same ARIA wiring — pick the wrapper your stack already uses."
-    primaryHref="/guides/getting-started/"
+    primaryHref={withBase("/guides/getting-started/")}
     primaryLabel="Get started"
-    secondaryHref="/examples/simple/"
+    secondaryHref={withBase("/examples/simple/")}
     secondaryLabel="Try it live"
 >
     <FrameworkChips slot="footer" />

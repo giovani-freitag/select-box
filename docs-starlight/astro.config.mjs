@@ -6,7 +6,8 @@ import vue from "@astrojs/vue";
 import mdx from "@astrojs/mdx";
 
 export default defineConfig({
-    site: "https://select-box.dev",
+    site: "https://giovani-freitag.github.io",
+    base: "/select-box",
     integrations: [
         react({ include: ["**/demos/**/*.tsx", "**/components/react/**"] }),
         vue({ include: ["**/demos/**/*.vue", "**/components/vue/**"] }),
