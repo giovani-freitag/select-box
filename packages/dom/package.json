@@ -1,8 +1,10 @@
 {
     "name": "@select-box/dom",
     "version": "0.1.0",
-    "private": true,
     "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
     "author": "giovani-freitag",
     "repository": {
         "type": "git",

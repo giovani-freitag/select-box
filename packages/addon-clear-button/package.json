@@ -1,8 +1,10 @@
 {
     "name": "@select-box/addon-clear-button",
     "version": "0.1.0",
-    "private": true,
     "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
     "author": "giovani-freitag",
     "repository": {
         "type": "git",

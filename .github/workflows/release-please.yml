@@ -29,6 +29,8 @@ jobs:
 
     outputs:
       release-pr-branch: ${{ steps.release.outputs.pr && fromJSON(steps.release.outputs.pr).headBranchName || '' }}
+      released: ${{ steps.release.outputs.releases_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
 
     steps:
       - id: release
@@ -58,3 +60,20 @@ jobs:
           event-type: verify-release-pr
           client-payload: |
             { "ref": "${{ needs.release-please.outputs.release-pr-branch }}" }
+
+  # Same escape hatch as the PR checks: a release cut with GITHUB_TOKEN raises no
+  # event a workflow can listen for, so the publish is summoned explicitly.
+  summon-publish:
+    name: Summon the publish
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ github.token }}
+          event-type: publish-release
+          client-payload: |
+            { "tag": "${{ needs.release-please.outputs.tag }}" }

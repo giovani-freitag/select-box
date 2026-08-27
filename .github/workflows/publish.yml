@@ -1,0 +1,58 @@
+name: Publish
+
+# Summoned by the Release workflow once a release is actually cut. A
+# `repository_dispatch` is the one event a GITHUB_TOKEN can raise that still
+# starts a workflow, so the release does not need a second trigger.
+on:
+  repository_dispatch:
+    types: [publish-release]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish
+        required: true
+        type: string
+
+# `id-token` is what npm Trusted Publishing verifies: the registry checks this
+# workflow's OIDC claim instead of a token anyone could copy.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    # Inert until the org exists and the flag is switched on, so merging a
+    # release before then is a tag and a changelog rather than a red run.
+    if: vars.NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.client_payload.tag || inputs.tag }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # Through pnpm, never npm: `workspace:*` in the manifests is rewritten to
+      # the real version at pack time, and only pnpm knows how to do that.
+      - name: Publish every public package
+        run: pnpm -r publish --access public --no-git-checks
