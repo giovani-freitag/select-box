@@ -188,11 +188,10 @@ importers:
         version: 2.2.12(typescript@5.9.3)
 
   packages/addon-clear-button:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -213,11 +212,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-create-option:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -239,13 +237,13 @@ importers:
 
   packages/addon-fuzzy:
     dependencies:
-      '@select-box/core':
-        specifier: workspace:*
-        version: link:../core
       fuse.js:
         specifier: ^7.3.0
         version: 7.3.0
     devDependencies:
+      '@select-box/core':
+        specifier: workspace:*
+        version: link:../core
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -266,11 +264,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-hoist-selected:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -291,11 +288,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-persist:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -316,11 +312,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-remove-button:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -341,11 +336,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/addon-restore-on-backspace:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
@@ -499,11 +493,10 @@ importers:
         version: 2.1.9(@types/node@24.12.3)(happy-dom@15.11.7)(jsdom@25.0.1)
 
   packages/react:
-    dependencies:
+    devDependencies:
       '@select-box/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@select-box/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint-config
