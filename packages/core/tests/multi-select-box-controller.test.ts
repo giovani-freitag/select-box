@@ -53,7 +53,7 @@ describe("MultiSelectBoxController", () => {
     test("commitOption toggles an already-selected option off", () => {
         const controller = new MultiSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
 
         controller.commitOption(fruits[0]!);
@@ -95,7 +95,7 @@ describe("MultiSelectBoxController", () => {
     test("clear empties the selection", () => {
         const controller = new MultiSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
 
         controller.clear();
@@ -110,7 +110,7 @@ describe("MultiSelectBoxController", () => {
     test("open() lands on the first selected option when there is a selection", () => {
         const controller = new MultiSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: ["peach"],
+            defaultValue: ["peach"],
         });
 
         controller.open();
@@ -120,13 +120,13 @@ describe("MultiSelectBoxController", () => {
         expect(snapshot.activeOption?.label).toBe("Peach");
     });
 
-    test("initialValue coerces numeric input", () => {
+    test("defaultValue coerces numeric input", () => {
         const controller = new MultiSelectBoxController<{ tag: string }>({
             options: [
                 { value: 1 as unknown as string, label: "One", tag: "uno" },
                 { value: 2 as unknown as string, label: "Two", tag: "dos" },
             ],
-            initialValue: [1, 2],
+            defaultValue: [1, 2],
         });
 
         const snapshot = controller.getState();

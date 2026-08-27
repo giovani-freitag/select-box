@@ -115,7 +115,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
             });
             return handle;
@@ -125,7 +125,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_GROUPED_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
             });
             return handle;
@@ -135,20 +135,20 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: true,
+                multiple: true,
                 surface: "popover",
             });
             return handle;
         }
 
         async function mountInline(options: {
-            readonly multi: boolean;
+            readonly multiple: boolean;
             readonly grouped?: boolean;
         }): Promise<ParityHandle> {
             handle = await adapter.mount({
                 options: options.grouped === true ? PARITY_GROUPED_FRUITS : PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: options.multi,
+                multiple: options.multiple,
                 surface: "inline",
             });
             return handle;
@@ -158,7 +158,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: "",
-                multi: false,
+                multiple: false,
                 surface: "popover",
             });
 
@@ -295,7 +295,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
                 ...flags,
             });
@@ -310,7 +310,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS_WITH_DISABLED,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
             });
             const mounted = handle;
@@ -327,7 +327,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS_WITH_DISABLED,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
             });
             const mounted = handle;
@@ -410,7 +410,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
                 addons: [
                     {
@@ -461,7 +461,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
                 addons: [addon],
             });
@@ -497,7 +497,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             handle = await adapter.mount({
                 options: PARITY_FRUITS,
                 placeholder: PARITY_PLACEHOLDER,
-                multi: false,
+                multiple: false,
                 surface: "popover",
                 ariaLabel: "Fruit picker",
             });
@@ -712,13 +712,13 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             };
 
             async function mountWithAddons(options: {
-                readonly multi: boolean;
+                readonly multiple: boolean;
                 readonly addons: ReadonlyArray<ParityAddon>;
             }): Promise<ParityHandle> {
                 handle = await adapter.mount({
                     options: PARITY_FRUITS,
                     placeholder: PARITY_PLACEHOLDER,
-                    multi: options.multi,
+                    multiple: options.multiple,
                     surface: "popover",
                     addons: options.addons,
                 });
@@ -734,7 +734,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
             test("the addon brings the clear control to single mode", async () => {
                 const mounted = await mountWithAddons({
-                    multi: false,
+                    multiple: false,
                     addons: [clearButtonAddon],
                 });
                 await mounted.setValue("apple");
@@ -744,7 +744,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
             test("the control carries the glyph and name the addon published", async () => {
                 const mounted = await mountWithAddons({
-                    multi: false,
+                    multiple: false,
                     addons: [clearButtonAddon],
                 });
                 await mounted.setValue("apple");
@@ -756,7 +756,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
             test("the control the addon added still clears", async () => {
                 const mounted = await mountWithAddons({
-                    multi: false,
+                    multiple: false,
                     addons: [clearButtonAddon],
                 });
                 await mounted.setValue("apple");
@@ -770,7 +770,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
             test("the addon can take the control away in multi mode", async () => {
                 const mounted = await mountWithAddons({
-                    multi: true,
+                    multiple: true,
                     addons: [
                         {
                             name: "clear-button",
@@ -789,7 +789,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
             test("a remove-button addon renames the chip's remove control", async () => {
                 const mounted = await mountWithAddons({
-                    multi: true,
+                    multiple: true,
                     addons: [
                         {
                             name: "remove-button",
@@ -820,7 +820,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
         describe("inline surface", () => {
             test("renders one chip per option, with no popover and no trigger input", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
 
                 expect(inlineChips(mounted)).toHaveLength(PARITY_FRUITS.length);
                 expect(isOpen(mounted)).toBe(false);
@@ -830,7 +830,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("keeps the surface as a child of the root, never the root itself", async () => {
-                await mountInline({ multi: false });
+                await mountInline({ multiple: false });
 
                 const root = document.querySelector("[data-select-root]")!;
                 expect(root.hasAttribute("data-select-surface")).toBe(false);
@@ -838,7 +838,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("marks itself as the inline surface", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
 
                 expect(
                     mounted.queryScope().querySelector("[data-select-surface='inline']"),
@@ -846,13 +846,13 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("hands its root over through its own public API", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
 
                 expect(mounted.publicRoot()).toBe(document.querySelector("[data-select-root]"));
             });
 
             test("clicking a chip selects it", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
 
                 await mounted.clickElement(inlineChips(mounted)[0]!);
 
@@ -860,7 +860,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("single mode keeps one chip selected at a time", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
                 await mounted.clickElement(inlineChips(mounted)[0]!);
 
                 await mounted.clickElement(inlineChips(mounted)[2]!);
@@ -869,7 +869,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("multi mode accumulates selected chips", async () => {
-                const mounted = await mountInline({ multi: true });
+                const mounted = await mountInline({ multiple: true });
                 await mounted.clickElement(inlineChips(mounted)[0]!);
 
                 await mounted.clickElement(inlineChips(mounted)[2]!);
@@ -878,7 +878,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("multi mode deselects a chip clicked twice", async () => {
-                const mounted = await mountInline({ multi: true });
+                const mounted = await mountInline({ multiple: true });
                 await mounted.clickElement(inlineChips(mounted)[0]!);
 
                 await mounted.clickElement(inlineChips(mounted)[0]!);
@@ -887,7 +887,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("renders a header per group when options carry group keys", async () => {
-                const mounted = await mountInline({ multi: false, grouped: true });
+                const mounted = await mountInline({ multiple: false, grouped: true });
 
                 expect(
                     [...mounted.queryScope().querySelectorAll("[data-select-group-label]")].map(
@@ -897,7 +897,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("gives each group its own chip row, so headers own a line", async () => {
-                const mounted = await mountInline({ multi: false, grouped: true });
+                const mounted = await mountInline({ multiple: false, grouped: true });
 
                 const rows = [
                     ...mounted
@@ -912,7 +912,7 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             });
 
             test("keeps the ungrouped list in a single chip row", async () => {
-                const mounted = await mountInline({ multi: false });
+                const mounted = await mountInline({ multiple: false });
 
                 const rows = mounted
                     .queryScope()

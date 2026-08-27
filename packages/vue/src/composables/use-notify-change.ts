@@ -13,7 +13,7 @@ export interface NotifyChangeHandlers<TExtra extends object> {
         value: string | null,
         option: SelectOption<TExtra> | null,
     ) => void;
-    readonly multi?: (
+    readonly multiple?: (
         values: ReadonlyArray<string>,
         options: ReadonlyArray<SelectOption<TExtra>>,
     ) => void;
@@ -47,7 +47,7 @@ export function useNotifyChange<TExtra extends object>(
             if (echoed) return;
 
             if (state.value.mode === "multi") {
-                handlers.multi?.(
+                handlers.multiple?.(
                     next as ReadonlyArray<string>,
                     state.value.selectedOptions,
                 );

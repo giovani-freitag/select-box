@@ -14,7 +14,7 @@ describe("reset in single mode", () => {
     test("restores the default the control was built with, like a native select", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
 
@@ -35,7 +35,7 @@ describe("reset in single mode", () => {
     test("is not the same as clear, which empties whatever the default was", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
 
@@ -47,7 +47,7 @@ describe("reset in single mode", () => {
     test("restores the same default however many times it runs", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         controller.commitValue("pear");
@@ -61,7 +61,7 @@ describe("reset in single mode", () => {
     test("drops the query and closes the popover", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.open();
         controller.setQuery("pe");
@@ -77,7 +77,7 @@ describe("reset in single mode", () => {
     test("runs on a disabled control, the way the platform resets one", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         controller.setInteractivity({ disabled: true, readOnly: false });
@@ -90,7 +90,7 @@ describe("reset in single mode", () => {
     test("runs on a read-only control too", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         controller.setInteractivity({ disabled: false, readOnly: true });
@@ -105,7 +105,7 @@ describe("reset against a changed option list", () => {
     test("re-resolves the default, so an option that is gone does not come back", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         controller.setOptions([{ value: "pear", label: "Pear" }]);
@@ -118,7 +118,7 @@ describe("reset against a changed option list", () => {
     test("restores the default once its option is loaded again", () => {
         const controller = new SingleSelectBoxController({
             options: [{ value: "pear", label: "Pear" }],
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         expect(controller.getState().value).toBeNull();
 
@@ -131,7 +131,7 @@ describe("reset against a changed option list", () => {
     test("refuses a default that has since been disabled", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         controller.setOptions([
@@ -149,7 +149,7 @@ describe("reset in multi mode", () => {
     test("restores every option the control started with", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
         controller.commitValue([]);
 
@@ -161,7 +161,7 @@ describe("reset in multi mode", () => {
     test("removes the selections made since, not just the added ones", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
         });
         controller.commitValue(["apple", "pear"]);
 
@@ -182,7 +182,7 @@ describe("reset in multi mode", () => {
     test("carries the default across a mode flip, as the driver coerces it", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         controller.setMode("multi");
@@ -197,7 +197,7 @@ describe("reset and subscribers", () => {
     test("publishes once so every view repaints", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         let published = 0;
@@ -213,7 +213,7 @@ describe("reset and subscribers", () => {
     test("the published snapshot already carries the restored option", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         controller.commitValue("pear");
         let seen: string | null | undefined;

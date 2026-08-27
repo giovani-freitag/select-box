@@ -19,29 +19,29 @@ const fruits: ReadonlyArray<Fruit> = [
 ];
 
 describe("SingleSelectBoxController", () => {
-    test("drops an initialValue that names no known option", () => {
+    test("drops an defaultValue that names no known option", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "durian",
+            defaultValue: "durian",
         });
 
         expect(controller.getState().value).toBeNull();
         expect(controller.getState().selectedOption).toBeNull();
     });
 
-    test("drops an initialValue that names a disabled option", () => {
+    test("drops an defaultValue that names a disabled option", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "plum",
+            defaultValue: "plum",
         });
 
         expect(controller.getState().value).toBeNull();
     });
 
-    test("keeps an initialValue that names a selectable option", () => {
+    test("keeps an defaultValue that names a selectable option", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
         });
 
         expect(controller.getState().value).toBe("pear");
@@ -50,7 +50,7 @@ describe("SingleSelectBoxController", () => {
     test("swapping the options keeps a selection that still exists", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
         });
 
         controller.setOptions([
@@ -68,7 +68,7 @@ describe("SingleSelectBoxController", () => {
     test("swapping the options drops a selection that no longer exists", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
         });
 
         controller.setOptions([{ value: "fig", label: "Fig", id: 6, name: "fig" }]);
@@ -105,7 +105,7 @@ describe("SingleSelectBoxController", () => {
     test("disabled refuses to open, type, commit or clear", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
             disabled: true,
         });
 
@@ -124,7 +124,7 @@ describe("SingleSelectBoxController", () => {
     test("readOnly refuses to open and to change anything", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
             readOnly: true,
         });
 
@@ -211,7 +211,7 @@ describe("SingleSelectBoxController", () => {
     test("opens with the selected option active when there is a current value", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: fruits[2]!.value,
+            defaultValue: fruits[2]!.value,
         });
 
         controller.open();
@@ -298,7 +298,7 @@ describe("SingleSelectBoxController", () => {
                 { value: 1 as unknown as string, label: "One", tag: "uno" },
                 { value: 2 as unknown as string, label: "Two", tag: "dos" },
             ],
-            initialValue: 2,
+            defaultValue: 2,
         });
 
         const snapshot = controller.getState();
@@ -323,7 +323,7 @@ describe("SingleSelectBoxController", () => {
     test("clear resets value and query", () => {
         const controller = new SingleSelectBoxController<FruitExtra>({
             options: fruits,
-            initialValue: fruits[0]!.value,
+            defaultValue: fruits[0]!.value,
         });
 
         controller.setQuery("ap");

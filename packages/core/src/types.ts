@@ -73,7 +73,7 @@ export type SelectionMode = "single" | "multi";
 export type SelectionValue = string | null | ReadonlyArray<string>;
 
 /**
- * Anything a consumer may hand to `initialValue` / `commitValue`. The active
+ * Anything a consumer may hand to `defaultValue` / `commitValue`. The active
  * `SelectionDriver` coerces this into the canonical `SelectionValue` shape.
  */
 export type SelectionValueInput =
@@ -291,19 +291,19 @@ export interface SelectBoxControllerConfig<TExtra extends object = object>
     /** Defaults to `"single"`. */
     readonly mode?: SelectionMode;
     /** Initial selection — single value for "single", array for "multi", `null` for empty. */
-    readonly initialValue?: SelectionValueInput;
+    readonly defaultValue?: SelectionValueInput;
 }
 
 /** Config accepted by `SingleSelectBoxController`. */
 export interface SingleSelectBoxControllerConfig<TExtra extends object = object>
     extends SelectBoxControllerCommonConfig<TExtra> {
     /** Initial selected value (coerced to string). */
-    readonly initialValue?: string | number | null;
+    readonly defaultValue?: string | number | null;
 }
 
 /** Config accepted by `MultiSelectBoxController`. */
 export interface MultiSelectBoxControllerConfig<TExtra extends object = object>
     extends SelectBoxControllerCommonConfig<TExtra> {
     /** Initial selected values (each coerced to string; duplicates dropped). */
-    readonly initialValue?: ReadonlyArray<string | number>;
+    readonly defaultValue?: ReadonlyArray<string | number>;
 }

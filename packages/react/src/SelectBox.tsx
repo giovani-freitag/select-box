@@ -90,7 +90,7 @@ interface SelectBoxBaseProps<TExtra extends object> {
 
 export interface SelectBoxSingleProps<TExtra extends object = object>
     extends SelectBoxBaseProps<TExtra> {
-    readonly multi?: false;
+    readonly multiple?: false;
     /**
      * Selection owned by the caller, applied even while the control refuses input.
      *
@@ -110,7 +110,7 @@ export interface SelectBoxSingleProps<TExtra extends object = object>
 
 export interface SelectBoxMultiProps<TExtra extends object = object>
     extends SelectBoxBaseProps<TExtra> {
-    readonly multi: true;
+    readonly multiple: true;
     /**
      * Selection owned by the caller, applied even while the control refuses input.
      *
@@ -146,8 +146,8 @@ export type SelectBoxProps<TExtra extends object = object> =
 export function SelectBox<TExtra extends object = object>(
     props: SelectBoxProps<TExtra>,
 ): JSX.Element {
-    const initialMulti = props.multi === true;
-    const initialValue: SelectionValueInput =
+    const initialMulti = props.multiple === true;
+    const defaultValue: SelectionValueInput =
         props.value ?? (initialMulti ? (props.defaultValue ?? []) : (props.defaultValue ?? null));
 
     const controllerConfig: SelectBoxControllerConfig<TExtra> = {
@@ -156,7 +156,7 @@ export function SelectBox<TExtra extends object = object>(
         ...(props.addons !== undefined ? { addons: props.addons } : {}),
         ...(props.filter !== undefined ? { filter: props.filter } : {}),
         ...(props.ungroupedLabel !== undefined ? { ungroupedLabel: props.ungroupedLabel } : {}),
-        initialValue,
+        defaultValue,
         disabled: props.disabled === true,
         readOnly: props.readOnly === true,
     };
@@ -165,7 +165,7 @@ export function SelectBox<TExtra extends object = object>(
         controllerConfig as Parameters<typeof useSelectBox<TExtra>>[0],
     );
 
-    const wantMulti = props.multi === true;
+    const wantMulti = props.multiple === true;
     useEffect(() => {
         const currentMulti = controller.mode === "multi";
         if (currentMulti !== wantMulti) {

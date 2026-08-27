@@ -14,11 +14,11 @@ function mount(): SelectBoxView {
     const view = host.selectBox({
         options: config.options,
         placeholder: config.placeholder,
-        mode: config.multi ? "multi" : "single",
+        multiple: config.multiple,
         surface,
         name: config.name,
         required: config.required,
-        initialValue: config.initialValue,
+        defaultValue: config.defaultValue,
         // `exactOptionalPropertyTypes` draws the line between "absent" and
         // "present but undefined", so an unset scenario omits the key.
         ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),

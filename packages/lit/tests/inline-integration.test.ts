@@ -16,11 +16,11 @@ const fruits: ReadonlyArray<Fruit> = [
 
 defineSelectBoxElement("select-box-lit-inline-test");
 
-async function mount(options: { multi?: boolean } = {}): Promise<SelectBox> {
+async function mount(options: { multiple?: boolean } = {}): Promise<SelectBox> {
     const element = document.createElement("select-box-lit-inline-test") as SelectBox;
     element.options = fruits;
     element.surface = "inline";
-    if (options.multi) element.multi = true;
+    if (options.multiple) element.multiple = true;
     document.body.append(element);
     await element.updateComplete;
     return element;
@@ -63,7 +63,7 @@ describe("<select-box surface=\"inline\" /> (Lit)", () => {
     });
 
     test("multi mode toggles selection on each chip click", async () => {
-        const element = await mount({ multi: true });
+        const element = await mount({ multiple: true });
 
         chips(element)[0]!.click();
         await element.updateComplete;

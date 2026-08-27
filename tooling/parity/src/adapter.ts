@@ -15,7 +15,7 @@ export type ParitySurface = "popover" | "inline";
 export interface ParityMountConfig {
     readonly options: ReadonlyArray<ParityOption>;
     readonly placeholder: string;
-    readonly multi: boolean;
+    readonly multiple: boolean;
     readonly surface: ParitySurface;
     readonly disabled?: boolean;
     readonly readOnly?: boolean;
@@ -90,7 +90,7 @@ export interface ParityHandle {
     /** Replaces the option list the way a consumer of this wrapper would. */
     setOptions(options: ReadonlyArray<ParityOption>): Promise<void>;
     /** Flips selection cardinality on a live instance. */
-    setMulti(multi: boolean): Promise<void>;
+    setMulti(multiple: boolean): Promise<void>;
     /** Sets the selection programmatically, through the wrapper's own door. */
     setValue(value: string | ReadonlyArray<string> | null): Promise<void>;
     /** Every value this wrapper has reported since mount. */
@@ -141,7 +141,7 @@ export const PARITY_SWAPPED_FRUITS: ReadonlyArray<ParityOption> = [
 interface DomHandleConfig {
     readonly queryScope: () => ParentNode;
     readonly setOptions: (options: ReadonlyArray<ParityOption>) => void;
-    readonly setMulti: (multi: boolean) => void;
+    readonly setMulti: (multiple: boolean) => void;
     readonly setValue: (value: string | ReadonlyArray<string> | null) => void;
     readonly reportedChanges: () => ReadonlyArray<unknown>;
     readonly publicRoot: () => Element | null;
@@ -173,8 +173,8 @@ export function createDomHandle(config: DomHandleConfig): ParityHandle {
             await config.settle();
         },
 
-        async setMulti(multi: boolean): Promise<void> {
-            config.setMulti(multi);
+        async setMulti(multiple: boolean): Promise<void> {
+            config.setMulti(multiple);
             await config.settle();
         },
 

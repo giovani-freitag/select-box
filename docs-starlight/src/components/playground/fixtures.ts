@@ -3,7 +3,7 @@ import type { SelectOption } from "@select-box/core";
 /** The knobs the playground can turn, in the shape the preview reads them. */
 export interface PlaygroundConfig {
     readonly surface: "popover" | "inline";
-    readonly multi: boolean;
+    readonly multiple: boolean;
     readonly shape: "flat" | "grouped";
     readonly withDisabled: boolean;
     readonly interactivity: "enabled" | "disabled" | "readOnly";
@@ -14,7 +14,7 @@ export type AddonKey = "clear-button" | "hoist-selected" | "fuzzy";
 
 export const DEFAULT_CONFIG: PlaygroundConfig = {
     surface: "popover",
-    multi: false,
+    multiple: false,
     shape: "grouped",
     withDisabled: false,
     interactivity: "enabled",

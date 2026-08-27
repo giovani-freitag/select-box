@@ -77,7 +77,7 @@ export class SelectBoxView<TExtra extends object = object>
     private readonly list: HTMLDivElement | null;
 
     /** Live mode flag — reflects the controller's current selection mode. */
-    private get multi(): boolean {
+    private get multiple(): boolean {
         return this.coreController.mode === "multi";
     }
 
@@ -187,7 +187,7 @@ export class SelectBoxView<TExtra extends object = object>
 
         this.rootElement = document.createElement("div");
         this.rootElement.dataset["selectRoot"] = "";
-        this.rootElement.dataset["selectMode"] = this.multi ? "multi" : "single";
+        this.rootElement.dataset["selectMode"] = this.multiple ? "multi" : "single";
         this.rootElement.className = this.computeRootClassName();
 
         if (this.surface === "inline") {
@@ -236,7 +236,7 @@ export class SelectBoxView<TExtra extends object = object>
     private computeRootClassName(): string {
         return [
             "select-box",
-            this.multi ? "select-box-multi" : null,
+            this.multiple ? "select-box-multi" : null,
         ]
             .filter((value): value is string => value !== null)
             .join(" ");
@@ -440,7 +440,7 @@ export class SelectBoxView<TExtra extends object = object>
         const popover = document.createElement("div");
         popover.className = "select-box-popover";
         popover.setAttribute("role", "listbox");
-        if (this.multi) popover.setAttribute("aria-multiselectable", "true");
+        if (this.multiple) popover.setAttribute("aria-multiselectable", "true");
         popover.dataset["selectPopover"] = "";
         popover.hidden = true;
 

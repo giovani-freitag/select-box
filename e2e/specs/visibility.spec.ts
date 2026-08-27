@@ -17,13 +17,13 @@ test("single mode offers a caret and no clear button", async ({ selectBox }) => 
 });
 
 test("multi mode offers no caret", async ({ selectBox }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
 
     await expect(selectBox.caret).toBeHidden();
 });
 
 test("the clear button appears only once something is selected", async ({ selectBox }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await expect(selectBox.clear).toBeHidden();
     await selectBox.openPopover();
 
@@ -33,7 +33,7 @@ test("the clear button appears only once something is selected", async ({ select
 });
 
 test("clearing puts the clear button away again", async ({ selectBox }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await selectBox.openPopover();
     await selectBox.options.filter({ hasText: "Apple" }).click();
 

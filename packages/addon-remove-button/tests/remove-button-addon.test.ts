@@ -13,7 +13,7 @@ describe("RemoveButtonAddon", () => {
     test("offers a control per selection, in selection order", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["pear", "apple"],
+            defaultValue: ["pear", "apple"],
             addons: [new RemoveButtonAddon()],
         });
 
@@ -25,7 +25,7 @@ describe("RemoveButtonAddon", () => {
     test("names each control after the option it removes", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [new RemoveButtonAddon()],
         });
 
@@ -37,7 +37,7 @@ describe("RemoveButtonAddon", () => {
     test("takes a localized name builder", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [
                 new RemoveButtonAddon({
                     ariaLabel: (label) => `Remover ${label}`,
@@ -63,7 +63,7 @@ describe("RemoveButtonAddon", () => {
     test("stays out of single mode, where there is no list to prune", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new RemoveButtonAddon()],
         });
 
@@ -75,7 +75,7 @@ describe("RemoveButtonAddon", () => {
     test("comes to single mode when asked to", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new RemoveButtonAddon({ when: "always" })],
         });
 
@@ -87,7 +87,7 @@ describe("RemoveButtonAddon", () => {
     test("follows a mode flip", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new RemoveButtonAddon()],
         });
         expect(controller.getState().addons["remove-button"].enabled).toBe(false);
@@ -100,7 +100,7 @@ describe("RemoveButtonAddon", () => {
     test("offers nothing on a disabled control", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             disabled: true,
             addons: [new RemoveButtonAddon()],
         });
@@ -113,7 +113,7 @@ describe("RemoveButtonAddon", () => {
     test("offers nothing on a read-only control", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             readOnly: true,
             addons: [new RemoveButtonAddon()],
         });
@@ -124,7 +124,7 @@ describe("RemoveButtonAddon", () => {
     test("the published entry is what a commit removes", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
             addons: [new RemoveButtonAddon()],
         });
         const entry = controller.getState().addons["remove-button"].removable[0]!;
@@ -139,7 +139,7 @@ describe("RemoveButtonAddon", () => {
     test("shrinks as the selection shrinks", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
             addons: [new RemoveButtonAddon()],
         });
 

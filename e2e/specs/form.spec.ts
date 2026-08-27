@@ -39,7 +39,7 @@ test("submits the committed value under its name", async ({ selectBox, page }) =
 });
 
 test("submits one entry per selection in multi mode", async ({ selectBox, page }) => {
-    await selectBox.open({ name: "fruit", multi: true });
+    await selectBox.open({ name: "fruit", multiple: true });
     await selectBox.openPopover();
 
     await selectBox.options.filter({ hasText: "Pear" }).click();
@@ -99,7 +99,7 @@ test("resetting restores every preselected option in multi mode", async ({
     selectBox,
     page,
 }) => {
-    await selectBox.open({ multi: true, name: "fruit", value: "apple,pear" });
+    await selectBox.open({ multiple: true, name: "fruit", value: "apple,pear" });
     await selectBox.openPopover();
     await selectBox.options.filter({ hasText: "Grape" }).click();
     expect(await submitted(page)).toEqual([

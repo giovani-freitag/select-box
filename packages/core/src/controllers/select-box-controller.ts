@@ -93,8 +93,8 @@ export class SelectBoxController<
         // Kept as handed in, not as resolved: a form reset re-resolves it against
         // whatever options are loaded then, the way a native control's default
         // lives in the markup rather than in a snapshot taken at startup.
-        this.defaultValueInput = config.initialValue ?? null;
-        this.currentValue = this.resolveValueFromInput(config.initialValue);
+        this.defaultValueInput = config.defaultValue ?? null;
+        this.currentValue = this.resolveValueFromInput(config.defaultValue);
         this.currentDisabled = config.disabled ?? false;
         this.currentReadOnly = config.readOnly ?? false;
         for (const addon of config.addons ?? []) {

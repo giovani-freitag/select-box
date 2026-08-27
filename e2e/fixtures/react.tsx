@@ -10,8 +10,8 @@ const config = readFixtureConfig();
 
 // The prop is mode-shaped, so the scenario's raw value is narrowed per branch
 // rather than cast.
-const defaultMulti = Array.isArray(config.initialValue) ? config.initialValue : [];
-const defaultSingle = typeof config.initialValue === "string" ? config.initialValue : null;
+const defaultMulti = Array.isArray(config.defaultValue) ? config.defaultValue : [];
+const defaultSingle = typeof config.defaultValue === "string" ? config.defaultValue : null;
 
 function Fixture(): React.JSX.Element {
     const [surface, setSurface] = useState<SelectBoxSurface>(config.surface);
@@ -19,10 +19,10 @@ function Fixture(): React.JSX.Element {
         setSurface((current: SelectBoxSurface) => (current === "inline" ? "popover" : "inline"));
     };
 
-    if (config.multi) {
+    if (config.multiple) {
         return (
             <SelectBox
-                multi
+                multiple
                 options={config.options}
                 placeholder={config.placeholder}
                 surface={surface}

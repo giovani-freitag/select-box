@@ -18,7 +18,7 @@ const committed = ref<ReadonlyArray<string>>([]);
 <template>
     <div class="sb-demo multi-demo">
         <SelectBox
-            multi
+            multiple
             :options="fruits"
             ungrouped-label="Citrus"
             placeholder="Pick fruits…"

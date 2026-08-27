@@ -41,7 +41,7 @@ function commitOption(label: string): void {
 describe("$.fn.selectBox multi integration", () => {
     test("renders with mode='multi' when configured", () => {
         jQuery("#fruit").selectBox({
-            mode: "multi",
+            multiple: true,
             options: fruits,
             placeholder: "Pick fruits",
         });
@@ -50,7 +50,7 @@ describe("$.fn.selectBox multi integration", () => {
     });
 
     test("clicking an option commits as a chip and keeps the popover open", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+        jQuery("#fruit").selectBox({ multiple: true, options: fruits });
         const input = getInput();
         input.focus();
 
@@ -68,7 +68,7 @@ describe("$.fn.selectBox multi integration", () => {
         jQuery("#fruit").on("change", (_event, values: ReadonlyArray<string>) => {
             lastValues = values;
         });
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+        jQuery("#fruit").selectBox({ multiple: true, options: fruits });
         const input = getInput();
         input.focus();
 
@@ -81,7 +81,7 @@ describe("$.fn.selectBox multi integration", () => {
     });
 
     test("leaves the caret out of the tree and holds the clear button until a chip exists", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+        jQuery("#fruit").selectBox({ multiple: true, options: fruits });
         getInput().focus();
 
         commitOption("Apple");
@@ -91,13 +91,13 @@ describe("$.fn.selectBox multi integration", () => {
     });
 
     test("renders no clear button while the selection is empty", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits });
+        jQuery("#fruit").selectBox({ multiple: true, options: fruits });
 
         expect(clearButton()).toBeNull();
     });
 
     test("clicking the clear button empties the selection and drops the button again", () => {
-        jQuery("#fruit").selectBox({ mode: "multi", options: fruits, initialValue: ["apple"] });
+        jQuery("#fruit").selectBox({ multiple: true, options: fruits, defaultValue: ["apple"] });
 
         clearButton()!.click();
 
@@ -107,9 +107,9 @@ describe("$.fn.selectBox multi integration", () => {
 
     test("setMode('single') brings the caret back and drops the clear button", () => {
         const box = jQuery("#fruit").selectBox({
-            mode: "multi",
+            multiple: true,
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
         });
 
         box.setMode("single");
@@ -120,9 +120,9 @@ describe("$.fn.selectBox multi integration", () => {
 
     test("setMode('single') preserves the first selected option", () => {
         const box = jQuery("#fruit").selectBox({
-            mode: "multi",
+            multiple: true,
             options: fruits,
-            initialValue: ["pear", "apple"],
+            defaultValue: ["pear", "apple"],
         });
 
         expect(chipLabels()).toEqual(["Pear", "Apple"]);
@@ -138,7 +138,7 @@ describe("$.fn.selectBox multi integration", () => {
     test("setMode('multi') wraps the held value as a singleton chip", () => {
         const box = jQuery("#fruit").selectBox({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         box.setMode("multi");
@@ -149,9 +149,9 @@ describe("$.fn.selectBox multi integration", () => {
 
     test("setMode is a no-op when already in the requested mode", () => {
         const box = jQuery("#fruit").selectBox({
-            mode: "multi",
+            multiple: true,
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
         });
 
         box.setMode("multi");

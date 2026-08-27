@@ -14,7 +14,7 @@ export interface FixtureOption {
 
 export interface FixtureConfig {
     readonly options: ReadonlyArray<FixtureOption>;
-    readonly multi: boolean;
+    readonly multiple: boolean;
     readonly surface: "popover" | "inline";
     readonly placeholder: string;
     /** Submitted field name. Empty means the control stays out of the form data. */
@@ -24,7 +24,7 @@ export interface FixtureConfig {
      * Preselection the control is built with, which a form reset restores the
      * way a native control returns to its default. Undefined means none.
      */
-    readonly initialValue: string | ReadonlyArray<string> | undefined;
+    readonly defaultValue: string | ReadonlyArray<string> | undefined;
     /** Accessible name a consumer put on the box, if any. */
     readonly ariaLabel: string | undefined;
 }
@@ -73,12 +73,12 @@ export function readFixtureConfig(): FixtureConfig {
     const params = new URLSearchParams(window.location.search);
     return {
         options: buildOptions(params),
-        multi: params.get("multi") === "1",
+        multiple: params.get("multi") === "1",
         surface: params.get("surface") === "inline" ? "inline" : "popover",
         placeholder: params.get("placeholder") ?? "Pick a fruit",
         name: params.get("name") ?? "",
         required: params.get("required") === "1",
-        initialValue: readInitialValue(params),
+        defaultValue: readInitialValue(params),
         ariaLabel: params.get("label") ?? undefined,
     };
 }

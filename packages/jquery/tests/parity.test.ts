@@ -22,7 +22,7 @@ describeParitySuite({
         const box = jQuery(mountPoint).selectBox({
             options: config.options,
             placeholder: config.placeholder,
-            mode: config.multi ? "multi" : "single",
+            multiple: config.multiple,
             surface: config.surface,
             ...(config.addons !== undefined ? { addons: config.addons } : {}),
             ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),

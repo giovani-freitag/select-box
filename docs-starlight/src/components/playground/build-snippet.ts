@@ -22,7 +22,7 @@ function importLines(config: PlaygroundConfig): ReadonlyArray<string> {
 function propLines(config: PlaygroundConfig): ReadonlyArray<string> {
     const props = ["options={fruits}"];
 
-    if (config.multi) props.push("multi");
+    if (config.multiple) props.push("multiple");
     if (config.surface === "inline") props.push('surface="inline"');
     if (config.interactivity === "disabled") props.push("disabled");
     if (config.interactivity === "readOnly") props.push("readOnly");

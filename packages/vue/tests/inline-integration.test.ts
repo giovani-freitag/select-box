@@ -51,7 +51,7 @@ describe("<SelectBox surface=\"inline\" /> (Vue)", () => {
     });
 
     test("multi mode toggles selection on each chip click", async () => {
-        const wrapper = makeWrapper({ multi: true });
+        const wrapper = makeWrapper({ multiple: true });
 
         const chips = wrapper.findAll<HTMLButtonElement>("[data-select-chip]");
         await chips[0]!.trigger("click");

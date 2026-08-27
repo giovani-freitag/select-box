@@ -19,11 +19,11 @@ defineExpose({ toggleSurface });
     <SelectBox
         :options="config.options"
         :placeholder="config.placeholder"
-        :multi="config.multi"
+        :multiple="config.multiple"
         :surface="surface"
         :name="config.name"
         :required="config.required"
-        :default-value="config.initialValue ?? null"
+        :default-value="config.defaultValue ?? null"
         :aria-label="config.ariaLabel"
         @change="(value: unknown) => reportChange(value)"
     />

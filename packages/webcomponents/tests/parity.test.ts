@@ -20,7 +20,7 @@ describeParitySuite({
         const element = document.createElement("select-box");
         element.setAttribute("placeholder", config.placeholder);
         element.setAttribute("surface", config.surface);
-        if (config.multi) element.setAttribute("multi", "");
+        if (config.multiple) element.setAttribute("multiple", "");
         if (config.disabled === true) element.setAttribute("disabled", "");
         if (config.readOnly === true) element.setAttribute("readonly", "");
         element.options = config.options;
@@ -37,7 +37,7 @@ describeParitySuite({
                     element.options = options;
                 },
                 setMulti: (multi) => {
-                    element.multi = multi;
+                    element.multiple = multi;
                 },
                 setValue: (value) => {
                     element.value = value;

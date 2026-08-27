@@ -114,7 +114,7 @@ describe("the instance the plugin hands back", () => {
     test("clear() drops the selection and repaints the trigger", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
         });
 
         box.clear();
@@ -127,9 +127,9 @@ describe("the instance the plugin hands back", () => {
 
     test("clear() empties every chip in multi mode", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
-            mode: "multi",
+            multiple: true,
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
 
         box.clear();
@@ -326,7 +326,7 @@ describe("form participation", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         box.controller.commitValue("pear");
 
@@ -343,7 +343,7 @@ describe("form participation", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         box.controller.commitValue("pear");
 
@@ -461,7 +461,7 @@ describe("the form mirror's reset baseline", () => {
         jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         expect(defaults()).toEqual(["apple"]);
@@ -472,7 +472,7 @@ describe("the form mirror's reset baseline", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         box.controller.commitValue("pear");
@@ -485,7 +485,7 @@ describe("the form mirror's reset baseline", () => {
         const box = jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         box.setOptions([
@@ -501,7 +501,7 @@ describe("the form mirror's reset baseline", () => {
         jQuery("#fruit").selectBox<FruitExtra>({
             options: fruits,
             name: "fruit",
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         expect(

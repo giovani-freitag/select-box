@@ -24,7 +24,7 @@ const DEMO_PAGES = [
     { path: "/examples/search/", surface: "popover" },
     { path: "/examples/disabled/", surface: "popover" },
     { path: "/examples/large-list/", surface: "popover" },
-    { path: "/examples/multi-select/", surface: "popover", multi: true },
+    { path: "/examples/multi-select/", surface: "popover", multiple: true },
     { path: "/examples/inline-select/", surface: "inline" },
 ] as const;
 
@@ -83,7 +83,7 @@ for (const demo of DEMO_PAGES) {
             // Committing has to reach the trigger, which is the wiring a broken
             // demo script silently skips. Multi puts the label in a chip and
             // leaves the input free for the next search.
-            if ("multi" in demo && demo.multi === true) {
+            if ("multiple" in demo && demo.multiple === true) {
                 await expect(root.locator("[data-select-chip]").first()).toHaveText(
                     new RegExp(label),
                 );

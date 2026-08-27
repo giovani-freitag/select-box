@@ -12,13 +12,13 @@ beforeAll(() => {
     defineSelectBoxElement();
 });
 
-function mount(options: { multi?: boolean } = {}): {
+function mount(options: { multiple?: boolean } = {}): {
     element: SelectBoxElement;
     input: HTMLInputElement;
 } {
     const element = document.createElement("select-box");
     element.setAttribute("placeholder", "Pick fruits");
-    if (options.multi) element.setAttribute("multi", "");
+    if (options.multiple) element.setAttribute("multiple", "");
     element.options = fruits;
     document.body.append(element);
     const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
@@ -31,13 +31,13 @@ describe("<select-box multi> integration", () => {
     });
 
     test("renders with mode='multi' on the host when the multi attribute is present", () => {
-        const { element } = mount({ multi: true });
+        const { element } = mount({ multiple: true });
 
         expect(element.getAttribute("mode")).toBe("multi");
     });
 
     test("clicking an option commits as a chip and keeps the popover open", () => {
-        const { element, input } = mount({ multi: true });
+        const { element, input } = mount({ multiple: true });
         input.focus();
 
         const appleButton = [
@@ -52,7 +52,7 @@ describe("<select-box multi> integration", () => {
     });
 
     test("chip remove button toggles the option off", () => {
-        const { element, input } = mount({ multi: true });
+        const { element, input } = mount({ multiple: true });
         element.value = ["pear", "grape"];
         input.focus();
 
@@ -63,11 +63,11 @@ describe("<select-box multi> integration", () => {
     });
 
     test("toggling the multi attribute off preserves the first selected option", () => {
-        const { element, input } = mount({ multi: true });
+        const { element, input } = mount({ multiple: true });
         element.value = ["pear", "apple"];
         input.focus();
 
-        element.removeAttribute("multi");
+        element.removeAttribute("multiple");
 
         expect(element.getAttribute("mode")).toBe("single");
         expect(element.value).toBe("pear");
@@ -79,7 +79,7 @@ describe("<select-box multi> integration", () => {
         element.value = "apple";
         input.focus();
 
-        element.setAttribute("multi", "");
+        element.setAttribute("multiple", "");
 
         expect(element.getAttribute("mode")).toBe("multi");
         expect(element.value).toEqual(["apple"]);
@@ -88,12 +88,12 @@ describe("<select-box multi> integration", () => {
         expect(chips[0]?.textContent).toContain("Apple");
     });
 
-    test("the element.multi property setter mirrors the attribute", () => {
+    test("the element.multiple property setter mirrors the attribute", () => {
         const { element } = mount();
 
-        element.multi = true;
+        element.multiple = true;
 
-        expect(element.hasAttribute("multi")).toBe(true);
+        expect(element.hasAttribute("multiple")).toBe(true);
         expect(element.getAttribute("mode")).toBe("multi");
     });
 });

@@ -11,7 +11,7 @@ describe("committing a value that changes nothing", () => {
     test("publishes no snapshot in single mode", () => {
         const controller = new SingleSelectBoxController({
             options: FRUITS,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         const listener = vi.fn();
         controller.subscribe(listener);
@@ -24,7 +24,7 @@ describe("committing a value that changes nothing", () => {
     test("publishes no snapshot in multi mode, where the value is rebuilt as an array", () => {
         const controller = new MultiSelectBoxController({
             options: FRUITS,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
         const listener = vi.fn();
         controller.subscribe(listener);
@@ -37,7 +37,7 @@ describe("committing a value that changes nothing", () => {
     test("keeps the multi value referentially stable so wrappers can skip a render", () => {
         const controller = new MultiSelectBoxController({
             options: FRUITS,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
         });
         const before = controller.getState().value;
 
@@ -49,7 +49,7 @@ describe("committing a value that changes nothing", () => {
     test("still publishes when the multi selection actually changes", () => {
         const controller = new MultiSelectBoxController({
             options: FRUITS,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
         });
         const listener = vi.fn();
         controller.subscribe(listener);
@@ -62,7 +62,7 @@ describe("committing a value that changes nothing", () => {
     test("treats a reordered selection as a change", () => {
         const controller = new MultiSelectBoxController({
             options: FRUITS,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
         });
         const listener = vi.fn();
         controller.subscribe(listener);

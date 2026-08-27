@@ -15,7 +15,7 @@ describe("HoistSelectedAddon", () => {
     test("lifts the selected option into a top-most pinned group labeled 'Selected' by default", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [new HoistSelectedAddon()],
         });
 
@@ -32,7 +32,7 @@ describe("HoistSelectedAddon", () => {
     test("groupLabel config flows through to the pinned group header", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [new HoistSelectedAddon({ groupLabel: "Selecionado" })],
         });
 
@@ -48,7 +48,7 @@ describe("HoistSelectedAddon", () => {
         ];
         const controller = new SingleSelectBoxController({
             options: oneCitrus,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [new HoistSelectedAddon()],
         });
 
@@ -71,7 +71,7 @@ describe("HoistSelectedAddon", () => {
     test("does nothing when the selected option is filtered out", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [new HoistSelectedAddon()],
         });
 
@@ -84,7 +84,7 @@ describe("HoistSelectedAddon", () => {
     test("when='popoverOpen' suppresses hoist while the popover is closed", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [new HoistSelectedAddon({ when: "popoverOpen" })],
         });
 
@@ -100,7 +100,7 @@ describe("HoistSelectedAddon", () => {
     test("activeIndex resolves against the post-hoist list when the popover opens", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lime",
+            defaultValue: "lime",
             addons: [new HoistSelectedAddon()],
         });
 
@@ -112,7 +112,7 @@ describe("HoistSelectedAddon", () => {
     test("publishes pinnedKeys via snapshot.addons['hoist-selected']", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lime",
+            defaultValue: "lime",
             addons: [new HoistSelectedAddon({ separator: true })],
         });
 
@@ -139,7 +139,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("pins every selected option, not just the first", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon", "apple"],
+            defaultValue: ["lemon", "apple"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -168,7 +168,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("leaves no pinned option behind in its original group", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon", "apple"],
+            defaultValue: ["lemon", "apple"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -183,7 +183,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("pins only the selections that survived the filter", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon", "apple"],
+            defaultValue: ["lemon", "apple"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -199,7 +199,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("stands down when the filter hides every selection", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon", "lime"],
+            defaultValue: ["lemon", "lime"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -213,7 +213,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("publishes every pinned key in the snapshot slice", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon", "apple"],
+            defaultValue: ["lemon", "apple"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -226,7 +226,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("re-pins as the selection grows", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [new HoistSelectedAddon()],
         });
 
@@ -240,7 +240,7 @@ describe("HoistSelectedAddon in multi mode", () => {
     test("drops the pinned group once the last selection is cleared", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple", "lime"],
+            defaultValue: ["apple", "lime"],
             addons: [new HoistSelectedAddon()],
         });
 

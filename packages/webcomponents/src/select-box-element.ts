@@ -29,13 +29,13 @@ const OBSERVED_ATTRIBUTES = [
     "disabled",
     "required",
     "readonly",
-    "multi",
+    "multiple",
     "surface",
 ] as const;
 
 /**
  * Form-associated `<select-box>` custom element backed by the unified
- * `SelectBoxController`. Set the `multi` attribute (or property) to switch
+ * `SelectBoxController`. Set the `multiple` attribute (or property) to switch
  * to multi-select semantics — chips render inside the trigger, the popover
  * stays open across commits, and the form value submits as multiple entries.
  */
@@ -116,7 +116,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             this.handleSnapshotChange();
             return;
         }
-        if (name === "multi") {
+        if (name === "multiple") {
             this.applyModeAttribute();
             this.applyModeToController();
             return;
@@ -144,7 +144,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
      */
     private applyModeToController(): void {
         if (!this.coreController) return;
-        const nextMode = this.multi ? "multi" : "single";
+        const nextMode = this.multiple ? "multi" : "single";
         if (this.coreController.mode === nextMode) return;
         this.coreController.setMode(nextMode);
     }
@@ -212,13 +212,13 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         else this.removeAttribute("readonly");
     }
 
-    get multi(): boolean {
-        return this.hasAttribute("multi");
+    get multiple(): boolean {
+        return this.hasAttribute("multiple");
     }
 
-    set multi(next: boolean) {
-        if (next) this.setAttribute("multi", "");
-        else this.removeAttribute("multi");
+    set multiple(next: boolean) {
+        if (next) this.setAttribute("multiple", "");
+        else this.removeAttribute("multiple");
     }
 
     get surface(): "popover" | "inline" {
@@ -296,7 +296,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     get value(): SelectionValue {
         const snapshot = this.coreController?.getState();
         if (snapshot) return snapshot.value;
-        return this.multi ? [] : null;
+        return this.multiple ? [] : null;
     }
     set value(next: SelectionValueInput) {
         this.pendingValue = next;
@@ -338,18 +338,18 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     private applyModeAttribute(): void {
-        const mode = this.multi ? "multi" : "single";
+        const mode = this.multiple ? "multi" : "single";
         if (this.getAttribute("mode") !== mode) this.setAttribute("mode", mode);
     }
 
     private buildController(): SelectBoxController<TExtra, SelectionValue> {
         return new SelectBoxController<TExtra, SelectionValue>({
-            mode: this.multi ? "multi" : "single",
+            mode: this.multiple ? "multi" : "single",
             ...(this.pendingOptions !== undefined ? { options: this.pendingOptions } : {}),
             ...(this.pendingAddons !== undefined ? { addons: this.pendingAddons } : {}),
             ...(this.pendingFilter !== undefined ? { filter: this.pendingFilter } : {}),
             ungroupedLabel: this.getAttribute("ungrouped-label") ?? "",
-            initialValue: this.pendingValue,
+            defaultValue: this.pendingValue,
             disabled: this.disabled,
             readOnly: this.readOnly,
         });

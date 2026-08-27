@@ -112,7 +112,7 @@ describe("a controlled value", () => {
             const [values, setValues] = useState<ReadonlyArray<string>>(["apple"]);
             return (
                 <SelectBox
-                    multi
+                    multiple
                     options={FRUITS}
                     value={values}
                     placeholder="Pick"

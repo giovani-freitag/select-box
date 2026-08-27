@@ -43,7 +43,7 @@ test("points the combobox at the row the keyboard is on", async ({ selectBox, pa
 });
 
 test("exposes exactly the selected row as selected", async ({ selectBox, page }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await selectBox.openPopover();
 
     await selectBox.options.first().click();
@@ -52,7 +52,7 @@ test("exposes exactly the selected row as selected", async ({ selectBox, page })
 });
 
 test("announces multi-selectability on the listbox", async ({ selectBox, page }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await selectBox.openPopover();
 
     await expect(page.getByRole("listbox")).toHaveAttribute("aria-multiselectable", "true");
@@ -70,7 +70,7 @@ test("keeps the option rows out of the tab order", async ({ selectBox, page }) =
 });
 
 test("gives the clear control an accessible name", async ({ selectBox, page }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await selectBox.openPopover();
     await selectBox.options.first().click();
 
@@ -78,7 +78,7 @@ test("gives the clear control an accessible name", async ({ selectBox, page }) =
 });
 
 test("names each chip's remove control after its own option", async ({ selectBox, page }) => {
-    await selectBox.open({ multi: true });
+    await selectBox.open({ multiple: true });
     await selectBox.openPopover();
     const label = ((await selectBox.options.first().textContent()) ?? "").trim();
     await selectBox.options.first().click();

@@ -6,7 +6,13 @@ import { SelectBoxView, type SelectBoxSurface } from "./select-box-view.js";
 export type { SelectBoxSurface };
 
 export interface SelectBoxPluginConfig<TExtra extends object = object>
-    extends SelectBoxControllerConfig<TExtra> {
+    extends Omit<SelectBoxControllerConfig<TExtra>, "mode"> {
+    /**
+     * Accumulates a selection instead of replacing it, the way `multiple` does
+     * on a native `<select>`. The same flag every other wrapper takes; `mode`
+     * stays the core's own, driver-level term.
+     */
+    readonly multiple?: boolean;
     readonly placeholder?: string;
     readonly surface?: SelectBoxSurface;
     /** Field name under which the selection is submitted. Omit to stay out of the form. */
@@ -82,6 +88,7 @@ function mount<TExtra extends object>(
     host.selectBox?.destroy();
     const view = new SelectBoxView<TExtra>({
         ...config,
+        mode: config.multiple === true ? "multi" : "single",
         onValueChange: (value: string | null, option: SelectOption<TExtra> | null) => {
             jq(host).trigger("change", [value, option]);
         },

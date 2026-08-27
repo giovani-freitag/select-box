@@ -15,10 +15,10 @@ const fruits: ReadonlyArray<Fruit> = [
 
 defineSelectBoxElement("select-box-lit-multi-test");
 
-async function mount(options: { multi?: boolean } = {}): Promise<SelectBox> {
+async function mount(options: { multiple?: boolean } = {}): Promise<SelectBox> {
     const element = document.createElement("select-box-lit-multi-test") as SelectBox;
     element.options = fruits;
-    if (options.multi) element.multi = true;
+    if (options.multiple) element.multiple = true;
     document.body.append(element);
     await element.updateComplete;
     return element;
@@ -30,13 +30,13 @@ afterEach(() => {
 
 describe("<select-box multi /> (Lit)", () => {
     test("renders with the multi marker on the root", async () => {
-        const element = await mount({ multi: true });
+        const element = await mount({ multiple: true });
 
         expect(element.dataset["selectMode"]).toBe("multi");
     });
 
     test("commitOption toggles chips and keeps the popover open", async () => {
-        const element = await mount({ multi: true });
+        const element = await mount({ multiple: true });
         const apple = fruits[0]!;
         const pear = fruits[1]!;
 
@@ -62,8 +62,8 @@ describe("<select-box multi /> (Lit)", () => {
         expect(view.selectedOptions.map((option) => option.value)).toEqual([apple.value, pear.value]);
     });
 
-    test("toggling .multi from true to false preserves the first selection", async () => {
-        const element = await mount({ multi: true });
+    test("toggling .multiple from true to false preserves the first selection", async () => {
+        const element = await mount({ multiple: true });
         const apple = fruits[0]!;
         const pear = fruits[1]!;
 
@@ -82,7 +82,7 @@ describe("<select-box multi /> (Lit)", () => {
 
         expect(element.value).toEqual([pear.value, apple.value]);
 
-        element.multi = false;
+        element.multiple = false;
         await element.updateComplete;
 
         expect(element.dataset["selectMode"]).toBe("single");
@@ -90,7 +90,7 @@ describe("<select-box multi /> (Lit)", () => {
         expect(element.querySelectorAll("[data-select-chip]")).toHaveLength(0);
     });
 
-    test("toggling .multi from false to true wraps the held value as a singleton chip", async () => {
+    test("toggling .multiple from false to true wraps the held value as a singleton chip", async () => {
         const element = await mount();
         const apple = fruits[0]!;
         const input = element.querySelector<HTMLInputElement>("[data-select-input]")!;
@@ -103,7 +103,7 @@ describe("<select-box multi /> (Lit)", () => {
 
         expect(element.value).toBe(apple.value);
 
-        element.multi = true;
+        element.multiple = true;
         await element.updateComplete;
 
         expect(element.dataset["selectMode"]).toBe("multi");

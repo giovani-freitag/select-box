@@ -21,7 +21,7 @@ describeParitySuite({
             props: {
                 options: config.options,
                 placeholder: config.placeholder,
-                multi: config.multi,
+                multiple: config.multiple,
                 surface: config.surface,
                 ...(config.addons !== undefined ? { addons: config.addons } : {}),
                 ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
@@ -43,8 +43,8 @@ describeParitySuite({
             setOptions: (options) => {
                 void wrapper.setProps({ options });
             },
-            setMulti: (multi) => {
-                void wrapper.setProps({ multi });
+            setMulti: (multiple) => {
+                void wrapper.setProps({ multiple });
             },
             setValue: (value) => {
                 exposed?.controller.setValue(value);

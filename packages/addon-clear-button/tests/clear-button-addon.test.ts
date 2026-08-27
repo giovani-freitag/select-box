@@ -22,7 +22,7 @@ describe("ClearButtonAddon", () => {
     test("offers itself once something is selected", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new ClearButtonAddon()],
         });
 
@@ -54,7 +54,7 @@ describe("ClearButtonAddon", () => {
     test("hides on a disabled control, which cannot be cleared anyway", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             disabled: true,
             addons: [new ClearButtonAddon({ when: "always" })],
         });
@@ -65,7 +65,7 @@ describe("ClearButtonAddon", () => {
     test("hides on a read-only control for the same reason", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             readOnly: true,
             addons: [new ClearButtonAddon()],
         });
@@ -76,7 +76,7 @@ describe("ClearButtonAddon", () => {
     test("comes back when the control becomes interactive again", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             disabled: true,
             addons: [new ClearButtonAddon()],
         });
@@ -89,7 +89,7 @@ describe("ClearButtonAddon", () => {
     test("carries the glyph and the accessible name a wrapper renders", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new ClearButtonAddon({ label: "⨯", ariaLabel: "Limpar" })],
         });
 
@@ -112,7 +112,7 @@ describe("ClearButtonAddon", () => {
     test("works in multi mode too, where it tracks the whole selection", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple", "pear"],
+            defaultValue: ["apple", "pear"],
             addons: [new ClearButtonAddon()],
         });
 

@@ -48,7 +48,7 @@ describe("addon.transformGroups", () => {
 
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
             addons: [probeAddon],
         });
         controller.open();
@@ -105,7 +105,7 @@ describe("addon.transformGroups", () => {
 
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "lemon",
+            defaultValue: "lemon",
             addons: [moveSelectedToTopAddon],
         });
 

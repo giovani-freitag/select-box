@@ -15,7 +15,7 @@ in or out". The snapshot exposes the full picked list under
 
 ## React: the styled component
 
-The same `<SelectBox />` handles both modes — set `multi` and the trigger
+The same `<SelectBox />` handles both modes — set `multiple` and the trigger
 renders chips inside the input, the popover stays open across picks, and
 the `onChange` signature switches to arrays. Same component, same import,
 same virtualised list under the hood.
@@ -32,7 +32,7 @@ const fruits = [
 export function FruitPicker() {
     return (
         <SelectBox
-            multi
+            multiple
             options={fruits}
             placeholder="Pick fruits…"
             defaultValue={["apple"]}
@@ -61,7 +61,7 @@ function FruitPicker() {
     const { state, controller } = useSelectBox({
         mode: "multi",
         options: fruits,
-        initialValue: ["apple"],
+        defaultValue: ["apple"],
     });
 
     return (
@@ -104,7 +104,7 @@ import { MultiSelectBoxController } from "@select-box/core";
 
 const controller = new MultiSelectBoxController({
     options: fruits,
-    initialValue: ["apple", "pear"],
+    defaultValue: ["apple", "pear"],
 });
 
 controller.subscribe(() => {
@@ -138,7 +138,7 @@ none of it cares about cardinality.
 
 ## Runtime mode toggle
 
-`multi` flips at runtime in every wrapper. The current selection is
+`multiple` flips at runtime in every wrapper. The current selection is
 preserved through the toggle, mirroring how the browser handles toggling
 the `multiple` attribute on a native `<select>`:
 
@@ -149,10 +149,10 @@ How to flip in each wrapper:
 
 | Wrapper | API |
 |---|---|
-| React | `<SelectBox multi={isMulti} />` — re-render with a different `multi` prop. |
-| Vue | `<SelectBox :multi="isMulti" />` — toggle the reactive prop. |
-| Lit | `element.multi = true` or `element.toggleAttribute("multi")`. |
-| Web Components | `element.setAttribute("multi", "")` / `element.removeAttribute("multi")`. |
+| React | `<SelectBox multiple={isMulti} />` — re-render with a different `multiple` prop. |
+| Vue | `<SelectBox :multiple="isMulti" />` — toggle the reactive prop. |
+| Lit | `element.multiple = true` or `element.toggleAttribute("multi")`. |
+| Web Components | `element.setAttribute("multiple", "")` / `element.removeAttribute("multiple")`. |
 | jQuery | `box.setMode('multi')` on the instance the plugin returned. |
 
 ## Status

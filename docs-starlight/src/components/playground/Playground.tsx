@@ -122,8 +122,8 @@ export default function Playground(): JSX.Element {
                 <Knob
                     label="Selection"
                     options={CARDINALITIES}
-                    value={config.multi ? "multi" : "single"}
-                    onPick={(next) => update("multi", next === "multi")}
+                    value={config.multiple ? "multi" : "single"}
+                    onPick={(next) => update("multiple", next === "multi")}
                 />
                 <Knob
                     label="Options"
@@ -150,7 +150,7 @@ export default function Playground(): JSX.Element {
                         Addons
                     </span>
                     <SelectBox
-                        multi
+                        multiple
                         options={ADDONS}
                         defaultValue={[]}
                         aria-label="Addons"
@@ -162,10 +162,10 @@ export default function Playground(): JSX.Element {
 
             <div className="sb-playground-stage">
                 <span className="sb-playground-caption">Live preview</span>
-                {config.multi ? (
+                {config.multiple ? (
                     <SelectBox
                         {...shared}
-                        multi
+                        multiple
                         onChange={(values) => setCommitted(values)}
                     />
                 ) : (

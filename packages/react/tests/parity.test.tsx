@@ -21,7 +21,7 @@ function createReactHandle(
     result: RenderResult,
     handleRef: RefObject<SelectBoxHandle | null>,
     rerenderWith: (options: ReadonlyArray<ParityOption>) => void,
-    rerenderMulti: (multi: boolean) => void,
+    rerenderMulti: (multiple: boolean) => void,
     reported: ReadonlyArray<unknown>,
 ): ParityHandle {
     function input(): HTMLInputElement {
@@ -43,8 +43,8 @@ function createReactHandle(
             await flush();
         },
 
-        async setMulti(multi: boolean): Promise<void> {
-            act(() => rerenderMulti(multi));
+        async setMulti(multiple: boolean): Promise<void> {
+            act(() => rerenderMulti(multiple));
             await flush();
         },
 
@@ -98,11 +98,11 @@ describeParitySuite({
         const reported: unknown[] = [];
         const element = (
             options: ReadonlyArray<ParityOption>,
-            multi: boolean = config.multi,
+            multiple: boolean = config.multiple,
         ): JSX.Element =>
-            multi ? (
+            multiple ? (
                 <SelectBox
-                    multi
+                    multiple
                     ref={handleRef}
                     options={options}
                     placeholder={config.placeholder}
@@ -135,8 +135,8 @@ describeParitySuite({
                 (options) => {
                     result.rerender(element(options));
                 },
-                (multi) => {
-                    result.rerender(element(config.options, multi));
+                (multiple) => {
+                    result.rerender(element(config.options, multiple));
                 },
                 reported,
             ),

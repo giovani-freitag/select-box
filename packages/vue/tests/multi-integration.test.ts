@@ -11,12 +11,12 @@ const fruits = [
 
 function makeWrapper(propsOverride: Record<string, unknown> = {}) {
     return mount(SelectBox, {
-        props: { multi: true, options: fruits, placeholder: "Pick fruits", ...propsOverride },
+        props: { multiple: true, options: fruits, placeholder: "Pick fruits", ...propsOverride },
         attachTo: document.body,
     });
 }
 
-describe("<SelectBox multi /> (Vue)", () => {
+describe("<SelectBox multiple /> (Vue)", () => {
     test("renders with chips when defaultValue is provided", () => {
         const wrapper = makeWrapper({ defaultValue: ["apple", "pear"] });
 
@@ -71,7 +71,7 @@ describe("<SelectBox multi /> (Vue)", () => {
 
         expect(wrapper.findAll("[data-select-chip]")).toHaveLength(2);
 
-        await wrapper.setProps({ multi: false });
+        await wrapper.setProps({ multiple: false });
 
         expect(wrapper.find("[data-select-mode='single']").exists()).toBe(true);
         expect(wrapper.findAll("[data-select-chip]")).toHaveLength(0);
@@ -87,7 +87,7 @@ describe("<SelectBox multi /> (Vue)", () => {
             attachTo: document.body,
         });
 
-        await wrapper.setProps({ multi: true });
+        await wrapper.setProps({ multiple: true });
 
         expect(wrapper.find("[data-select-mode='multi']").exists()).toBe(true);
         const chips = wrapper

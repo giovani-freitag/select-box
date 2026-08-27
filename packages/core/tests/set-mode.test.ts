@@ -12,7 +12,7 @@ describe("SelectBoxController.setMode", () => {
     test("single → multi wraps the held key as a singleton array", () => {
         const controller = new SelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         controller.setMode("multi");
@@ -35,7 +35,7 @@ describe("SelectBoxController.setMode", () => {
         const controller = new SelectBoxController({
             mode: "multi",
             options: fruits,
-            initialValue: ["pear", "apple", "lemon"],
+            defaultValue: ["pear", "apple", "lemon"],
         });
 
         controller.setMode("single");
@@ -50,7 +50,7 @@ describe("SelectBoxController.setMode", () => {
         const controller = new SelectBoxController({
             mode: "multi",
             options: fruits,
-            initialValue: [],
+            defaultValue: [],
         });
 
         controller.setMode("single");
@@ -61,7 +61,7 @@ describe("SelectBoxController.setMode", () => {
     test("commit semantics flip after setMode (replace ↔ toggle)", () => {
         const controller = new SelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
 
         // Single mode: commit replaces.
@@ -80,7 +80,7 @@ describe("SelectBoxController.setMode", () => {
     });
 
     test("setMode is a no-op when already in the requested mode", () => {
-        const controller = new SelectBoxController({ options: fruits, initialValue: "apple" });
+        const controller = new SelectBoxController({ options: fruits, defaultValue: "apple" });
         let notifications = 0;
         controller.subscribe(() => {
             notifications += 1;
@@ -95,7 +95,7 @@ describe("SelectBoxController.setMode", () => {
     test("setMode publishes a single notification with the new snapshot", () => {
         const controller = new SelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
         });
         let notifications = 0;
         let lastSnapshotMode = controller.getState().mode;

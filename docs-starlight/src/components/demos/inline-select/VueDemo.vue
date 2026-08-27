@@ -17,7 +17,7 @@ const committed = ref<ReadonlyArray<string>>([]);
 <template>
     <div class="sb-demo">
         <SelectBox
-            multi
+            multiple
             surface="inline"
             :options="fruits"
             @change="(values) => (committed = values)"

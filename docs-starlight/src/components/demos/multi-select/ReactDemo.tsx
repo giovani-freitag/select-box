@@ -16,7 +16,7 @@ export default function Demo(): React.ReactElement {
     return (
         <div className="sb-demo multi-demo">
             <SelectBox
-                multi
+                multiple
                 options={fruits}
                 placeholder="Pick fruits…"
                 ungroupedLabel="Citrus"

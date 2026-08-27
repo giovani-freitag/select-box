@@ -76,7 +76,7 @@ describe("PersistAddon saving", () => {
     test("forgets the key once the selection is emptied", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new PersistAddon({ key: "fruit", storage })],
         });
         controller.commitValue("pear");
@@ -104,7 +104,7 @@ describe("PersistAddon saving", () => {
     test("publishes the key it is storing under", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [new PersistAddon({ key: "fruit", storage })],
         });
 
@@ -143,7 +143,7 @@ describe("PersistAddon saving", () => {
 
         const revived = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
             addons: [new PersistAddon({ key: "fruit", storage })],
         });
         revived.commitValue("apple");
@@ -159,7 +159,7 @@ describe("restoreSelection", () => {
 
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: restoreSelection({ key: "fruit", storage }),
+            defaultValue: restoreSelection({ key: "fruit", storage }),
             addons: [new PersistAddon({ key: "fruit", storage })],
         });
 
@@ -234,7 +234,7 @@ describe("restoreSelection", () => {
 
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: restoreSelection({ key: "fruit", storage }),
+            defaultValue: restoreSelection({ key: "fruit", storage }),
         });
 
         expect(controller.getState().value).toBeNull();

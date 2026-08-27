@@ -15,7 +15,7 @@ export default function Demo(): React.ReactElement {
     return (
         <div className="sb-demo">
             <SelectBox
-                multi
+                multiple
                 surface="inline"
                 options={fruits}
                 onChange={setCommitted}

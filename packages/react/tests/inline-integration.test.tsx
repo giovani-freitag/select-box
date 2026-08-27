@@ -41,7 +41,7 @@ describe("<SelectBox surface=\"inline\" /> (React)", () => {
     test("multi mode toggles selection on each chip click", () => {
         const onChange = vi.fn();
         const { container } = render(
-            <SelectBox surface="inline" multi options={fruits} onChange={onChange} />,
+            <SelectBox surface="inline" multiple options={fruits} onChange={onChange} />,
         );
 
         const chips = container.querySelectorAll<HTMLButtonElement>("[data-select-chip]");

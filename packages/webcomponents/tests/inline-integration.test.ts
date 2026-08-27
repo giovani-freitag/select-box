@@ -13,10 +13,10 @@ beforeAll(() => {
     defineSelectBoxElement();
 });
 
-function mount(options: { multi?: boolean } = {}): SelectBoxElement {
+function mount(options: { multiple?: boolean } = {}): SelectBoxElement {
     const element = document.createElement("select-box");
     element.setAttribute("surface", "inline");
-    if (options.multi) element.setAttribute("multi", "");
+    if (options.multiple) element.setAttribute("multiple", "");
     element.options = fruits;
     document.body.append(element);
     return element;
@@ -55,7 +55,7 @@ describe("<select-box surface=\"inline\"> integration", () => {
     });
 
     test("multi mode toggles selection on each chip click", () => {
-        const element = mount({ multi: true });
+        const element = mount({ multiple: true });
 
         chips(element)[0]!.click();
         chips(element)[2]!.click();

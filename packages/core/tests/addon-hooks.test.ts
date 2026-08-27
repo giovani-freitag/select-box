@@ -283,7 +283,7 @@ describe("interceptCommit", () => {
         const captured: { context: AddonTransformContext | null } = { context: null };
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon"],
+            defaultValue: ["lemon"],
             addons: [
                 {
                     name: "probe",
@@ -556,7 +556,7 @@ describe("onKeyDown", () => {
         const captured: { context: AddonTransformContext | null } = { context: null };
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [
                 {
                     name: "probe",
@@ -585,7 +585,7 @@ describe("onKeyDown effects", () => {
     test("commits the option the addon named", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [
                 {
                     name: "pop",
@@ -617,7 +617,7 @@ describe("onKeyDown effects", () => {
     test("applies a commit and a query together, commit first", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["lemon"],
+            defaultValue: ["lemon"],
             addons: [
                 {
                     name: "restore",
@@ -659,7 +659,7 @@ describe("onKeyDown effects", () => {
     test("empties the selection when the effect asks to clear", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [{ name: "wipe", onKeyDown: () => ({ clear: true }) }],
         });
 
@@ -671,7 +671,7 @@ describe("onKeyDown effects", () => {
     test("a query set alongside a clear survives it", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             addons: [
                 { name: "wipe", onKeyDown: () => ({ clear: true, query: "Apple" }) },
             ],
@@ -687,7 +687,7 @@ describe("onKeyDown effects", () => {
     test("a clear through an effect respects the interaction gate", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "apple",
+            defaultValue: "apple",
             readOnly: true,
             addons: [{ name: "wipe", onKeyDown: () => ({ clear: true }) }],
         });
@@ -744,7 +744,7 @@ describe("onKeyDown effects", () => {
     test("a commit through an effect still goes through the commit gate", () => {
         const controller = new MultiSelectBoxController({
             options: fruits,
-            initialValue: ["apple"],
+            defaultValue: ["apple"],
             addons: [
                 { name: "veto", interceptCommit: () => null },
                 {

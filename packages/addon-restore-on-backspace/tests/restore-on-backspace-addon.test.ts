@@ -15,7 +15,7 @@ const fruits: ReadonlyArray<SelectOption> = [
 ];
 
 function multi(
-    initialValue: ReadonlyArray<string>,
+    defaultValue: ReadonlyArray<string>,
     addon = new RestoreOnBackspaceAddon(),
 ): {
     readonly controller: MultiSelectBoxController;
@@ -23,7 +23,7 @@ function multi(
 } {
     const controller = new MultiSelectBoxController({
         options: fruits,
-        initialValue,
+        defaultValue,
         addons: [addon],
     });
     const dispatcher = new SelectBoxKeyDispatcher(controller);
@@ -141,7 +141,7 @@ describe("RestoreOnBackspaceAddon", () => {
     test("works in single mode, where popping empties the selection", () => {
         const controller = new SingleSelectBoxController({
             options: fruits,
-            initialValue: "pear",
+            defaultValue: "pear",
             addons: [new RestoreOnBackspaceAddon()],
         });
         controller.open();

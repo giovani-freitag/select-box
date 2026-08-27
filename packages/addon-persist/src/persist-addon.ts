@@ -79,7 +79,7 @@ export interface RestoreSelectionConfig extends SelectionStorageServiceConfig {
  * The stored selection for a key, shaped for the controller it is going into.
  *
  * Coerces across a mode change rather than handing back something the
- * controller's `initialValue` rejects: a list restored into single mode keeps
+ * controller's `defaultValue` rejects: a list restored into single mode keeps
  * its first entry, and a lone value restored into multi mode becomes a
  * singleton.
  *

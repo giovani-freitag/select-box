@@ -1,7 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 
 export interface ScenarioQuery {
-    readonly multi?: boolean;
+    readonly multiple?: boolean;
     readonly surface?: "popover" | "inline";
     readonly count?: number;
     readonly groups?: boolean;
@@ -36,7 +36,7 @@ export class SelectBoxPage {
      */
     async open(scenario: ScenarioQuery = {}): Promise<void> {
         const params = new URLSearchParams();
-        if (scenario.multi === true) params.set("multi", "1");
+        if (scenario.multiple === true) params.set("multi", "1");
         if (scenario.surface !== undefined) params.set("surface", scenario.surface);
         if (scenario.count !== undefined) params.set("count", String(scenario.count));
         if (scenario.groups === true) params.set("groups", "1");

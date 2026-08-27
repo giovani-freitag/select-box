@@ -9,15 +9,15 @@ const fruits = [
     { value: "grape", label: "Grape" },
 ];
 
-function mount(props: Partial<Omit<SelectBoxMultiProps, "multi">> = {}) {
+function mount(props: Partial<Omit<SelectBoxMultiProps, "multiple">> = {}) {
     const result = render(
-        <SelectBox multi options={fruits} placeholder="Pick fruits" {...props} />,
+        <SelectBox multiple options={fruits} placeholder="Pick fruits" {...props} />,
     );
     const input = result.container.querySelector<HTMLInputElement>("[data-select-input]")!;
     return { ...result, input };
 }
 
-describe("<SelectBox multi /> (React)", () => {
+describe("<SelectBox multiple /> (React)", () => {
     test("renders the trigger with placeholder and no chips", () => {
         const { input, container } = mount();
 
@@ -145,7 +145,7 @@ describe("<SelectBox multi /> (React)", () => {
 
     test("toggling multi → single preserves the first selected option (native <select> semantics)", () => {
         const { container, rerender } = render(
-            <SelectBox multi options={fruits} defaultValue={["pear", "apple"]} />,
+            <SelectBox multiple options={fruits} defaultValue={["pear", "apple"]} />,
         );
 
         expect(container.querySelectorAll("[data-select-chip]")).toHaveLength(2);
@@ -163,7 +163,7 @@ describe("<SelectBox multi /> (React)", () => {
             <SelectBox options={fruits} defaultValue="apple" />,
         );
 
-        rerender(<SelectBox multi options={fruits} />);
+        rerender(<SelectBox multiple options={fruits} />);
 
         expect(container.querySelector("[data-select-mode='multi']")).not.toBeNull();
         const chips = [...container.querySelectorAll("[data-select-chip]")].map((chip) =>

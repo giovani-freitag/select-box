@@ -26,7 +26,7 @@ const LIST_VIEWPORT_HEIGHT = 240;
 
 /**
  * Form-associated Lit select box; consumers register it under a tag of their
- * choice. Switches between single and multi mode via the `multi` boolean
+ * choice. Switches between single and multi mode via the `multiple` boolean
  * property/attribute (default `false`).
  */
 export class SelectBox<TExtra extends object = object> extends LitElement {
@@ -42,7 +42,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         disabled: { type: Boolean, reflect: true },
         required: { type: Boolean, reflect: true },
         readOnly: { type: Boolean, reflect: true, attribute: "readonly" },
-        multi: { type: Boolean, reflect: true },
+        multiple: { type: Boolean, reflect: true },
         surface: { type: String, reflect: true },
     } as const;
 
@@ -55,7 +55,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     disabled = false;
     required = false;
     readOnly = false;
-    multi = false;
+    multiple = false;
     /** Rendering style. `"popover"` (default) shows a combobox dropdown; `"inline"`
      * renders every option as a toggleable chip with no popover/input/search. */
     surface: "popover" | "inline" = "popover";
@@ -198,10 +198,10 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             this.rebuildController();
         } else if (changed.has("options")) {
             this.reactiveController.core.setOptions(this.options ?? []);
-        } else if (changed.has("multi") && this.reactiveController) {
+        } else if (changed.has("multiple") && this.reactiveController) {
             // Mode toggle preserves the current selection via driver coerce —
             // no need to throw away the controller.
-            this.reactiveController.core.setMode(this.multi ? "multi" : "single");
+            this.reactiveController.core.setMode(this.multiple ? "multi" : "single");
         } else if (changed.has("filter") && this.filter !== undefined) {
             this.reactiveController.setFilter(this.filter);
         }
@@ -256,14 +256,14 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
 
     private rebuildController(): void {
         this.reactiveController = new SelectBoxController<TExtra, SelectionValue>(this, {
-            mode: this.multi ? "multi" : "single",
+            mode: this.multiple ? "multi" : "single",
             ...(this.options !== undefined ? { options: this.options } : {}),
             ...(this.addons !== undefined ? { addons: this.addons } : {}),
             ...(this.filter !== undefined ? { filter: this.filter } : {}),
             ungroupedLabel: this.ungroupedLabel,
             disabled: this.disabled,
             readOnly: this.readOnly,
-            initialValue: this.pendingValue,
+            defaultValue: this.pendingValue,
         });
         this.keyDispatcher = new SelectBoxKeyDispatcher(this.reactiveController.core);
         this.previousValueKey = SelectBoxSnapshotView.valueKey(this.reactiveController.state.value);

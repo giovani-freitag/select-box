@@ -46,7 +46,7 @@ export interface SelectBoxProps<TExtra extends object = object> {
     addons?: ReadonlyArray<SelectBoxAddon<TExtra>>;
     filter?: OptionFilterStrategy<TExtra>;
     /** When `true`, switches to multi-select (chips inside the input, popover stays open on commit). */
-    multi?: boolean;
+    multiple?: boolean;
     /** Surface style. Defaults to `"popover"`. */
     surface?: SelectBoxSurface;
     /** Refuses every interaction and stays out of the form data, like a disabled input. */
@@ -69,7 +69,7 @@ export interface SelectBoxProps<TExtra extends object = object> {
 
 const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
     defaultValue: null,
-    multi: false,
+    multiple: false,
     surface: "popover",
     disabled: false,
     readOnly: false,
@@ -108,17 +108,17 @@ function commonConfig() {
 // at construction; thereafter the controller's mode can flip at runtime via
 // setMode without recreating the controller (selection preserved across the
 // flip via the driver's coerce step).
-const useResult = props.multi
+const useResult = props.multiple
     ? useSelectBox<TExtra>({
         mode: "multi",
         ...commonConfig(),
-        initialValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
+        defaultValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
             ? (props.defaultValue as ReadonlyArray<string | number>)
             : [])) as ReadonlyArray<string | number>,
     })
     : useSelectBox<TExtra>({
         ...commonConfig(),
-        initialValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
+        defaultValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
             ? null
             : props.defaultValue)) as string | number | null,
     });
@@ -127,7 +127,7 @@ const state = useResult.state as ShallowRef<SelectBoxSnapshot<TExtra, SelectionV
 const controller = useResult.controller as SelectBoxController<TExtra, SelectionValue>;
 
 watch(
-    () => props.multi,
+    () => props.multiple,
     (multi) => {
         controller.setMode(multi ? "multi" : "single");
     },
@@ -156,7 +156,7 @@ useNotifyChange(
             emit("change", value, option);
             emit("update:modelValue", value);
         },
-        multi: (values, options) => {
+        multiple: (values, options) => {
             emit("change", values, options);
             emit("update:modelValue", values);
         },

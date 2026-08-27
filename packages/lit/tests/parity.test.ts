@@ -19,7 +19,7 @@ describeParitySuite({
         element.surface = config.surface;
         if (config.addons !== undefined) element.addons = config.addons;
         if (config.ariaLabel !== undefined) element.setAttribute("aria-label", config.ariaLabel);
-        if (config.multi) element.multi = true;
+        if (config.multiple) element.multiple = true;
         if (config.disabled === true) element.disabled = true;
         if (config.readOnly === true) element.readOnly = true;
         const reported: unknown[] = [];
@@ -33,7 +33,7 @@ describeParitySuite({
                 element.options = options;
             },
             setMulti: (multi) => {
-                element.multi = multi;
+                element.multiple = multi;
             },
             setValue: (value) => {
                 element.value = value;

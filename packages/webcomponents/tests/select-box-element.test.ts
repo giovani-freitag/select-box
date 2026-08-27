@@ -31,13 +31,13 @@ afterEach(() => {
 function mountInForm(setup: {
     readonly name?: string;
     readonly required?: boolean;
-    readonly multi?: boolean;
+    readonly multiple?: boolean;
 }): { form: HTMLFormElement; element: SelectBoxElement<FruitExtra> } {
     const form = document.createElement("form");
     const element = document.createElement("select-box") as SelectBoxElement<FruitExtra>;
     if (setup.name !== undefined) element.setAttribute("name", setup.name);
     if (setup.required === true) element.setAttribute("required", "");
-    if (setup.multi === true) element.setAttribute("multi", "");
+    if (setup.multiple === true) element.setAttribute("multiple", "");
     element.options = fruits;
     form.append(element);
     document.body.append(form);
@@ -123,7 +123,7 @@ describe("<select-box>", () => {
     });
 
     test("submits one entry per selection in multi mode", () => {
-        const { form, element } = mountInForm({ name: "fruit", multi: true });
+        const { form, element } = mountInForm({ name: "fruit", multiple: true });
 
         element.value = ["pear", "lemon"];
 
@@ -140,7 +140,7 @@ describe("<select-box>", () => {
     });
 
     test("submits no entry at all when multi mode holds nothing", () => {
-        const { form } = mountInForm({ name: "fruit", multi: true });
+        const { form } = mountInForm({ name: "fruit", multiple: true });
 
         expect([...new FormData(form)]).toEqual([]);
     });
