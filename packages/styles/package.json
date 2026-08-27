@@ -39,9 +39,9 @@
     "devDependencies": {
         "@select-box/eslint-config": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
-        "@types/node": "^22.20.1",
-        "eslint": "^9.39.5",
+        "@types/node": "^26.4.0",
+        "eslint": "^10.9.1",
         "typescript": "^5.9.3",
-        "vitest": "^2.1.9"
+        "vitest": "^4.1.11"
     }
 }

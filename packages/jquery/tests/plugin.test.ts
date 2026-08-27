@@ -370,16 +370,16 @@ describe("document listeners", () => {
         const originalAdd = document.addEventListener.bind(document);
         const originalRemove = document.removeEventListener.bind(document);
         vi.spyOn(document, "addEventListener").mockImplementation(
-            ((type: string, ...rest: unknown[]) => {
+            (type: string, ...rest: unknown[]) => {
                 added.push(type);
-                return (originalAdd as (...args: unknown[]) => void)(type, ...rest);
-            }) as typeof document.addEventListener,
+                return originalAdd(type, ...rest);
+            },
         );
         vi.spyOn(document, "removeEventListener").mockImplementation(
-            ((type: string, ...rest: unknown[]) => {
+            (type: string, ...rest: unknown[]) => {
                 removed.push(type);
-                return (originalRemove as (...args: unknown[]) => void)(type, ...rest);
-            }) as typeof document.removeEventListener,
+                return originalRemove(type, ...rest);
+            },
         );
         return { added, removed };
     }

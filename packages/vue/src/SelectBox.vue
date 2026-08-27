@@ -221,8 +221,8 @@ defineExpose({
         :controller="controller"
         :name="name"
         :required="required"
-        :aria-label-text="ariaLabel"
-        :aria-labelledby-ref="ariaLabelledby"
+        :ariaLabelText="ariaLabel"
+        :ariaLabelledbyRef="ariaLabelledby"
     />
     <PopoverSurface
         v-else
@@ -233,7 +233,7 @@ defineExpose({
         :empty-message="emptyMessage"
         :name="name"
         :required="required"
-        :aria-label-text="ariaLabel"
-        :aria-labelledby-ref="ariaLabelledby"
+        :ariaLabelText="ariaLabel"
+        :ariaLabelledbyRef="ariaLabelledby"
     />
 </template>

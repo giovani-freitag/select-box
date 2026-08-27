@@ -58,7 +58,7 @@ export function runWhenIdle(step: IdleStep): IdleWork {
     const pump = (deadline: IdleDeadline): void => {
         if (cancelled) return;
 
-        let more = true;
+        let more: boolean;
         do {
             more = step();
         } while (more && !cancelled && deadline.timeRemaining() > 1);

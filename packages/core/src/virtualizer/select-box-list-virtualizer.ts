@@ -16,20 +16,10 @@ const DEFAULT_OVERSCAN = 3;
  * default answers that call from its size cache — which leaves the list
  * re-rendering every frame for as long as the popover is open. Reading the
  * element is what the ref-style measurement means to ask for.
- *
- * A row measured before its first paint answers zero, and a zero is kept: the
- * row then occupies no space and drops out of the window for good. The
- * estimate stands in until a real height arrives.
  */
-function measureRowHeight(
-    element: HTMLElement,
-    entry: ResizeObserverEntry | undefined,
-    instance: Virtualizer<HTMLElement, HTMLElement>,
-): number {
+function measureRowHeight(element: HTMLElement, entry: ResizeObserverEntry | undefined): number {
     const box = entry?.borderBoxSize?.[0];
-    const measured = box ? Math.round(box.blockSize) : element.offsetHeight;
-    if (measured > 0) return measured;
-    return instance.options.estimateSize(instance.indexFromElement(element));
+    return box ? Math.round(box.blockSize) : element.offsetHeight;
 }
 
 /**
@@ -154,8 +144,19 @@ export class SelectBoxListVirtualizer {
         this.listeners.clear();
     }
 
-    /** Ref-style callback: pass each rendered row's element. Pass `null` when the row unmounts. */
+    /**
+     * Ref-style callback: pass each rendered row's element. Pass `null` when the
+     * row unmounts.
+     *
+     * A row with no layout box yet has nothing to report, and a zero recorded
+     * for it would stand: the row would occupy no space and drop out of the
+     * window for good. Skipping leaves the estimate in place until the row has
+     * really been laid out.
+     *
+     * @param node - The row element, or `null` as it unmounts.
+     */
     measureElement(node: HTMLElement | null): void {
+        if (node !== null && node.offsetHeight === 0) return;
         this.virtualizer.measureElement(node);
     }
 
