@@ -5,6 +5,7 @@ import {
     type SearchMatchRange,
     type SelectBoxKeyDispatcher,
     type SelectBoxController,
+    type SelectBoxRow,
     type SelectBoxSnapshot,
     type SelectionValue,
     type SelectOption,
@@ -483,6 +484,41 @@ function PopoverListbox<TExtra extends object>({
     );
 }
 
+interface RowChunk {
+    readonly label: string;
+    readonly items: ReadonlyArray<{ readonly index: number }>;
+}
+
+/**
+ * Splits the visible rows into runs that share a labelled group.
+ *
+ * A window can start in the middle of a group, so each run is named from its
+ * rows' own group rather than from a header that may be scrolled out of sight.
+ * Rows whose group has no label come back in a run with an empty label and are
+ * rendered bare — a nameless `role="group"` would be worse than none.
+ */
+function chunkByGroup<TExtra extends object>(
+    items: ReadonlyArray<{ readonly index: number }>,
+    rowModel: { getRowAt(index: number): SelectBoxRow<TExtra> | undefined },
+): ReadonlyArray<RowChunk> {
+    const chunks: Array<{ label: string; groupIndex: number; items: Array<{ index: number }> }> = [];
+
+    for (const item of items) {
+        const row = rowModel.getRowAt(item.index);
+        if (!row) continue;
+
+        const label = row.group.label;
+        const last = chunks[chunks.length - 1];
+        if (last !== undefined && label !== "" && last.groupIndex === row.groupIndex) {
+            last.items.push({ index: item.index });
+            continue;
+        }
+        chunks.push({ label, groupIndex: row.groupIndex, items: [{ index: item.index }] });
+    }
+
+    return chunks.map((chunk) => ({ label: chunk.label, items: chunk.items }));
+}
+
 function VirtualizedOptionList<TExtra extends object>({
     state,
     controller,
@@ -519,7 +555,22 @@ function VirtualizedOptionList<TExtra extends object>({
             style={{ maxHeight: LIST_VIEWPORT_HEIGHT, overflowY: "auto" }}
         >
             <div style={{ paddingTop, paddingBottom }}>
-                {virtualItems.map((virtualRow) => {
+                {chunkByGroup<TExtra>(virtualItems, rowModel).map((chunk, chunkIndex) => (
+                    <div
+                        key={`group-${chunkIndex}`}
+                        className="select-box-group"
+                        role={chunk.label === "" ? "presentation" : "group"}
+                        aria-label={chunk.label === "" ? undefined : chunk.label}
+                        data-select-group
+                    >
+                        {chunk.items.map(renderRow)}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    function renderRow(virtualRow: { readonly index: number }): JSX.Element | null {
                     const row = rowModel.getRowAt(virtualRow.index);
                     if (!row) return null;
                     const measureRef = (node: HTMLElement | null): void => measureElement(node);
@@ -530,6 +581,7 @@ function VirtualizedOptionList<TExtra extends object>({
                                 ref={measureRef}
                                 data-index={virtualRow.index}
                                 className="select-box-group-label"
+                                aria-hidden
                                 data-select-group-label
                             >
                                 {row.group.label}
@@ -582,10 +634,7 @@ function VirtualizedOptionList<TExtra extends object>({
                             />
                         </button>
                     );
-                })}
-            </div>
-        </div>
-    );
+    }
 }
 
 function HighlightedLabel(props: {

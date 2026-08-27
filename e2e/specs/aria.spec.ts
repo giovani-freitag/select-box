@@ -132,3 +132,30 @@ test("leaves the native disabled attribute off that row", async ({ selectBox }) 
 
     expect(natively).toBe(false);
 });
+
+/**
+ * Grouping is structural in ARIA: the options have to sit inside a named
+ * container. A bare `<div>` between a listbox and its options is not a valid
+ * child, gets dropped, and leaves the grouping on screen but not in the tree.
+ * Only the browser's own tree shows that, which is why this lives here.
+ */
+test("announces each group the list shows", async ({ selectBox, page }) => {
+    await selectBox.open({ groups: true });
+    await selectBox.openPopover();
+
+    const session = await page.context().newCDPSession(page);
+    const { nodes } = (await session.send("Accessibility.getFullAXTree")) as {
+        nodes: ReadonlyArray<{
+            role?: { value?: string };
+            name?: { value?: string };
+            ignored?: boolean;
+        }>;
+    };
+    await session.detach();
+
+    const announced = nodes
+        .filter((node) => node.ignored !== true && node.role?.value === "group")
+        .map((node) => (node.name?.value ?? "").trim());
+
+    expect(announced).toContain("Pomes");
+});

@@ -23,7 +23,12 @@
             "dependsOn": [
                 "^build"
             ],
-            "outputs": []
+            "outputs": [],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "../*/src/**",
+                "../../tooling/parity/src/**"
+            ]
         },
         "e2e": {
             "dependsOn": [

@@ -235,6 +235,13 @@ select-box,
 /* Group header and option share the trigger's horizontal inset (0.6rem)
  * and a pinned line-height so the parent line-height can't inflate them
  * past the virtualizer's estimated row heights. */
+/* Structural only. The container names its rows for assistive technology and
+   must leave them exactly where they would sit without it, or the virtualizer's
+   measurements drift away from what is painted. */
+.select-box-group {
+    display: block;
+}
+
 .select-box-group-label {
     position: sticky;
     top: 0;

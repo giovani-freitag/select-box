@@ -85,6 +85,26 @@ const {
     listRefName: "listEl",
 });
 
+/**
+ * Splits the visible rows into runs that share a labelled group.
+ *
+ * A window can start in the middle of a group, so each run is named from its
+ * rows' own group rather than from a header that may be scrolled out of sight.
+ */
+const visibleChunks = computed(() => {
+    const chunks: Array<{ label: string; groupIndex: number; entries: typeof visibleEntries.value }> = [];
+    for (const entry of visibleEntries.value) {
+        const label = entry.row.group.label;
+        const last = chunks[chunks.length - 1];
+        if (last !== undefined && label !== "" && last.groupIndex === entry.row.groupIndex) {
+            last.entries.push(entry);
+            continue;
+        }
+        chunks.push({ label, groupIndex: entry.row.groupIndex, entries: [entry] });
+    }
+    return chunks;
+});
+
 const visibleEntries = computed(() => {
     const model = rowModel.value;
     const active = activeRowIndex.value;
@@ -312,12 +332,21 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                         paddingBottom: `${paddingBottom}px`,
                     }"
                 >
-                    <template v-for="entry in visibleEntries" :key="entry.virtualRow.index">
+                    <div
+                        v-for="(rowGroup, groupPosition) in visibleChunks"
+                        :key="groupPosition"
+                        class="select-box-group"
+                        :role="rowGroup.label === '' ? 'presentation' : 'group'"
+                        :aria-label="rowGroup.label === '' ? undefined : rowGroup.label"
+                        data-select-group
+                    >
+                    <template v-for="entry in rowGroup.entries" :key="entry.virtualRow.index">
                         <div
                             v-if="entry.row.kind === 'header'"
                             :ref="measureRow"
                             :data-index="entry.virtualRow.index"
                             class="select-box-group-label"
+                            aria-hidden="true"
                             data-select-group-label
                         >
                             {{ entry.row.group.label }}
@@ -353,6 +382,7 @@ function labelChunks(label: string): ReadonlyArray<HighlightChunk> {
                             </template>
                         </button>
                     </template>
+                    </div>
                 </div>
             </div>
         </div>

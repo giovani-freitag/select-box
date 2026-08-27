@@ -67,8 +67,33 @@ export class SelectBoxNodeFactory<TExtra extends object = object> {
         const header = document.createElement("div");
         header.className = "select-box-group-label";
         header.dataset["selectGroupLabel"] = "";
+        // The group container carries the name, so announcing the header too
+        // would say it twice. This is the visual half of the same thing.
+        header.setAttribute("aria-hidden", "true");
         header.textContent = label;
         return header;
+    }
+
+    /**
+     * A container that names the rows it holds, the way `<optgroup>` does.
+     *
+     * A bare `<div>` between a listbox and its options is not a valid child and
+     * is dropped from the accessibility tree, which is what left the grouping
+     * visible on screen and absent to a screen reader.
+     *
+     * @param label - Group name, already localized by the consumer.
+     * @returns The container element, empty.
+     */
+    createGroupContainer(label: string): HTMLDivElement {
+        const group = document.createElement("div");
+        group.className = "select-box-group";
+        // An unlabelled run still gets a container so every wrapper renders the
+        // same shape, but `presentation` keeps it out of the way rather than
+        // announcing a group with no name.
+        group.setAttribute("role", label === "" ? "presentation" : "group");
+        if (label !== "") group.setAttribute("aria-label", label);
+        group.dataset["selectGroup"] = "";
+        return group;
     }
 
     /**

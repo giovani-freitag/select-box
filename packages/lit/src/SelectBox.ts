@@ -654,11 +654,46 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         const isMulti = state.mode === "multi";
         return html`
             <div style="padding-top: ${paddingTop}px; padding-bottom: ${paddingBottom}px;">
-                ${items.map((virtualRow) =>
-                    this.renderRow(virtualRow.index, activeRowIndex, view, isMulti),
+                ${this.chunkByGroup(items.map((item) => item.index)).map(
+                    (chunk) => html`
+                        <div
+                            class="select-box-group"
+                            role=${chunk.label === "" ? "presentation" : "group"}
+                            aria-label=${chunk.label === "" ? nothing : chunk.label}
+                            data-select-group
+                        >
+                            ${chunk.indexes.map((rowIndex) =>
+                                this.renderRow(rowIndex, activeRowIndex, view, isMulti),
+                            )}
+                        </div>
+                    `,
                 )}
             </div>
         `;
+    }
+
+    /**
+     * Splits the visible rows into runs that share a labelled group.
+     *
+     * A window can start in the middle of a group, so each run is named from its
+     * rows' own group rather than from a header that may be scrolled out of sight.
+     */
+    private chunkByGroup(
+        indexes: ReadonlyArray<number>,
+    ): ReadonlyArray<{ label: string; groupIndex: number; indexes: number[] }> {
+        const chunks: Array<{ label: string; groupIndex: number; indexes: number[] }> = [];
+        for (const rowIndex of indexes) {
+            const row = this.rowModel.getRowAt(rowIndex);
+            if (row === undefined) continue;
+            const label = row.group.label;
+            const last = chunks[chunks.length - 1];
+            if (last !== undefined && label !== "" && last.groupIndex === row.groupIndex) {
+                last.indexes.push(rowIndex);
+                continue;
+            }
+            chunks.push({ label, groupIndex: row.groupIndex, indexes: [rowIndex] });
+        }
+        return chunks;
     }
 
     private renderRow(
@@ -675,6 +710,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
                     data-index=${rowIndex}
                     ${ref(this.handleRowRef)}
                     class="select-box-group-label"
+                    aria-hidden="true"
                     data-select-group-label
                 >
                     ${row.group.label}

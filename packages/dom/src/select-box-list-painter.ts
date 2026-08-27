@@ -161,6 +161,13 @@ export class SelectBoxListPainter<TExtra extends object = object> {
         )}px`;
 
         const rows: HTMLElement[] = [];
+        // Rows that share a labelled group go inside one `role="group"`, so the
+        // grouping a sighted reader sees is the grouping a screen reader hears.
+        // A window can start mid-group, which is why the container is named from
+        // the row's own group rather than from a header that may be scrolled out.
+        const children: HTMLElement[] = [];
+        let openGroup: { readonly index: number; readonly element: HTMLDivElement } | null = null;
+
         for (const virtualRow of items) {
             const row = this.rowModel.getRowAt(virtualRow.index);
             if (row === undefined) continue;
@@ -175,8 +182,17 @@ export class SelectBoxListPainter<TExtra extends object = object> {
             // it has to be set before the element is handed over.
             node.dataset["index"] = String(virtualRow.index);
             rows.push(node);
+
+            const sameRun =
+                openGroup !== null && row.group.label !== "" && openGroup.index === row.groupIndex;
+            if (!sameRun) {
+                const container = this.factory.createGroupContainer(row.group.label);
+                openGroup = { index: row.groupIndex, element: container };
+                children.push(container);
+            }
+            openGroup!.element.append(node);
         }
-        wrapper.replaceChildren(...rows);
+        wrapper.replaceChildren(...children);
         for (const node of rows) this.virtualizer.measureElement(node);
 
         this.followActiveRow(activeRowIndex);

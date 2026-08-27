@@ -358,6 +358,35 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             ).toBe("Nada encontrado");
         });
 
+        // A `<div>` between a listbox and its options is not a valid child and is
+        // dropped from the accessibility tree, which left the grouping visible on
+        // screen and absent to a screen reader — against the optgroup parity the
+        // README promises.
+        test("wraps each labelled run of rows in a named group", async () => {
+            const mounted = await mountGrouped();
+            await mounted.focusInput();
+
+            const groups = [...mounted.queryScope().querySelectorAll("[data-select-group]")].filter(
+                (group) => group.getAttribute("role") === "group",
+            );
+
+            expect(groups.map((group) => group.getAttribute("aria-label"))).toEqual([
+                "Pomes",
+                "Berries",
+            ]);
+        });
+
+        test("keeps the option rows inside the group that names them", async () => {
+            const mounted = await mountGrouped();
+            await mounted.focusInput();
+
+            const first = mounted
+                .queryScope()
+                .querySelector("[data-select-group][role='group']");
+
+            expect(first?.querySelectorAll("[data-select-option]").length).toBeGreaterThan(0);
+        });
+
         test("reports an empty state when the query matches nothing", async () => {
             const mounted = await mountSingle();
             await mounted.focusInput();
