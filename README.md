@@ -1,54 +1,71 @@
 <p align="center">
-  <img src="./assets/logo.svg" alt="select-box" width="80" height="80" />
+  <img src="assets/logo.svg" alt="select-box" width="112">
 </p>
 
 <h1 align="center">select-box</h1>
 
 <p align="center">
   <strong>One select box. Every framework.</strong><br>
-  Framework-agnostic core with thin wrappers for React, Vue, Lit, Web Components, and jQuery.
+  Search, virtualization, keyboard navigation and ARIA live in a framework-agnostic
+  core. React, Vue, Lit, Web Components and jQuery are thin adapters over it — same
+  snapshot, same behaviour, every bug fixed once.
 </p>
 
 <p align="center">
-  <em>Same snapshot fields. Same behaviour. One shared suite proves it across all five.</em>
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6">
+  ·
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-2bd4a8">
+  ·
+  <img alt="Wrappers" src="https://img.shields.io/badge/wrappers-5-a259ff">
+  ·
+  <img alt="Addons" src="https://img.shields.io/badge/addons-7-fdb515">
+  ·
+  <img alt="Matrix specs" src="https://img.shields.io/badge/matrix%20specs-570-3178c6">
 </p>
 
----
+<p align="center">
+  <a href="https://giovani-freitag.github.io/select-box/"><strong>Open the live demo →</strong></a><br>
+  <sub>Five wrappers rendering on one page. No iframe, no sandbox.</sub>
+</p>
 
-## Why
+<p align="center">
+  <img src="docs/screenshot.png" alt="select-box, five wrappers on one page" width="100%">
+</p>
 
-Most select / combobox libraries are tied to a single framework. If your stack mixes
-React with a Vue widget and a sprinkle of jQuery (legacy admin, design-system bridges,
-multi-app monorepos), you ship three different select-boxes with three different
-UX bugs.
+Most select libraries are welded to one framework. A stack that mixes React with a
+Vue widget and a legacy jQuery admin ends up shipping three select boxes with three
+different keyboard quirks and three different accessibility holes. This one splits
+**state and behaviour** from **rendering**, so a fix lands in the core and every
+wrapper gets it in the same commit.
 
-`select-box` separates **state and behaviour** from **rendering**. A single
-`SingleSelectBoxController` owns search, filtering, virtualization, keyboard
-navigation, ARIA combobox semantics, and the addon pipeline. Each framework wrapper
-is a thin adapter that subscribes to the controller and renders snapshots — no
-framework-specific logic in the core, no behavioural drift across wrappers.
+## ✨ Features
 
-## Features
+- 🧠 **Framework-agnostic core** — one controller owns search, filtering, virtualization, keyboard nav and ARIA. Observer store, TanStack-style.
+- 🔁 **Identical API in all five** — `useSelectBox()`, `<select-box>` and `$.fn.selectBox()` take the same config and publish the same snapshot fields.
+- ♿ **WAI-ARIA combobox, built in** — roles, `aria-activedescendant`, focus management and accessible names, asserted against the browser's own accessibility tree.
+- 📋 **Native form control** — `disabled`, `readOnly`, `name` and `required` everywhere, submitted through `ElementInternals` or a mirrored native `<select>`. Reset restores the default, the way the platform does.
+- ⚡ **10 000 options, windowed** — measured virtualization over `@tanstack/virtual-core`, variable row heights included.
+- 🗂️ **Option groups** — `<optgroup>` parity, with navigation that skips headers and disabled rows.
+- 🎯 **Single, multi, popover, inline chips** — cardinality and surface are orthogonal flags, switchable at runtime.
+- 🔌 **Seven opt-in addons** — fuzzy matching, hoist selected, clear button, create option, remove button, restore on backspace, persistence. Hooks are pure transformers, so reentrancy is structurally impossible.
+- 🎨 **One stylesheet, themed by tokens** — restyling is redefining `--sb-*` custom properties, not overriding rules.
+- 🪜 **Two tiers per wrapper** — drop in the styled component, or take the headless controller and render your own markup.
+- 🧪 **570 matrix specs** — 62 parity scenarios and 52 browser specs run against every wrapper, so cross-framework drift fails a column instead of reaching users.
 
-- **Framework-agnostic core** — pure TypeScript, observer pattern à la TanStack. Drives every wrapper.
-- **Identical public API** — `useSelectBox()` / `<select-box>` / `$.fn.selectBox()` all take the same config shape and surface the same `state` fields (`open`, `value`, `query`, `filteredGroups`, `activeIndex`, `isEmpty`, `selectedOption`).
-- **Two API tiers per wrapper** — drop-in component plus one shared stylesheet for the common case, or the headless controller / hook when you need custom UI. Every wrapper offers `disabled`, `readOnly`, `name` and `required`, and reaches a form natively.
-- **ARIA combobox spec built-in** — keyboard nav, focus management, `aria-*` wiring lives in the core. Not patched per-framework.
-- **Option groups** — flat-with-`group` or nested `groups`; filtered snapshot exposes `filteredGroups` so wrappers render headers; nav skips disabled rows and headers.
-- **One markup source per rendering style** — the four declarative wrappers render from their own templates; the web component and the jQuery plugin share `@select-box/dom`, so a row, a chip or a virtualized list exists once, not twice.
-- **Addon system** — opt-in `.use(new Addon(config))` chain. Hooks are pure transformers (reentrancy structurally impossible). Snapshot extension is typed via TypeScript declaration merging.
-- **Two matrix suites, one scenario list each** — `tooling/parity/` runs 62 behavioural scenarios per wrapper in Vitest; `e2e/` runs 52 more per wrapper in a real browser, for what JSDOM can't see: real-CSS visibility and dark mode, keyboard and focus, popover layout, virtualization over 10k options, form submission, teardown, and the accessibility mapping the browser itself computes. A core regression fails all five columns at once; a wrapper regression fails only its own.
-
-## Quick start
+## 🚀 Quick start
 
 ```bash
-pnpm add @select-box/react           # or /vue, /lit, /webcomponents, /jquery
+pnpm add @select-box/react @select-box/styles     # or /vue, /lit, /webcomponents, /jquery
 ```
+
+> Not on a registry yet. Until it is, consume it from a checkout — `pnpm link` or a
+> git dependency on a release tag. The package names above are the ones it will publish under.
 
 ### React
 
 ```tsx
 import { SelectBox } from "@select-box/react";
+import "@select-box/styles";
 
 const fruits = [
     { value: "apple", label: "Apple", group: "Pomes" },
@@ -75,6 +92,7 @@ export function App() {
 
 <script type="module">
     import "@select-box/webcomponents/define";
+    import "@select-box/styles";
 
     const element = document.getElementById("fruit");
     element.options = [
@@ -82,121 +100,59 @@ export function App() {
         { value: "pear", label: "Pear", group: "Pomes" },
         { value: "lemon", label: "Lemon" },
     ];
-    element.addEventListener("change", (event) => {
-        console.log(event.target.value);
-    });
+    element.addEventListener("change", (event) => console.log(event.target.value));
 </script>
 ```
 
-For Vue, Lit and jQuery, the API mirrors the same shape. See the [components page](#documentation) for every wrapper side-by-side.
+Vue, Lit and jQuery mirror the same shape — the
+[live demo](https://giovani-freitag.github.io/select-box/) shows all five side by side.
 
-## Reaching inside
+### Going headless
 
-The styled component hands over two things on every wrapper, under the same
-names: `root` (the outermost element) and `controller` (the core controller
-driving it). React exposes them through `ref`, Vue through a template ref,
-the two custom elements as getters, jQuery on the instance its plugin returns.
-Enough for most escape hatches without leaving the styled tier.
-
-## Headless mode
-
-When even that doesn't fit, build your own markup on the hook or the
-controller directly:
+Every wrapper hands over `root` and `controller` on the styled component, and exposes
+the raw hook when the props are not enough:
 
 ```tsx
-import { useSelectBox } from "@select-box/react";
+const { state, controller } = useSelectBox({ options: fruits });
 
-function CustomBox() {
-    const { state, controller } = useSelectBox({ options: fruits });
-    return (
-        <div>
-            <button onClick={() => controller.toggle()}>
-                {state.selectedOption?.label ?? "Select…"}
-            </button>
-            {state.open && (
-                <ul>
-                    {state.filteredGroups.flatMap((group) =>
-                        group.options.map((option) => (
-                            <li key={String(option.value)}>
-                                <button onClick={() => controller.commitOption(option)}>
-                                    {option.label}
-                                </button>
-                            </li>
-                        )),
-                    )}
-                </ul>
-            )}
-        </div>
-    );
-}
+state.filteredGroups.flatMap((group) =>
+    group.options.map((option) => (
+        <button key={option.value} onClick={() => controller.commitOption(option)}>
+            {option.label}
+        </button>
+    )),
+);
 ```
 
-The same `SingleSelectBoxController` is available standalone for vanilla / non-framework usage.
+## 📦 Packages
 
-## Documentation
+| Package | What it is |
+|---|---|
+| `@select-box/core` | The controller, filters, row model, virtualizer, addon host |
+| `@select-box/react` · `/vue` · `/lit` · `/webcomponents` · `/jquery` | The five wrappers |
+| `@select-box/dom` | Light-DOM painters shared by the two imperative wrappers |
+| `@select-box/styles` | The single stylesheet every wrapper reads |
+| `@select-box/addon-*` | Seven opt-in behaviours, installed one at a time |
 
-Two docs sites coexist while the project decides on its canonical one:
+## 📚 Docs
 
-- **`docs-starlight/`** — Astro + Starlight. Each wrapper renders as a real Astro Island on the same page (no iframe). `pnpm --filter @select-box/docs-starlight start` → `localhost:4321`.
+- [Live site](https://giovani-freitag.github.io/select-box/) — guides, every example, and the TypeDoc API reference
+- [Getting started](https://giovani-freitag.github.io/select-box/guides/getting-started/) — install, mount, and the config shape
+- [Styling](https://giovani-freitag.github.io/select-box/guides/styling/) — the `--sb-*` token surface
+- [Headless vs ready](https://giovani-freitag.github.io/select-box/guides/headless-vs-ready/) — when to drop a tier
+- [Decisions](docs/adr/) — why the design is what it is, and what each choice costs
+- [Contributing](CONTRIBUTING.md) — the workspace, the conventions, the release flow
 
-API reference for both is auto-generated by TypeDoc from `packages/*/src/index.ts`.
+## 🧭 Status
 
-## Repo layout
+`0.1.0`, and honest about it: single and multi mode are complete across all five
+wrappers on both surfaces, seven addons ship on a complete hook surface, and three
+test layers pin the behaviour. The API is still free to move, which is what `0.x`
+means here.
 
-```
-select-box/
-├── packages/
-│   ├── core/                 # @select-box/core — framework-agnostic
-│   ├── webcomponents/        # <select-box> custom element
-│   ├── react/                # useSelectBox() + <SelectBox />
-│   ├── vue/                  # useSelectBox() + <SelectBox />
-│   ├── lit/                  # SelectBox LitElement + ReactiveController
-│   └── jquery/               # $.fn.selectBox plugin
-├── docs-starlight/           # Astro + Starlight docs (current)
-├── tooling/                  # shared eslint + tsconfig presets
-├── turbo.json
-└── pnpm-workspace.yaml
-```
+Nothing is published to a registry yet — a release is a tag, a changelog entry and a
+rebuilt docs site. Server-side rendering is out of scope for now.
 
-Each wrapper publishes:
+## 📄 License
 
-- A class / hook / component (`SelectBoxElement`, `SelectBox`, `useSelectBox`, `$.fn.selectBox`).
-- A `defineSelectBoxElement(tagName?)` function for opt-in registration (custom elements only).
-- A `/define` subpath entry that calls `defineSelectBoxElement()` for HTML-first one-liner imports.
-
-## Development
-
-```bash
-pnpm install                            # install all workspaces
-pnpm build                              # build packages + both docs (turbo)
-pnpm test                               # vitest across packages (unit + parity)
-pnpm e2e                                # playwright matrix, all five wrappers
-pnpm typecheck                          # tsc --noEmit across packages
-pnpm lint                               # eslint
-```
-
-Per-package or per-doc:
-
-```bash
-pnpm --filter @select-box/core test
-pnpm --filter @select-box/docs-starlight start
-pnpm --filter @select-box/e2e exec playwright test --project=vue   # one column
-pnpm --filter @select-box/e2e exec playwright test --headed        # watch it run
-```
-
-`pnpm e2e` builds first on purpose: the fixtures import the built packages, so
-the browser exercises what a consumer installs rather than the source tree.
-
-## Status
-
-Pilot project. The select-box pulled out of `the-origin-app` is the first
-component; conventions and tooling established here become the template for
-future components. Single and multi mode are feature-complete across all five
-wrappers, in both the popover and the inline-chip surface, and seven
-first-party addons ship on a complete hook surface. Two matrix suites pin the
-same behaviour on every wrapper — one in Vitest, one in a real browser — plus a
-third that drives the demos the docs site actually publishes. Packages stay
-private for now.
-
-See [PROJECT.md](./PROJECT.md) for the full architectural spec, milestones, and
-open decisions.
+[MIT](LICENSE) © Giovani Freitag

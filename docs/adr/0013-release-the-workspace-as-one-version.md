@@ -5,7 +5,7 @@
 
 ## Context
 
-The workspace holds sixteen packages — a core, six wrappers, seven addons, a
+The workspace holds fifteen packages — a core, five wrappers, seven addons, a
 shared stylesheet and a shared DOM layer — but they are one library. A wrapper
 is meaningless without the core version it was built against, and an addon
 speaks a hook contract the core defines. Independent per-package versioning
@@ -33,7 +33,7 @@ rule — breaking changes bump the minor — describes that honestly.
 
 ## Consequences
 
-- One `CHANGELOG.md` and one `vX.Y.Z` tag per release, instead of sixteen of
+- One `CHANGELOG.md` and one `vX.Y.Z` tag per release, instead of fifteen of
   each.
 - A package with no changes in a release still bumps. That is the point: the
   version identifies a tested combination, not a diff.
