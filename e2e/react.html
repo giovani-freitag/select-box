@@ -2,6 +2,9 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
+        <!-- Without this a mobile-emulated run lays out at 980px and wide,
+             so a narrow-viewport spec would never see a narrow layout. -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>react fixture</title>
         <style>
             /* Controls sit above the mount: an open popover is absolutely
