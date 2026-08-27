@@ -32,6 +32,6 @@
         "@types/node": "^26.4.0",
         "eslint": "^10.9.1",
         "turbo": "^2.10.12",
-        "typescript": "^5.9.3"
+        "typescript": "^7.0.2"
     }
 }
