@@ -102,6 +102,24 @@ function render(state) {
   </TabItem>
 </Tabs>
 
+## Owning the value
+
+Pass `defaultValue` and the box keeps its own selection. Pass `value` instead and
+the box becomes controlled: it shows what you say it holds, and a pick you do not
+answer through `onChange` is reverted. That is the shape a form library expects,
+and it applies even while the control is `disabled` — the flags refuse the user,
+not the page.
+
+```tsx
+const [fruit, setFruit] = useState<string | null>("apple");
+
+<SelectBox options={fruits} value={fruit} onChange={setFruit} />;
+```
+
+Every wrapper offers the same thing under its own door: a `value` prop in React
+and Vue, a `value` property on the two custom elements, and `box.setValue()` on
+the jQuery instance.
+
 ## Which one
 
 Start ready. The styled component also hands you `root` and `controller`, so
