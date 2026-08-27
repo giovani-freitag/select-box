@@ -22,6 +22,7 @@ import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity
 import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
 import { useOpenReactivity } from "./hooks/use-open-reactivity.js";
+import { usePopoverPlacement } from "./hooks/use-popover-placement.js";
 import { usePropWarnings } from "./hooks/use-prop-warnings.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
 import { useValueReactivity } from "./hooks/use-value-reactivity.js";
@@ -210,6 +211,8 @@ export function SelectBox<TExtra extends object = object, TMultiple extends bool
     useInteractivityReactivity(controller, props.disabled, props.readOnly);
 
     const rootRef = useRef<HTMLDivElement>(null);
+    usePopoverPlacement(rootRef, state.open);
+
     // `root` is a getter, not a captured value: switching surfaces mounts a
     // different root element, and a captured node would dangle outside the tree.
     useImperativeHandle(

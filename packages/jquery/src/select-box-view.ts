@@ -1,8 +1,9 @@
 import {
-    SelectBoxController,
-    SelectBoxKeyDispatcher,
     nextSelectBoxId,
     optionElementId,
+    PopoverPlacementWatcher,
+    SelectBoxController,
+    SelectBoxKeyDispatcher,
     SelectBoxSnapshotView,
     type SelectBoxControllerConfig,
     type SelectBoxSnapshot,
@@ -127,6 +128,7 @@ export class SelectBoxView<TExtra extends object = object>
     private destroyed = false;
     private unsubscribeFromStore: (() => void) | null = null;
     private previousOpen = false;
+    private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this.root });
     private previousValueKey: string;
     private readonly onSingleChange:
         | ((value: string | null, option: SelectOption<TExtra> | null) => void)
@@ -259,6 +261,7 @@ export class SelectBoxView<TExtra extends object = object>
         this.destroyed = true;
         this.unlisten();
         this.listPainter?.dispose();
+        this.placement.dispose();
         this.coreController.destroy();
         this.rootElement.remove();
         this.onDestroy?.();
@@ -601,6 +604,7 @@ export class SelectBoxView<TExtra extends object = object>
             // which the plugin turns into a real jQuery event.
             this.onOpenChange?.(snapshot.open);
         }
+        this.placement.sync(snapshot.open);
     };
 
     private paint(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {

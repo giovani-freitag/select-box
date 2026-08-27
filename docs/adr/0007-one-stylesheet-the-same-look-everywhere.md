@@ -27,4 +27,11 @@ exists only as a CSS rule cannot be asserted outside a browser.
 - An arch test asserts the classes the wrappers emit and the rules the sheet
   declares are the same set, both directions. Two class names once shipped with
   no rule at all.
+- Where a part sits can depend on the viewport, and that decision is behaviour,
+  so the core measures and publishes the answer as a `data-select-*` attribute
+  the sheet styles. The popover's side is the first: the core says `below` or
+  `above`, the sheet says what each one looks like.
 - Consumers who want none of our CSS skip the import and drive the controller.
+- An ancestor with `overflow: hidden` clips a popover that opens upward. The
+  sheet cannot reach outside the component to prevent that, so a host that wraps
+  the box in a clipping container has to say so itself.

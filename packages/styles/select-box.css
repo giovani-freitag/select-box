@@ -223,6 +223,13 @@ select-box,
     overflow: hidden;
 }
 
+/* The core decides the side by measuring the viewport; the stylesheet still
+   owns what each side looks like. */
+.select-box-popover[data-select-placement="above"] {
+    top: auto;
+    bottom: calc(100% + var(--sb-space-xs));
+}
+
 .select-box-popover[hidden] {
     display: none;
 }

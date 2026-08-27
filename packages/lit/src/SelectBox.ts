@@ -1,12 +1,13 @@
 import {
+    isMultiSelection,
+    nextSelectBoxId,
+    optionElementId,
+    PopoverPlacementWatcher,
     SelectBoxKeyDispatcher,
     SelectBoxListVirtualizer,
     SelectBoxRowModel,
-    nextSelectBoxId,
-    optionElementId,
     SelectBoxSnapshotView,
     TextHighlighter,
-    isMultiSelection,
     type OptionFilterStrategy,
     type SelectBoxAddon,
     type SelectBoxController as CoreSelectBoxController,
@@ -79,6 +80,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private pendingValue: SelectionValueInput = null;
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private previousOpen = false;
+    private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this });
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
     private readonly inputRef: Ref<HTMLInputElement> = createRef();
@@ -197,6 +199,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         this.virtualizer?.dispose();
         this.virtualizer = null;
         this.listVirtualizerMounted = false;
+        this.placement.dispose();
     }
 
     protected override willUpdate(changed: PropertyValues<this>): void {
@@ -257,6 +260,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             // reaching for the controller.
             this.dispatchEvent(new Event(snapshot.open ? "open" : "close", { bubbles: true }));
         }
+        this.placement.sync(snapshot.open);
         if (snapshot.open && this.listRef.value !== undefined) {
             if (!this.listVirtualizerMounted) {
                 this.virtualizer?.mount();

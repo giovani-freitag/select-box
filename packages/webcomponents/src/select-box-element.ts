@@ -1,10 +1,11 @@
 import {
-    SelectBoxController,
-    SelectBoxKeyDispatcher,
-    SelectBoxSnapshotView,
     isMultiSelection,
     nextSelectBoxId,
     optionElementId,
+    PopoverPlacementWatcher,
+    SelectBoxController,
+    SelectBoxKeyDispatcher,
+    SelectBoxSnapshotView,
     type ClearControlView,
     type OptionFilterStrategy,
     type SelectBoxAddon,
@@ -56,6 +57,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private unsubscribeFromStore: (() => void) | null = null;
     private refs: SelectBoxRefs | null = null;
     private previousOpen = false;
+    private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this });
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
     private readonly nodeFactory: SelectBoxNodeFactory<TExtra>;
@@ -113,6 +115,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         this.keyDispatcher = null;
         this.refs = null;
         this.listPainter.dispose();
+        this.placement.dispose();
     }
 
     attributeChangedCallback(name: string, _previous: string | null, _next: string | null): void {
@@ -530,6 +533,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             // reaching for the controller.
             this.dispatchEvent(new Event(snapshot.open ? "open" : "close", { bubbles: true }));
         }
+        this.placement.sync(snapshot.open);
     };
 
     private syncFormState(snapshot: SelectBoxSnapshot<TExtra, SelectionValue>): void {

@@ -46,5 +46,13 @@ export type {
     SingleSelectBoxControllerConfig,
 } from "./types.js";
 
+export {
+    PopoverPlacementWatcher,
+    resolvePopoverPlacement,
+    type PopoverPlacement,
+    type PopoverPlacementInput,
+    type PopoverPlacementWatcherConfig,
+} from "./placement/index.js";
+
 export const packageName = "@select-box/core" as const;
 export { runWhenIdle, type IdleStep, type IdleWork } from "./scheduling/idle-work.js";

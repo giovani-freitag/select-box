@@ -59,3 +59,23 @@ test("the list scrolls inside the popover rather than growing it", async ({ sele
     expect(popover.height).toBeLessThan(400);
     expect(scrollHeight).toBeGreaterThan(popover.height);
 });
+
+test("the popover opens upward when the list would run off the bottom", async ({
+    selectBox,
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 420 });
+    await selectBox.open({ count: 50 });
+    // Park the trigger near the bottom of a short viewport, where a downward
+    // list cannot fit and there is room to spare above it.
+    await page.evaluate(() => {
+        document.querySelector("main")!.setAttribute("style", "padding-top: 200px");
+    });
+
+    await selectBox.openPopover();
+
+    const trigger = (await selectBox.trigger.boundingBox())!;
+    const popover = (await selectBox.popover.boundingBox())!;
+    expect(popover.y + popover.height).toBeLessThanOrEqual(trigger.y + 1);
+    expect(popover.y).toBeGreaterThanOrEqual(0);
+});

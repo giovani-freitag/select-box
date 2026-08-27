@@ -12,6 +12,7 @@ import { computed, ref, watch, type ShallowRef } from "vue";
 import { useFilterReactivity } from "./composables/use-filter-reactivity.js";
 import { useInteractivityReactivity } from "./composables/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./composables/use-options-reactivity.js";
+import { usePopoverPlacement } from "./composables/use-popover-placement.js";
 import { useNotifyChange } from "./composables/use-notify-change.js";
 import { useValueReactivity, type OwnerEcho } from "./composables/use-value-reactivity.js";
 import { useSelectBox } from "./composables/use-select-box.js";
@@ -189,6 +190,11 @@ watch(
         if (open) emit("open");
         else emit("close");
     },
+);
+
+usePopoverPlacement(
+    () => surfaceInstance.value?.root ?? null,
+    computed(() => state.value.open),
 );
 
 const isInline = computed(() => props.surface === "inline");

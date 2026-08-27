@@ -161,6 +161,7 @@ to `onChange` / `selectedOption`.
 | Change callback | `onChange(value, option)` | `change` event (read `event.target.value` / `event.target.selectedOption`) |
 | Vue two-way binding | — | `v-model`, or `:value` with `@change` |
 | Popover opened / closed | `onOpen` / `onClose` | `open` / `close` events |
+| Popover side | measured, not configured — see below | same |
 | Multi-select | `multiple` | `multiple` attribute |
 | Surface | `surface` (`"popover"` \| `"inline"`) | `surface` attribute |
 | Placeholder | `placeholder` | `placeholder` attribute |
@@ -177,6 +178,17 @@ to `onChange` / `selectedOption`.
 | Addons | `addons` | `.addons` (property) |
 | Custom filter | `filter` | `.filter` (property) |
 | Root and controller | `ref` yields `{ root, controller }` | `.root` / `.controller` (getters) |
+
+### Which side the popover opens on
+
+The list opens downward, and flips upward when it would not fit below and there
+is more room above — the same call a native `<select>` makes. The core measures
+and publishes the answer on the popover as `data-select-placement="below"` or
+`"above"`; the stylesheet positions each side. It re-measures while the popover
+is open, so scrolling the page moves the list to whichever side still fits.
+
+One thing to know if you wrap the box: an ancestor with `overflow: hidden` clips
+a popover that opens upward.
 
 ### Why `open` and `close` are props in React
 
