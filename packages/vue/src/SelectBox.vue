@@ -125,7 +125,7 @@ useNotifyChange(state, {
 
 const isInline = computed(() => props.surface === "inline");
 
-const surface = ref<{ root: HTMLDivElement | null } | null>(null);
+const surfaceInstance = ref<{ root: HTMLDivElement | null } | null>(null);
 
 /**
  * Imperative surface reachable through a template ref: the root element and the
@@ -133,7 +133,7 @@ const surface = ref<{ root: HTMLDivElement | null } | null>(null);
  */
 defineExpose({
     get root(): HTMLDivElement | null {
-        return surface.value?.root ?? null;
+        return surfaceInstance.value?.root ?? null;
     },
     controller,
 });
@@ -142,7 +142,7 @@ defineExpose({
 <template>
     <InlineSurface
         v-if="isInline"
-        ref="surface"
+        ref="surfaceInstance"
         :state="state"
         :controller="controller"
         :name="name"
@@ -152,7 +152,7 @@ defineExpose({
     />
     <PopoverSurface
         v-else
-        ref="surface"
+        ref="surfaceInstance"
         :state="state"
         :controller="controller"
         :placeholder="placeholder"

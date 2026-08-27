@@ -1,5 +1,7 @@
 import eslintJs from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
+import vue from "eslint-plugin-vue";
+import vueParser from "vue-eslint-parser";
 import tsEslint from "typescript-eslint";
 import globals from "globals";
 
@@ -32,6 +34,21 @@ export default tsEslint.config(
         rules: {
             "react-hooks/rules-of-hooks": "error",
             "react-hooks/exhaustive-deps": "error",
+        },
+    },
+    // Without a parser that understands single-file components, ESLint reports
+    // "no matching configuration" and skips them — silently, and only for the one
+    // wrapper that renders from SFCs.
+    ...vue.configs["flat/essential"],
+    {
+        files: ["**/*.vue"],
+        languageOptions: {
+            parser: vueParser,
+            parserOptions: {
+                parser: tsEslint.parser,
+                projectService: true,
+                extraFileExtensions: [".vue"],
+            },
         },
     },
     {
