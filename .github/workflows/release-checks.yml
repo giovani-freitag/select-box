@@ -5,13 +5,21 @@ name: Release checks
 on:
   repository_dispatch:
     types: [verify-release-pr]
+  # The dispatch only fires when release-please actually rewrites the PR, so a
+  # PR that is already current has no way to earn its checks without this.
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Release PR branch to verify
+        required: true
+        type: string
 
 permissions:
   contents: read
   statuses: write
 
 concurrency:
-  group: release-checks-${{ github.event.client_payload.ref }}
+  group: release-checks-${{ github.event.client_payload.ref || inputs.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.client_payload.ref }}
+          ref: ${{ github.event.client_payload.ref || inputs.ref }}
 
       # The dispatch carries a branch name, but a commit status can only be
       # posted against a SHA, and the branch may move while this runs.
