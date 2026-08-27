@@ -31,6 +31,7 @@ const OBSERVED_ATTRIBUTES = [
     "readonly",
     "multiple",
     "surface",
+    "value",
 ] as const;
 
 /**
@@ -63,6 +64,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private pendingAddons: ReadonlyArray<SelectBoxAddon<TExtra>> | undefined;
     private pendingFilter: OptionFilterStrategy<TExtra> | undefined;
     private pendingValue: SelectionValueInput = null;
+    private seedApplied = false;
 
     constructor() {
         super();
@@ -123,6 +125,14 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         }
         if (name === "surface") {
             this.handleSnapshotChange();
+            return;
+        }
+        // The attribute seeds the selection and the property reads the live one,
+        // which is how `<input value>` has always split the two. A page can then
+        // write `<select-box value="sp">` in markup instead of reaching for JS
+        // after upgrade.
+        if (name === "value") {
+            this.applyValueAttribute();
             return;
         }
         if (name === "disabled" || name === "required" || name === "readonly") {
@@ -289,8 +299,15 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         // A live controller swaps its list in place, the way a native select
         // reacts to its `<option>` children changing. Rebuilding would throw the
         // committed selection away.
-        if (this.coreController) this.coreController.setOptions(next ?? []);
-        else this.rebuildControllerIfConnected();
+        if (this.coreController) {
+            this.coreController.setOptions(next ?? []);
+            // A seed in the markup names an option that usually only exists once
+            // the list is assigned, so the value attribute is applied here rather
+            // than at construction, where it would resolve against nothing.
+            this.applySeedOnce();
+        } else {
+            this.rebuildControllerIfConnected();
+        }
     }
 
     get value(): SelectionValue {
@@ -342,6 +359,42 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         if (this.getAttribute("mode") !== mode) this.setAttribute("mode", mode);
     }
 
+    /**
+     * The selection to start from: whatever was set through the property, or
+     * the `value` attribute when the markup carried one.
+     */
+    private seededValue(): SelectionValueInput {
+        const attribute = this.getAttribute("value");
+        if (this.pendingValue !== null || attribute === null) return this.pendingValue;
+
+        return this.multiple
+            ? attribute.split(",").map((entry) => entry.trim()).filter(Boolean)
+            : attribute;
+    }
+
+    /** Applies the markup seed the first time there are options to resolve it against. */
+    private applySeedOnce(): void {
+        if (this.seedApplied) return;
+        const seeded = this.seededValue();
+        if (seeded === null) return;
+
+        this.seedApplied = true;
+        this.coreController?.setValue(seeded);
+    }
+
+    /** Seeds the selection from the `value` attribute, if one is present. */
+    private applyValueAttribute(): void {
+        const attribute = this.getAttribute("value");
+        if (attribute === null) return;
+
+        const seeded: SelectionValueInput = this.multiple
+            ? attribute.split(",").map((entry) => entry.trim()).filter(Boolean)
+            : attribute;
+        this.pendingValue = seeded;
+        this.seedApplied = true;
+        this.coreController?.setValue(seeded);
+    }
+
     private buildController(): SelectBoxController<TExtra, SelectionValue> {
         return new SelectBoxController<TExtra, SelectionValue>({
             mode: this.multiple ? "multi" : "single",
@@ -349,7 +402,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             ...(this.pendingAddons !== undefined ? { addons: this.pendingAddons } : {}),
             ...(this.pendingFilter !== undefined ? { filter: this.pendingFilter } : {}),
             ungroupedLabel: this.getAttribute("ungrouped-label") ?? "",
-            defaultValue: this.pendingValue,
+            defaultValue: this.seededValue(),
             disabled: this.disabled,
             readOnly: this.readOnly,
         });
