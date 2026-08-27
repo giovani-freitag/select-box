@@ -67,3 +67,14 @@ Releases are automated and cover the workspace as a unit: release-please keeps a
 release PR open against `main`, and merging it stamps one new version into every
 package, updates the changelog and cuts a single tag. A package with no changes
 still bumps — the version identifies a tested combination, not a diff.
+
+### The 0.x line
+
+The project is in beta and stays on `0.x` until someone decides otherwise. A
+breaking change therefore bumps the **minor**, not the major: `feat!:` takes
+`0.2.0` to `0.3.0` rather than promoting to `1.0.0`. That is `bump-minor-pre-major`
+in `release-please-config.json`, and it is deliberate — without it a single `!`
+would ship a stable-looking version by accident.
+
+Going `1.0.0` is a decision, made by removing that flag, not something a commit
+message should be able to trigger.

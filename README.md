@@ -145,10 +145,12 @@ state.filteredGroups.flatMap((group) =>
 
 ## 🧭 Status
 
-`0.1.0`, and honest about it: single and multi mode are complete across all five
-wrappers on both surfaces, seven addons ship on a complete hook surface, and three
-test layers pin the behaviour. The API is still free to move, which is what `0.x`
-means here.
+**Beta, on the `0.x` line, and staying there for now.** Single and multi mode are
+complete across all five wrappers on both surfaces, seven addons ship on a complete
+hook surface, and three test layers pin the behaviour. What `0.x` buys is room to
+move the API: a breaking change bumps the minor rather than promoting to `1.0.0`,
+and the release tooling is configured to hold that line rather than trust anyone to
+remember it.
 
 Nothing is published to a registry yet — a release is a tag, a changelog entry and a
 rebuilt docs site. Server-side rendering is out of scope for now.
