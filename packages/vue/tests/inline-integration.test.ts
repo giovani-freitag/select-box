@@ -61,7 +61,7 @@ describe("<SelectBox surface=\"inline\" /> (Vue)", () => {
 
         await chips[0]!.trigger("click");
 
-        const emitted = wrapper.emitted("change-multi");
+        const emitted = wrapper.emitted("change");
         expect(emitted).toHaveLength(3);
         expect(emitted![2]![0]).toEqual(["grape"]);
         expect(pressedStates(wrapper)).toEqual(["false", "false", "true"]);

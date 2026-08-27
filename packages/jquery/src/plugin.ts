@@ -85,11 +85,14 @@ function mount<TExtra extends object>(
         onValueChange: (value: string | null, option: SelectOption<TExtra> | null) => {
             jq(host).trigger("change", [value, option]);
         },
+        // One `change`, whatever the mode: a listener never has to know which
+        // event this instance will use. Single passes `(value, option)`, multi
+        // passes `(values, options)`.
         onMultiValueChange: (
             values: ReadonlyArray<string>,
             options: ReadonlyArray<SelectOption<TExtra>>,
         ) => {
-            jq(host).trigger("selectbox:change", [values, options]);
+            jq(host).trigger("change", [values, options]);
         },
         // Whoever tore the view down, the element must stop advertising it —
         // including a `view.destroy()` the plugin never saw. Safe to delete

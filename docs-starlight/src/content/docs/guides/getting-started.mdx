@@ -117,18 +117,21 @@ const fruits = [
     { value: "lemon", label: "Lemon" },
 ];
 
-const value = ref(null);
+const fruit = ref(null);
 </script>
 
 <template>
     <SelectBox
+        v-model="fruit"
         :options="fruits"
         placeholder="Pick a fruit"
         ungrouped-label="Citrus"
-        @change="(next) => (value = next)"
     />
 </template>
 ```
+
+`v-model` is the shortest way in; `:value` with `@change` is the same binding
+written out, and is the name the other four wrappers use.
 
   </TabItem>
   <TabItem label="Lit">

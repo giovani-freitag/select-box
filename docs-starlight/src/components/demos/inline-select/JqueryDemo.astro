@@ -8,7 +8,7 @@
     import jQuery from "jquery";
     import "@select-box/jquery";
 
-    jQuery("#demo-inline-jq").on("selectbox:change", (_event, values) => {
+    jQuery("#demo-inline-jq").on("change", (_event, values) => {
         const out = document.querySelector("#demo-inline-jq-out code");
         if (out) out.textContent = JSON.stringify(values);
     });

@@ -33,6 +33,12 @@ export interface SelectBoxProps<TExtra extends object = object> {
      * `change` event is reverted to what the prop still says.
      */
     value?: string | number | null | ReadonlyArray<string | number>;
+    /**
+     * What `v-model` binds to. The same selection `value` carries, under the
+     * name Vue's own sugar compiles to; supply either. `modelValue` wins if
+     * both are given.
+     */
+    modelValue?: string | number | null | ReadonlyArray<string | number>;
     /** Initial selection for an uncontrolled box. Ignored once `value` is supplied. */
     defaultValue?: string | number | null | ReadonlyArray<string | number>;
     placeholder?: string;
@@ -69,14 +75,22 @@ const props = withDefaults(defineProps<SelectBoxProps<TExtra>>(), {
     readOnly: false,
 });
 const emit = defineEmits<{
-    /** Single-mode change. Fires only when `multi` is `false`. */
-    (event: "change", value: string | null, option: SelectOption<TExtra> | null): void;
-    /** Multi-mode change. Fires only when `multi` is `true`. */
+    /**
+     * The committed selection changed.
+     *
+     * One event whatever the mode, so a listener never has to know which to
+     * bind: single mode passes `(value, option)`, multi passes
+     * `(values, options)`. Declared as one signature rather than an overload
+     * pair on purpose — an overload would force every listener to accept both
+     * arguments, and `@change="(value) => …"` is what people write.
+     */
     (
-        event: "change-multi",
-        values: ReadonlyArray<string>,
-        options: ReadonlyArray<SelectOption<TExtra>>,
+        event: "change",
+        value: string | null | ReadonlyArray<string>,
+        option: SelectOption<TExtra> | null | ReadonlyArray<SelectOption<TExtra>>,
     ): void;
+    /** Mirrors `change` so `v-model` binds the selection the way Vue expects. */
+    (event: "update:modelValue", value: string | null | ReadonlyArray<string>): void;
 }>();
 
 function commonConfig() {
@@ -98,13 +112,13 @@ const useResult = props.multi
     ? useSelectBox<TExtra>({
         mode: "multi",
         ...commonConfig(),
-        initialValue: (props.value ?? (Array.isArray(props.defaultValue)
+        initialValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
             ? (props.defaultValue as ReadonlyArray<string | number>)
             : [])) as ReadonlyArray<string | number>,
     })
     : useSelectBox<TExtra>({
         ...commonConfig(),
-        initialValue: (props.value ?? (Array.isArray(props.defaultValue)
+        initialValue: (props.modelValue ?? props.value ?? (Array.isArray(props.defaultValue)
             ? null
             : props.defaultValue)) as string | number | null,
     });
@@ -130,19 +144,28 @@ useInteractivityReactivity(
 // pushed in, so the notifier does not read it back out as a fresh change.
 const ownerEcho: OwnerEcho = { current: null };
 
+/** `v-model` and `value` are the same selection; the explicit binding wins. */
+const ownedValue = computed(() => props.modelValue ?? props.value);
+
 // Order matters. Watchers run in creation order, so the announcement has to be
 // registered before the push that stamps the next echo.
 useNotifyChange(
     state,
     {
-        single: (value, option) => emit("change", value, option),
-        multi: (values, options) => emit("change-multi", values, options),
+        single: (value, option) => {
+            emit("change", value, option);
+            emit("update:modelValue", value);
+        },
+        multi: (values, options) => {
+            emit("change", values, options);
+            emit("update:modelValue", values);
+        },
     },
     ownerEcho,
 );
 useValueReactivity(
     controller,
-    computed(() => props.value),
+    ownedValue,
     state,
     ownerEcho,
 );

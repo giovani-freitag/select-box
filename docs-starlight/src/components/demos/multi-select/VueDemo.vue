@@ -22,7 +22,7 @@ const committed = ref<ReadonlyArray<string>>([]);
             :options="fruits"
             ungrouped-label="Citrus"
             placeholder="Pick fruits…"
-            @change-multi="(values) => (committed = values)"
+            @change="(values) => (committed = values)"
         />
         <output>
             <code>{{ JSON.stringify(committed) }}</code>

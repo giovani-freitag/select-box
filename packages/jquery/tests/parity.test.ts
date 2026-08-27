@@ -17,10 +17,8 @@ describeParitySuite({
         document.body.append(mountPoint);
 
         const reported: unknown[] = [];
+        // One listener, because there is one event now, whatever the mode.
         jQuery(mountPoint).on("change", (_event: unknown, value: unknown) => reported.push(value));
-        jQuery(mountPoint).on("selectbox:change", (_event: unknown, values: unknown) =>
-            reported.push(values),
-        );
         const box = jQuery(mountPoint).selectBox({
             options: config.options,
             placeholder: config.placeholder,

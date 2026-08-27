@@ -16,9 +16,9 @@ function controlledHost(accept: boolean) {
         setup() {
             const value = ref<string | null>("apple");
 
-            const onChange = (next: string | null): void => {
-                announced.push(next);
-                if (accept) value.value = next;
+            const onChange = (next: string | null | ReadonlyArray<string>): void => {
+                announced.push(next as string | null);
+                if (accept) value.value = next as string | null;
             };
 
             return () =>

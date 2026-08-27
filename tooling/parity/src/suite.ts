@@ -175,6 +175,12 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(input(mounted).value).toBe("Grape");
         });
 
+        // The set of things a wrapper announces is decided once, in the core:
+        // a committed selection changed, and nothing else. A wrapper may add an
+        // event of its own where its ecosystem needs one, but it may not split
+        // this one by mode — a listener would then have to know which of two
+        // names its instance is going to use. These three scenarios are what
+        // hold that line across all five.
         test("reports a commit to whatever the wrapper calls its change hook", async () => {
             const mounted = await mountSingle();
             await mounted.focusInput();
@@ -182,6 +188,25 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             await mounted.clickElement(optionByLabel(mounted, "Pear"));
 
             expect(mounted.reportedChanges()).toContain("pear");
+        });
+
+        test("reports a multi commit through that same hook, not a second one", async () => {
+            const mounted = await mountMulti();
+            await mounted.focusInput();
+
+            await mounted.clickElement(optionByLabel(mounted, "Pear"));
+
+            expect(mounted.reportedChanges()).toHaveLength(1);
+            expect(mounted.reportedChanges()[0]).toEqual(["pear"]);
+        });
+
+        test("announces a commit once, not once per listener it could have used", async () => {
+            const mounted = await mountSingle();
+            await mounted.focusInput();
+
+            await mounted.clickElement(optionByLabel(mounted, "Pear"));
+
+            expect(mounted.reportedChanges()).toEqual(["pear"]);
         });
 
         test("renders the placeholder with an empty input", async () => {

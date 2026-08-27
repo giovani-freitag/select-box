@@ -63,9 +63,9 @@ describe("$.fn.selectBox multi integration", () => {
         expect(document.querySelector<HTMLDivElement>("#fruit [data-select-popover]")?.hidden).toBe(false);
     });
 
-    test("fires the selectbox:change event with values + options", () => {
+    test("fires one change event with values + options", () => {
         let lastValues: ReadonlyArray<string> | null = null;
-        jQuery("#fruit").on("selectbox:change", (_event, values: ReadonlyArray<string>) => {
+        jQuery("#fruit").on("change", (_event, values: ReadonlyArray<string>) => {
             lastValues = values;
         });
         jQuery("#fruit").selectBox({ mode: "multi", options: fruits });

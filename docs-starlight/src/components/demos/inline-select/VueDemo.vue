@@ -20,7 +20,7 @@ const committed = ref<ReadonlyArray<string>>([]);
             multi
             surface="inline"
             :options="fruits"
-            @change-multi="(values) => (committed = values)"
+            @change="(values) => (committed = values)"
         />
         <output>
             <code>{{ JSON.stringify(committed) }}</code>

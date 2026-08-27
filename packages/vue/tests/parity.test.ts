@@ -50,10 +50,9 @@ describeParitySuite({
                 exposed?.controller.setValue(value);
             },
             reportedChanges: () =>
-                [
-                    ...(wrapper.emitted("change") ?? []),
-                    ...(wrapper.emitted("change-multi") ?? []),
-                ].map((payload) => (payload as ReadonlyArray<unknown>)[0]),
+                (wrapper.emitted("change") ?? []).map(
+                    (payload) => (payload as ReadonlyArray<unknown>)[0],
+                ),
             publicRoot: () => exposed?.root ?? null,
             publicController: () => exposed?.controller ?? null,
             settle: () => nextTick(),

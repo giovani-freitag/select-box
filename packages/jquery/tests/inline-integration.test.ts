@@ -47,7 +47,7 @@ describe("$.fn.selectBox inline integration", () => {
 
     test("multi mode toggles selection on each chip click", () => {
         let lastValues: ReadonlyArray<string> | null = null;
-        jQuery("#fruit").on("selectbox:change", (_event, values: ReadonlyArray<string>) => {
+        jQuery("#fruit").on("change", (_event, values: ReadonlyArray<string>) => {
             lastValues = values;
         });
         jQuery("#fruit").selectBox({ mode: "multi", surface: "inline", options: fruits });

@@ -26,6 +26,5 @@ defineExpose({ toggleSurface });
         :default-value="config.initialValue ?? null"
         :aria-label="config.ariaLabel"
         @change="(value: unknown) => reportChange(value)"
-        @change-multi="(values: unknown) => reportChange(values)"
     />
 </template>

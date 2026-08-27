@@ -24,7 +24,6 @@ function mount(): SelectBoxView {
         ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
     });
     host.on("change", (_event: unknown, value: unknown) => reportChange(value));
-    host.on("selectbox:change", (_event: unknown, values: unknown) => reportChange(values));
     return view;
 }
 
