@@ -1,0 +1,67 @@
+name: Release checks
+
+# Summoned by the Release workflow, because the release PR is opened with
+# GITHUB_TOKEN and therefore never fires a `pull_request` event of its own.
+on:
+  repository_dispatch:
+    types: [verify-release-pr]
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: release-checks-${{ github.event.client_payload.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref }}
+
+      # The dispatch carries a branch name, but a commit status can only be
+      # posted against a SHA, and the branch may move while this runs.
+      - id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      # Nothing links this run to the pull request, so the verdict is written
+      # back as a commit status the PR can display.
+      - name: Report the verdict
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.head.outputs.sha }}" \
+            -f state="$STATE" \
+            -f context="Release checks" \
+            -f description="Verification summoned for the release PR" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

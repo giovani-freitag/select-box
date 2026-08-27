@@ -23,8 +23,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    outputs:
+      release-pr-branch: ${{ steps.release.outputs.pr && fromJSON(steps.release.outputs.pr).headBranchName || '' }}
+
     steps:
-      - uses: googleapis/release-please-action@v4
+      - id: release
+        uses: googleapis/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  # A pull request opened with GITHUB_TOKEN cannot trigger `pull_request`
+  # workflows: GitHub drops the event to stop a workflow feeding itself.
+  # `repository_dispatch` is the one event exempt from that guard, so the
+  # release PR's checks are summoned explicitly instead of triggered.
+  summon-release-checks:
+    name: Summon the release PR checks
+    needs: release-please
+    if: needs.release-please.outputs.release-pr-branch != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ github.token }}
+          event-type: verify-release-pr
+          client-payload: |
+            { "ref": "${{ needs.release-please.outputs.release-pr-branch }}" }
