@@ -34,6 +34,16 @@ export class Store<TState> {
         };
     }
 
+    /**
+     * Drops every listener, so a torn-down owner stops being notified.
+     *
+     * Without it a consumer who unsubscribes nowhere keeps the store, and
+     * everything it closes over, reachable for as long as they hold the handle.
+     */
+    clearListeners(): void {
+        this.listeners.clear();
+    }
+
     private notifyListeners(): void {
         for (const listener of this.listeners) {
             listener();

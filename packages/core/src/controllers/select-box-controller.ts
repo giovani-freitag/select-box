@@ -71,6 +71,7 @@ export class SelectBoxController<
      * decision on top of whatever the user did while it was in flight.
      */
     private gateGeneration = 0;
+    private destroyed = false;
     private pipelineCache: PipelineCache<TExtra> | null = null;
     private currentOpen = false;
     private currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
@@ -179,7 +180,7 @@ export class SelectBoxController<
      * neither — which is exactly how the native attributes behave.
      */
     private get canChange(): boolean {
-        return !this.currentDisabled && !this.currentReadOnly;
+        return !this.destroyed && !this.currentDisabled && !this.currentReadOnly;
     }
 
     getHighlightRanges(label: string): ReadonlyArray<SearchMatchRange> {
@@ -189,6 +190,7 @@ export class SelectBoxController<
 
     /** Registers an addon, runs its `attach`, and republishes the snapshot. */
     use(addon: SelectBoxAddon<TExtra>): this {
+        if (this.destroyed) return this;
         this.registeredAddons.push(addon);
         addon.attach?.();
         this.resolveFilterStrategy();
@@ -343,14 +345,25 @@ export class SelectBoxController<
         this.publish();
     }
 
+    /**
+     * Tears the controller down and leaves it inert.
+     *
+     * Detaches every addon, drops every subscriber, and stops publishing, so a
+     * stray call arriving after teardown cannot repaint a surface that is gone.
+     * Safe to call more than once.
+     */
     destroy(): void {
+        if (this.destroyed) return;
+        this.destroyed = true;
         for (const addon of this.registeredAddons) {
             addon.detach?.();
         }
         this.registeredAddons.length = 0;
+        this.store.clearListeners();
     }
 
     private publish(): void {
+        if (this.destroyed) return;
         this.store.setState(this.buildSnapshot());
     }
 
