@@ -373,12 +373,16 @@ export class SelectBoxView<TExtra extends object = object>
         const selected = new Set(snapshot.selectedOptions.map((option) => option.value));
         this.formMirror.multiple = isMulti;
         this.formMirror.disabled = snapshot.disabled;
+        // Only what submission needs: the chosen options, plus the empty one that
+        // lets `required` fail while nothing is selected. Mirroring the whole list
+        // would undo the windowing the popover does, and mirroring the filtered
+        // list would drop the selection the moment a query excluded it.
         const entries = [
-            // The empty entry is what lets `required` fail while nothing is selected.
             ...(isMulti ? [] : [{ value: "", label: "" }]),
-            ...snapshot.filteredGroups.flatMap((group) =>
-                group.options.map((option) => ({ value: option.value, label: option.label })),
-            ),
+            ...snapshot.selectedOptions.map((option) => ({
+                value: option.value,
+                label: option.label,
+            })),
         ];
         this.formMirror.replaceChildren(
             ...entries.map((entry) => {

@@ -26,12 +26,22 @@ const mirrorRef = useTemplateRef<HTMLSelectElement>("mirrorEl");
 const isMulti = computed(() => props.state.mode === "multi");
 const selected = computed(() => props.state.selectedOptions.map((option) => option.value));
 
-/** The empty entry is what lets `required` fail while nothing is selected. */
+/**
+ * Only what submission needs: the chosen options, plus the empty one that lets
+ * `required` fail while nothing is selected.
+ *
+ * Mirroring the whole list would undo the windowing the popover does — a named
+ * box over a hundred thousand options would put every one of them in the
+ * document — and mirroring the *filtered* list would drop the selection the
+ * moment a query excluded it, leaving the browser to fall back to the first
+ * option.
+ */
 const mirroredOptions = computed(() => [
     ...(isMulti.value ? [] : [{ value: "", label: "" }]),
-    ...props.state.filteredGroups.flatMap((group) =>
-        group.options.map((option) => ({ value: option.value, label: option.label })),
-    ),
+    ...props.state.selectedOptions.map((option) => ({
+        value: option.value,
+        label: option.label,
+    })),
 ]);
 
 function handleReset(): void {

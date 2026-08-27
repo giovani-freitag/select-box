@@ -49,11 +49,15 @@ export function FormMirror<TExtra extends object>({
 
     const isMulti = state.mode === "multi";
     const selected = state.selectedOptions.map((option) => option.value);
-    const everyOption = state.filteredGroups.flatMap((group) => group.options);
-    // The empty option is what lets `required` fail while nothing is selected.
+    // Only what submission needs: the chosen options, plus the empty one that
+    // lets `required` fail while nothing is selected. Mirroring the whole list
+    // would undo the windowing the popover does — a named box over a hundred
+    // thousand options would put every one of them in the document — and
+    // mirroring the *filtered* list would drop the selection the moment a query
+    // excluded it, leaving the browser to fall back to the first option.
     const options = [
         ...(isMulti ? [] : [{ value: "", label: "" }]),
-        ...everyOption.map((option) => ({ value: option.value, label: option.label })),
+        ...state.selectedOptions.map((option) => ({ value: option.value, label: option.label })),
     ];
 
     return (

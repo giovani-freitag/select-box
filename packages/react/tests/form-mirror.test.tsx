@@ -78,11 +78,34 @@ describe("the React form mirror's reset baseline", () => {
         );
 
         expect(defaults(form)).toEqual(["apple"]);
-        expect([...mirror(form).options].map((option) => option.value)).toEqual([
-            "",
-            "apple",
-            "fig",
-        ]);
+        expect([...mirror(form).options].map((option) => option.value)).toEqual(["", "apple"]);
+    });
+
+    test("holds only what submission needs, however long the option list is", () => {
+        const form = formContainer();
+        const many = Array.from({ length: 3_000 }, (_, index) => ({
+            value: String(index),
+            label: `Option ${index}`,
+        }));
+
+        render(<SelectBox options={many} name="fruit" defaultValue="7" />, { container: form });
+
+        expect([...mirror(form).options].map((option) => option.value)).toEqual(["", "7"]);
+    });
+
+    test("keeps the selection in the mirror while a query filters it out of the list", () => {
+        const form = formContainer();
+        const handle = createRef<SelectBoxHandle>();
+        render(
+            <SelectBox ref={handle} options={fruits} name="fruit" defaultValue="apple" />,
+            { container: form },
+        );
+
+        act(() => {
+            handle.current!.controller.setQuery("zzzz");
+        });
+
+        expect(new FormData(form as HTMLFormElement).get("fruit")).toBe("apple");
     });
 
     test("keeps the empty option as the default when nothing is selected", () => {
