@@ -59,7 +59,7 @@
         "@select-box/tsconfig": "workspace:*",
         "@types/jquery": "^4.0.1",
         "eslint": "^10.9.1",
-        "happy-dom": "^20.11.12",
+        "happy-dom": "^20.8.9",
         "jquery": "^4.0.0",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
