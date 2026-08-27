@@ -190,6 +190,15 @@ export function describeParitySuite(adapter: ParityAdapter): void {
             expect(mounted.reportedChanges()).toContain("pear");
         });
 
+        test("reports the popover opening and closing", async () => {
+            const mounted = await mountSingle();
+
+            await mounted.focusInput();
+            await mounted.pressKey("Escape");
+
+            expect(mounted.reportedOpenStates()).toEqual([true, false]);
+        });
+
         test("reports a multi commit through that same hook, not a second one", async () => {
             const mounted = await mountMulti();
             await mounted.focusInput();

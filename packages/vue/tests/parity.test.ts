@@ -17,8 +17,11 @@ describeParitySuite({
     async mount(config: ParityMountConfig): Promise<ParityHandle> {
         const mountPoint = document.createElement("div");
         document.body.append(mountPoint);
+        const openStates: boolean[] = [];
         const wrapper = mount(SelectBox, {
             props: {
+                onOpen: () => openStates.push(true),
+                onClose: () => openStates.push(false),
                 options: config.options,
                 placeholder: config.placeholder,
                 multiple: config.multiple,
@@ -54,6 +57,7 @@ describeParitySuite({
                 (wrapper.emitted("change") ?? []).map(
                     (payload) => (payload as ReadonlyArray<unknown>)[0],
                 ),
+            reportedOpenStates: () => openStates,
             publicRoot: () => exposed?.root ?? null,
             publicController: () => exposed?.controller ?? null,
             settle: () => nextTick(),

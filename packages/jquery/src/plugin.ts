@@ -102,6 +102,9 @@ function mount<TExtra extends object>(
         // One `change`, whatever the mode: a listener never has to know which
         // event this instance will use. Single passes `(value, option)`, multi
         // passes `(values, options)`.
+        onOpenChange: (open: boolean) => {
+            jq(host).trigger(open ? "open" : "close");
+        },
         onMultiValueChange: (
             values: ReadonlyArray<string>,
             options: ReadonlyArray<SelectOption<TExtra>>,

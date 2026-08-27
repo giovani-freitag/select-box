@@ -98,6 +98,10 @@ const emit = defineEmits<{
     ): void;
     /** Mirrors `change` so `v-model` binds the selection the way Vue expects. */
     (event: "update:modelValue", value: string | null | ReadonlyArray<string>): void;
+    /** The popover opened. */
+    (event: "open"): void;
+    /** The popover closed. */
+    (event: "close"): void;
 }>();
 
 function commonConfig() {
@@ -175,6 +179,16 @@ useValueReactivity(
     ownedValue,
     state,
     ownerEcho,
+);
+
+// One event per transition, named for what happened — the same shape `change`
+// has, so a listener never has to read the snapshot to find out.
+watch(
+    () => state.value.open,
+    (open) => {
+        if (open) emit("open");
+        else emit("close");
+    },
 );
 
 const isInline = computed(() => props.surface === "inline");

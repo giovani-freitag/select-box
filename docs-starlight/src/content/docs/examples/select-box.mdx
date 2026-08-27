@@ -160,6 +160,7 @@ to `onChange` / `selectedOption`.
 | Selection it owns | `defaultValue` | `value` attribute (the seed; the property is the live one, as with `<input>`) |
 | Change callback | `onChange(value, option)` | `change` event (read `event.target.value` / `event.target.selectedOption`) |
 | Vue two-way binding | — | `v-model`, or `:value` with `@change` |
+| Popover opened / closed | `onOpen` / `onClose` | `open` / `close` events |
 | Multi-select | `multiple` | `multiple` attribute |
 | Surface | `surface` (`"popover"` \| `"inline"`) | `surface` attribute |
 | Placeholder | `placeholder` | `placeholder` attribute |
@@ -176,6 +177,14 @@ to `onChange` / `selectedOption`.
 | Addons | `addons` | `.addons` (property) |
 | Custom filter | `filter` | `.filter` (property) |
 | Root and controller | `ref` yields `{ root, controller }` | `.root` / `.controller` (getters) |
+
+### Why `open` and `close` are props in React
+
+Every wrapper dispatches `open` and `close` as real DOM events, which bubble
+like any other. React's synthetic event system routes a fixed list of event
+names, so a custom one on a component has no listener syntax — a `ref` and a
+manual `addEventListener` would be the only way. The props are React's door to
+the same two moments, with the same names.
 
 ## Keyboard
 

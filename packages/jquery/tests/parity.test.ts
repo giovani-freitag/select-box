@@ -19,6 +19,9 @@ describeParitySuite({
         const reported: unknown[] = [];
         // One listener, because there is one event now, whatever the mode.
         jQuery(mountPoint).on("change", (_event: unknown, value: unknown) => reported.push(value));
+        const openStates: boolean[] = [];
+        jQuery(mountPoint).on("open", () => openStates.push(true));
+        jQuery(mountPoint).on("close", () => openStates.push(false));
         const box = jQuery(mountPoint).selectBox({
             options: config.options,
             placeholder: config.placeholder,
@@ -44,6 +47,7 @@ describeParitySuite({
                     box.setValue(value);
                 },
                 reportedChanges: () => reported,
+                reportedOpenStates: () => openStates,
                 // Root comes through the element door and the controller through
                 // the returned instance, so the suite exercises both.
                 publicRoot: () => mountPoint.selectBox?.root ?? null,

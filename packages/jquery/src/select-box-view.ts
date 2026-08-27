@@ -126,10 +126,12 @@ export class SelectBoxView<TExtra extends object = object>
     private readonly onDestroy: (() => void) | undefined;
     private destroyed = false;
     private unsubscribeFromStore: (() => void) | null = null;
+    private previousOpen = false;
     private previousValueKey: string;
     private readonly onSingleChange:
         | ((value: string | null, option: SelectOption<TExtra> | null) => void)
         | undefined;
+    private readonly onOpenChange: ((open: boolean) => void) | undefined;
     private readonly onMultiChange:
         | ((
               values: ReadonlyArray<string>,
@@ -164,6 +166,8 @@ export class SelectBoxView<TExtra extends object = object>
                 values: ReadonlyArray<string>,
                 options: ReadonlyArray<SelectOption<TExtra>>,
             ) => void;
+            /** Fires whenever the popover opens or closes. */
+            readonly onOpenChange?: (open: boolean) => void;
             /** Fires once the view has torn itself down, so an owner can drop its handle. */
             readonly onDestroy?: () => void;
         },
@@ -177,6 +181,7 @@ export class SelectBoxView<TExtra extends object = object>
         this.ariaLabelledby = config.ariaLabelledby;
         this.onSingleChange = config.onValueChange;
         this.onMultiChange = config.onMultiValueChange;
+        this.onOpenChange = config.onOpenChange;
         this.onDestroy = config.onDestroy;
         this.surface = config.surface ?? "popover";
         this.nodeFactory = new SelectBoxNodeFactory<TExtra>({
@@ -589,6 +594,12 @@ export class SelectBoxView<TExtra extends object = object>
                     snapshot.selectedOption,
                 );
             }
+        }
+        if (snapshot.open !== this.previousOpen) {
+            this.previousOpen = snapshot.open;
+            // Same shape as the change notification: one call per transition,
+            // which the plugin turns into a real jQuery event.
+            this.onOpenChange?.(snapshot.open);
         }
     };
 

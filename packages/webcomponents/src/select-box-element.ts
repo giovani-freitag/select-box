@@ -55,6 +55,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private unsubscribeFromStore: (() => void) | null = null;
     private refs: SelectBoxRefs | null = null;
+    private previousOpen = false;
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
     private readonly nodeFactory: SelectBoxNodeFactory<TExtra>;
@@ -521,6 +522,13 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
         if (currentKey !== this.previousValueKey) {
             this.previousValueKey = currentKey;
             this.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        if (snapshot.open !== this.previousOpen) {
+            this.previousOpen = snapshot.open;
+            // Same shape as `change`: one event per transition, named for what
+            // happened. A page can then react to the list opening without
+            // reaching for the controller.
+            this.dispatchEvent(new Event(snapshot.open ? "open" : "close", { bubbles: true }));
         }
     };
 

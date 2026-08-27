@@ -29,6 +29,9 @@ describeParitySuite({
         if (config.emptyMessage !== undefined) element.setAttribute("empty-message", config.emptyMessage);
         const reported: unknown[] = [];
         element.addEventListener("change", () => reported.push(element.value));
+        const openStates: boolean[] = [];
+        element.addEventListener("open", () => openStates.push(true));
+        element.addEventListener("close", () => openStates.push(false));
         document.body.append(element);
 
         return Promise.resolve(
@@ -44,6 +47,7 @@ describeParitySuite({
                     element.value = value;
                 },
                 reportedChanges: () => reported,
+                reportedOpenStates: () => openStates,
                 publicRoot: () => element.root,
                 publicController: () => element.controller,
                 settle: () => Promise.resolve(),

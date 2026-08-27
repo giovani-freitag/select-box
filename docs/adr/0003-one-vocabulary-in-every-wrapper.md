@@ -33,3 +33,8 @@ local habit.
 - Renaming a term is a breaking change in five packages at once, on purpose.
 - The word for the overlay surface is **`popover`**, not `dropdown`. Consumers
   arriving from a native `<select>` may expect the latter.
+- A wrapper may need a second door when its framework cannot express the shared
+  one — React has no way to listen to a custom DOM event on a component, so what
+  is an event elsewhere is also a prop there. The extra door is the framework's
+  limitation, not a naming choice: it carries the same name and the same payload,
+  and the shared door still exists wherever the framework allows it.

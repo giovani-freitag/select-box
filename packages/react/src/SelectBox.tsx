@@ -21,6 +21,7 @@ import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
 import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity.js";
 import { useOptionsReactivity } from "./hooks/use-options-reactivity.js";
 import { useNotifyChange } from "./hooks/use-notify-change.js";
+import { useOpenReactivity } from "./hooks/use-open-reactivity.js";
 import { usePropWarnings } from "./hooks/use-prop-warnings.js";
 import { useSelectBox } from "./hooks/use-select-box.js";
 import { useValueReactivity } from "./hooks/use-value-reactivity.js";
@@ -88,6 +89,16 @@ interface SelectBoxBaseProps<TExtra extends object> {
     readonly onBlur?: FocusEventHandler<HTMLInputElement> | undefined;
     /** Fires when the trigger input takes focus. */
     readonly onFocus?: FocusEventHandler<HTMLInputElement> | undefined;
+    /**
+     * Fires when the popover opens.
+     *
+     * Every other wrapper reports this as a real DOM event. React's synthetic
+     * system only routes a fixed set of event names, so a custom one on a
+     * component is unreachable without a `ref` — hence a prop here.
+     */
+    readonly onOpen?: (() => void) | undefined;
+    /** Fires when the popover closes. See `onOpen` for why this is a prop. */
+    readonly onClose?: (() => void) | undefined;
     /** Tab order of the trigger input. */
     readonly tabIndex?: number | undefined;
     /** Receives the imperative handle: the root element and the core controller. */
@@ -174,6 +185,8 @@ export function SelectBox<TExtra extends object = object, TMultiple extends bool
             controller.setMode(wantMulti ? "multi" : "single");
         }
     }, [controller, wantMulti]);
+
+    useOpenReactivity(state.open, props.onOpen, props.onClose);
 
     usePropWarnings({
         value: props.value,

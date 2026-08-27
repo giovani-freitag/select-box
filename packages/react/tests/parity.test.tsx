@@ -17,13 +17,18 @@ import { SelectBox, type SelectBoxHandle } from "../src/SelectBox.js";
  * interaction goes through Testing Library's act-wrapped helpers, which is what
  * flushes React's render queue.
  */
-function createReactHandle(
-    result: RenderResult,
-    handleRef: RefObject<SelectBoxHandle | null>,
-    rerenderWith: (options: ReadonlyArray<ParityOption>) => void,
-    rerenderMulti: (multiple: boolean) => void,
-    reported: ReadonlyArray<unknown>,
-): ParityHandle {
+interface ReactHandleConfig {
+    readonly result: RenderResult;
+    readonly handleRef: RefObject<SelectBoxHandle | null>;
+    readonly rerenderWith: (options: ReadonlyArray<ParityOption>) => void;
+    readonly rerenderMulti: (multiple: boolean) => void;
+    readonly reported: ReadonlyArray<unknown>;
+    readonly openStates: ReadonlyArray<boolean>;
+}
+
+function createReactHandle(config: ReactHandleConfig): ParityHandle {
+    const { result, handleRef, reported, openStates } = config;
+
     function input(): HTMLInputElement {
         return result.container.querySelector<HTMLInputElement>("[data-select-input]")!;
     }
@@ -39,12 +44,12 @@ function createReactHandle(
         settle: flush,
 
         async setOptions(options: ReadonlyArray<ParityOption>): Promise<void> {
-            act(() => rerenderWith(options));
+            act(() => config.rerenderWith(options));
             await flush();
         },
 
         async setMulti(multiple: boolean): Promise<void> {
-            act(() => rerenderMulti(multiple));
+            act(() => config.rerenderMulti(multiple));
             await flush();
         },
 
@@ -54,6 +59,7 @@ function createReactHandle(
         },
 
         reportedChanges: () => reported,
+        reportedOpenStates: () => openStates,
 
         async focusInput(): Promise<void> {
             act(() => {
@@ -96,6 +102,7 @@ describeParitySuite({
     mount(config: ParityMountConfig): Promise<ParityHandle> {
         const handleRef = createRef<SelectBoxHandle>();
         const reported: unknown[] = [];
+        const openStates: boolean[] = [];
         const element = (
             options: ReadonlyArray<ParityOption>,
             multiple: boolean = config.multiple,
@@ -113,6 +120,8 @@ describeParitySuite({
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                     onChange={(values) => reported.push(values)}
+                    onOpen={() => openStates.push(true)}
+                    onClose={() => openStates.push(false)}
                 />
             ) : (
                 <SelectBox
@@ -126,22 +135,25 @@ describeParitySuite({
                     disabled={config.disabled === true}
                     readOnly={config.readOnly === true}
                     onChange={(value) => reported.push(value)}
+                    onOpen={() => openStates.push(true)}
+                    onClose={() => openStates.push(false)}
                 />
             );
         const result = render(element(config.options));
 
         return Promise.resolve(
-            createReactHandle(
+            createReactHandle({
                 result,
                 handleRef,
-                (options) => {
+                rerenderWith: (options) => {
                     result.rerender(element(options));
                 },
-                (multiple) => {
+                rerenderMulti: (multiple) => {
                     result.rerender(element(config.options, multiple));
                 },
                 reported,
-            ),
+                openStates,
+            }),
         );
     },
 });

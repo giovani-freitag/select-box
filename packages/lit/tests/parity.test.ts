@@ -25,6 +25,9 @@ describeParitySuite({
         if (config.readOnly === true) element.readOnly = true;
         const reported: unknown[] = [];
         element.addEventListener("change", () => reported.push(element.value));
+        const openStates: boolean[] = [];
+        element.addEventListener("open", () => openStates.push(true));
+        element.addEventListener("close", () => openStates.push(false));
         document.body.append(element);
         await element.updateComplete;
 
@@ -40,6 +43,7 @@ describeParitySuite({
                 element.value = value;
             },
             reportedChanges: () => reported,
+            reportedOpenStates: () => openStates,
             publicRoot: () => element.root,
             publicController: () => element.controller,
             settle: async () => {

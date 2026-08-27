@@ -97,6 +97,8 @@ export interface ParityHandle {
     setValue(value: string | ReadonlyArray<string> | null): Promise<void>;
     /** Every value this wrapper has reported since mount. */
     reportedChanges(): ReadonlyArray<unknown>;
+    /** Every open/close transition this wrapper has reported since mount. */
+    reportedOpenStates(): ReadonlyArray<boolean>;
     focusInput(): Promise<void>;
     typeIntoInput(text: string): Promise<void>;
     clickElement(element: Element): Promise<void>;
@@ -146,6 +148,8 @@ interface DomHandleConfig {
     readonly setMulti: (multiple: boolean) => void;
     readonly setValue: (value: string | ReadonlyArray<string> | null) => void;
     readonly reportedChanges: () => ReadonlyArray<unknown>;
+    /** Every open/close transition the wrapper has reported since mount. */
+    readonly reportedOpenStates: () => ReadonlyArray<boolean>;
     readonly publicRoot: () => Element | null;
     readonly publicController: () => ParityController | null;
     readonly settle: () => Promise<void>;
@@ -186,6 +190,7 @@ export function createDomHandle(config: DomHandleConfig): ParityHandle {
         },
 
         reportedChanges: config.reportedChanges,
+        reportedOpenStates: config.reportedOpenStates,
 
         async focusInput(): Promise<void> {
             input().focus();
