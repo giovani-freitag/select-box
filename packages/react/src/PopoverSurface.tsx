@@ -14,6 +14,8 @@ import {
     useMemo,
     useRef,
     type ChangeEvent,
+    type CSSProperties,
+    type FocusEventHandler,
     type JSX,
     type KeyboardEvent,
     type MouseEvent,
@@ -39,6 +41,12 @@ export interface PopoverSurfaceProps<TExtra extends object> {
     readonly required: boolean | undefined;
     readonly placeholder: string | undefined;
     readonly className: string | undefined;
+    readonly style: CSSProperties | undefined;
+    readonly id: string | undefined;
+    readonly inputId: string | undefined;
+    readonly onBlur: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly onFocus: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly tabIndex: number | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
 }
@@ -57,6 +65,12 @@ export function PopoverSurface<TExtra extends object>({
     required,
     placeholder,
     className,
+    style,
+    id,
+    inputId,
+    onBlur,
+    onFocus,
+    tabIndex,
     ariaLabel,
     ariaLabelledby,
 }: PopoverSurfaceProps<TExtra>): JSX.Element {
@@ -90,6 +104,8 @@ export function PopoverSurface<TExtra extends object>({
         <div
             ref={setRootNode}
             className={rootClassName}
+            style={style}
+            id={id}
             data-select-root
             data-select-mode={state.mode}
         >
@@ -105,6 +121,10 @@ export function PopoverSurface<TExtra extends object>({
                     ariaLabelledby={ariaLabelledby}
                     activeDescendant={activeDescendant}
                     onFocusInput={focusInput}
+                    inputId={inputId}
+                    onBlur={onBlur}
+                    onFocus={onFocus}
+                    tabIndex={tabIndex}
                 />
             ) : (
                 <SingleTrigger
@@ -116,6 +136,10 @@ export function PopoverSurface<TExtra extends object>({
                     ariaLabel={ariaLabel}
                     ariaLabelledby={ariaLabelledby}
                     activeDescendant={activeDescendant}
+                    inputId={inputId}
+                    onBlur={onBlur}
+                    onFocus={onFocus}
+                    tabIndex={tabIndex}
                 />
             )}
 
@@ -137,6 +161,10 @@ interface SingleTriggerProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
     readonly inputRef: RefObject<HTMLInputElement | null>;
+    readonly inputId: string | undefined;
+    readonly onBlur: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly onFocus: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly tabIndex: number | undefined;
     readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
     readonly placeholder: string | undefined;
     readonly ariaLabel: string | undefined;
@@ -148,6 +176,10 @@ function SingleTrigger<TExtra extends object>({
     state,
     controller,
     inputRef,
+    inputId,
+    onBlur,
+    onFocus,
+    tabIndex,
     keyDispatcher,
     placeholder,
     ariaLabel,
@@ -213,12 +245,18 @@ function SingleTrigger<TExtra extends object>({
                 placeholder={placeholderText}
                 value={view.triggerInputValue}
                 onChange={handleInputChange}
-                onFocus={handleInputFocus}
+                onFocus={(event) => {
+                    handleInputFocus();
+                    onFocus?.(event);
+                }}
                 onClick={handleInputClick}
                 onKeyDown={handleKeyDown}
                 disabled={state.disabled}
                 readOnly={state.readOnly}
                 aria-readonly={state.readOnly || undefined}
+                id={inputId}
+                onBlur={onBlur}
+                tabIndex={tabIndex}
                 data-select-input
             />
             <button
@@ -255,6 +293,10 @@ interface MultiTriggerProps<TExtra extends object> {
     readonly state: SelectBoxSnapshot<TExtra, SelectionValue>;
     readonly controller: SelectBoxController<TExtra, SelectionValue>;
     readonly inputRef: RefObject<HTMLInputElement | null>;
+    readonly inputId: string | undefined;
+    readonly onBlur: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly onFocus: FocusEventHandler<HTMLInputElement> | undefined;
+    readonly tabIndex: number | undefined;
     readonly keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue>;
     readonly placeholder: string | undefined;
     readonly ariaLabel: string | undefined;
@@ -267,6 +309,10 @@ function MultiTrigger<TExtra extends object>({
     state,
     controller,
     inputRef,
+    inputId,
+    onBlur,
+    onFocus,
+    tabIndex,
     keyDispatcher,
     placeholder,
     ariaLabel,
@@ -351,11 +397,17 @@ function MultiTrigger<TExtra extends object>({
                     placeholder={placeholderText}
                     value={state.query}
                     onChange={handleInputChange}
-                    onFocus={handleInputFocus}
+                    onFocus={(event) => {
+                        handleInputFocus();
+                        onFocus?.(event);
+                    }}
                     onKeyDown={handleKeyDown}
                     disabled={state.disabled}
                     readOnly={state.readOnly}
                     aria-readonly={state.readOnly || undefined}
+                    id={inputId}
+                    onBlur={onBlur}
+                    tabIndex={tabIndex}
                     data-select-input
                 />
             </div>

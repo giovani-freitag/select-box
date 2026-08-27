@@ -5,7 +5,14 @@ import {
     type SelectionValue,
     type SelectOption,
 } from "@select-box/core";
-import { Fragment, useMemo, type JSX, type Ref } from "react";
+import {
+    Fragment,
+    useMemo,
+    type CSSProperties,
+    type FocusEventHandler,
+    type JSX,
+    type Ref,
+} from "react";
 
 import { FormMirror } from "./FormMirror.js";
 
@@ -16,6 +23,11 @@ export interface InlineSurfaceProps<TExtra extends object> {
     readonly name: string | undefined;
     readonly required: boolean | undefined;
     readonly className: string | undefined;
+    readonly style: CSSProperties | undefined;
+    readonly id: string | undefined;
+    // The inline surface renders no input, so focus events belong to the root.
+    readonly onBlur: FocusEventHandler<HTMLDivElement> | undefined;
+    readonly onFocus: FocusEventHandler<HTMLDivElement> | undefined;
     readonly ariaLabel: string | undefined;
     readonly ariaLabelledby: string | undefined;
 }
@@ -33,6 +45,10 @@ export function InlineSurface<TExtra extends object>({
     name,
     required,
     className,
+    style,
+    id,
+    onBlur,
+    onFocus,
     ariaLabel,
     ariaLabelledby,
 }: InlineSurfaceProps<TExtra>): JSX.Element {
@@ -61,6 +77,10 @@ export function InlineSurface<TExtra extends object>({
         <div
             ref={rootRef}
             className={rootClassName}
+            style={style}
+            id={id}
+            onBlur={onBlur}
+            onFocus={onFocus}
             data-select-root
             data-select-mode={state.mode}
         >

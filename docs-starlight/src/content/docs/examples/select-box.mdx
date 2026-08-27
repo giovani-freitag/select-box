@@ -168,6 +168,10 @@ to `onChange` / `selectedOption`.
 | Refuses everything | `disabled` | `disabled` attribute |
 | Refuses edits, still submits | `readOnly` | `readonly` attribute |
 | Accessible name | `aria-label` / `aria-labelledby` | same attributes |
+| Identifies the component | `id` (lands on the root) | `id` attribute |
+| What `<label for>` targets | `inputId` (lands on the trigger input) | — |
+| Touched / focus | `onBlur` / `onFocus` | native `blur` / `focus` |
+| Inline styles | `style` (lands on the root) | `style` attribute |
 | Addons | `addons` | `.addons` (property) |
 | Custom filter | `filter` | `.filter` (property) |
 | Root and controller | `ref` yields `{ root, controller }` | `.root` / `.controller` (getters) |

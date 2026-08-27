@@ -7,7 +7,15 @@ import {
     type SelectionValueInput,
     type SelectOption,
 } from "@select-box/core";
-import { useEffect, useImperativeHandle, useRef, type JSX, type Ref } from "react";
+import {
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    type CSSProperties,
+    type FocusEventHandler,
+    type JSX,
+    type Ref,
+} from "react";
 
 import { useFilterReactivity } from "./hooks/use-filter-reactivity.js";
 import { useInteractivityReactivity } from "./hooks/use-interactivity-reactivity.js";
@@ -53,6 +61,27 @@ interface SelectBoxBaseProps<TExtra extends object> {
     /** Blocks submission while nothing is selected, natively. */
     readonly required?: boolean | undefined;
     readonly className?: string | undefined;
+    readonly style?: CSSProperties | undefined;
+    /**
+     * Identifies the whole component; lands on the root element.
+     *
+     * Not what `<label for>` should point at — a label has to target a
+     * labelable control, which is the trigger input. Use `inputId` for that.
+     */
+    readonly id?: string | undefined;
+    /**
+     * Id for the trigger input, and therefore what `<label for>` must target.
+     *
+     * The popover surface has the input; the inline surface has none, and
+     * ignores this.
+     */
+    readonly inputId?: string | undefined;
+    /** Fires when focus leaves the trigger input — what form libraries call touched. */
+    readonly onBlur?: FocusEventHandler<HTMLInputElement> | undefined;
+    /** Fires when the trigger input takes focus. */
+    readonly onFocus?: FocusEventHandler<HTMLInputElement> | undefined;
+    /** Tab order of the trigger input. */
+    readonly tabIndex?: number | undefined;
     /** Receives the imperative handle: the root element and the core controller. */
     readonly ref?: Ref<SelectBoxHandle<TExtra>> | undefined;
     readonly "aria-label"?: string | undefined;
@@ -180,6 +209,10 @@ export function SelectBox<TExtra extends object = object>(
                 name={props.name}
                 required={props.required}
                 className={props.className}
+                style={props.style}
+                id={props.id}
+                onBlur={props.onBlur}
+                onFocus={props.onFocus}
                 ariaLabel={props["aria-label"]}
                 ariaLabelledby={props["aria-labelledby"]}
             />
@@ -195,6 +228,12 @@ export function SelectBox<TExtra extends object = object>(
             required={props.required}
             placeholder={props.placeholder}
             className={props.className}
+            style={props.style}
+            id={props.id}
+            inputId={props.inputId}
+            onBlur={props.onBlur}
+            onFocus={props.onFocus}
+            tabIndex={props.tabIndex}
             ariaLabel={props["aria-label"]}
             ariaLabelledby={props["aria-labelledby"]}
         />
