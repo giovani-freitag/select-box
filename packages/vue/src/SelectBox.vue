@@ -21,8 +21,8 @@ import PopoverSurface from "./PopoverSurface.vue";
 
 /** Rendering style. `"popover"` is the default combobox-with-dropdown surface;
  * `"inline"` renders every option as a toggleable chip with no popover, no
- * trigger input, and no search. Orthogonal to `multi` — both surfaces work in
- * single and multi modes. */
+ * trigger input, and no search. Orthogonal to `multiple` — both surfaces work
+ * in single and multi modes. */
 export type SelectBoxSurface = "popover" | "inline";
 
 export interface SelectBoxProps<TExtra extends object = object> {

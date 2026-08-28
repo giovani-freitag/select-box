@@ -34,7 +34,7 @@ import { SelectBox } from "@select-box/react";
 <select-box id="fruit" placeholder="Pick a fruit"></select-box>
 
 <script type="module">
-    import "@select-box/webcomponents";
+    import "@select-box/webcomponents/define";
     const element = document.getElementById("fruit");
     element.options = fruits;
     element.addEventListener("change", (event) => {

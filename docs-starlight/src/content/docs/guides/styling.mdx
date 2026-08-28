@@ -63,6 +63,24 @@ differs.
 | Disabled option | A non-selectable option | `.select-box-option-disabled` |
 | Match | A `<mark>` around the search match inside a label | `.select-box-option-match` |
 | Empty | The "no matches" message | `.select-box-empty` |
+| Selected option | A committed row, in either mode | `.select-box-option-selected` |
+| Tick | The check mark on a selected row in multi mode | `.select-box-option-tick` |
+| Group | The container holding one group's rows | `.select-box-group` |
+| Clear | The control an addon asks for to empty the selection | `.select-box-clear` |
+| Form mirror | The hidden native control the form reads | `.select-box-form-mirror` |
+
+Multi mode and the inline surface add their own pieces. The root carries
+`.select-box-multi` and `.select-box-inline` respectively, so a rule can branch
+on the mode without a wrapper prop.
+
+| Piece | What it is | Class |
+|---|---|---|
+| Tags | The row of chips, in the trigger or as the inline surface | `.select-box-tags` |
+| Chip | One option rendered as a chip | `.select-box-chip` |
+| Selectable chip | A chip on the inline surface, which is a button | `.select-box-chip-selectable` |
+| Selected chip | An inline chip that is part of the selection | `.select-box-chip-selected` |
+| Disabled chip | A chip that refuses input | `.select-box-chip-disabled` |
+| Chip remove | The per-chip remove control in multi mode | `.select-box-chip-remove` |
 
 The DOM wrappers also tag every piece with a `data-select-*` attribute
 (e.g. `data-select-trigger`, `data-select-popover`) — useful for
@@ -85,6 +103,9 @@ so a single rule on a page wrapper themes every select box under it.
 | `--sb-color-border` | `color-mix(in srgb, CanvasText 14%, transparent)` | Trigger and popover border |
 | `--sb-color-highlight-bg` | `Highlight` | Active option background and search-match highlight |
 | `--sb-color-highlight-text` | `HighlightText` | Active option text |
+| `--sb-color-chip-bg` | `color-mix(in srgb, Highlight 14%, Canvas)` | Chip background |
+| `--sb-color-chip-border` | `color-mix(in srgb, Highlight 30%, transparent)` | Chip border |
+| `--sb-color-focus-ring` | `Highlight` | Focus ring on the trigger and on chips |
 
 System colors like `Canvas` and `CanvasText` follow the user's UA theme,
 which is why the defaults look right in both light and dark mode without
@@ -96,7 +117,7 @@ extra effort.
 |---|---|---|
 | `--sb-space-xs` | `0.25rem` | Tight padding (gap below popover, group label bottom) |
 | `--sb-space-sm` | `0.5rem` | Vertical padding inside trigger and options |
-| `--sb-space-md` | `0.875rem` | Horizontal padding inside trigger and options |
+| `--sb-space-md` | `0.6rem` | Horizontal padding inside trigger and options |
 | `--sb-space-lg` | `1rem` | Padding around the "no matches" message |
 
 ### Shape and typography
@@ -107,6 +128,8 @@ extra effort.
 | `--sb-shadow-popover` | `0 12px 24px -8px color-mix(in srgb, CanvasText 30%, transparent)` | Popover drop shadow |
 | `--sb-font-size` | `inherit` | Base font size — defaults to the host's font |
 | `--sb-font-size-small` | `0.75em` | Group label font size |
+| `--sb-font-size-label` | `0.85em` | Chip label font size |
+| `--sb-radius-chip` | `4px` | Chip border-radius |
 | `--sb-list-max-height` | `240px` | Maximum visible list height before scrolling |
 | `--sb-popover-z-index` | `30` | Popover stacking |
 

@@ -200,9 +200,9 @@ the same two moments, with the same names.
 
 ## Keyboard
 
-| Key | Action |
-|---|---|
-| `↓` / `↑` | Move active option (skips disabled). When closed, `↓` also opens the popover. |
-| `Enter` | Commit the active option. |
-| `Escape` | Close the popover. |
-| Click outside | Close the popover. |
+| Key | Open | Closed |
+|---|---|---|
+| `↓` / `↑` | Move the active option, skipping disabled rows and wrapping at the ends | Open the popover |
+| `Enter` | Commit the active option | Open the popover |
+| `Escape` | Close the popover | Passes through, so a dialog or form still sees it |
+| Click outside | Close the popover | — |

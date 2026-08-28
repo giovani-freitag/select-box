@@ -54,12 +54,15 @@ option's own flag and the control's.
 
 ## Keyboard
 
-| Key | Action |
-|---|---|
-| `↓` / `↑` | Move the active option, skipping disabled rows. Closed, `↓` also opens the popover |
-| `Enter` | Commit the active option |
-| `Escape` | Close the popover |
-| `Backspace` | With `@select-box/addon-restore-on-backspace`, pops the last selection back into the query |
+| Key | Open | Closed |
+|---|---|---|
+| `↓` / `↑` | Move the active option, skipping disabled rows and wrapping at the ends | Open the popover |
+| `Enter` | Commit the active option | Open the popover |
+| `Escape` | Close the popover | Passes through, so a dialog or form still sees it |
+| `Backspace` | With `@select-box/addon-restore-on-backspace`, pops the last selection back into the query | — |
+
+Addons see a key before these bindings do, which is how one can claim
+`Backspace` without reimplementing the combobox around it.
 
 Typing filters. Clicking outside closes.
 

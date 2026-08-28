@@ -58,6 +58,7 @@ export default defineConfig({
                         { label: "Option groups", link: "/examples/optgroup/" },
                         { label: "Disabled", link: "/examples/disabled/" },
                         { label: "Search", link: "/examples/search/" },
+                        { label: "Hoist selected", link: "/examples/hoist-selected/" },
                         { label: "Large list", link: "/examples/large-list/" },
                         { label: "Reference", link: "/examples/select-box/" },
                     ],

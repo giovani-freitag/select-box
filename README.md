@@ -20,7 +20,7 @@
   ·
   <img alt="Addons" src="https://img.shields.io/badge/addons-7-fdb515">
   ·
-  <img alt="Matrix specs" src="https://img.shields.io/badge/matrix%20specs-570-3178c6">
+  <img alt="Matrix specs" src="https://img.shields.io/badge/matrix%20specs-630-3178c6">
 </p>
 
 <p align="center">
@@ -138,6 +138,9 @@ state.filteredGroups.flatMap((group) =>
 
 - [Live site](https://giovani-freitag.github.io/select-box/) — guides, every example, and the TypeDoc API reference
 - [Getting started](https://giovani-freitag.github.io/select-box/guides/getting-started/) — install, mount, and the config shape
+- [Forms](https://giovani-freitag.github.io/select-box/guides/forms/) — submit, reset and validate like a native control
+- [Addons](https://giovani-freitag.github.io/select-box/guides/addons/) — the seven first-party ones, and writing your own
+- [Accessibility](https://giovani-freitag.github.io/select-box/guides/accessibility/) — what it announces, and what you supply
 - [Styling](https://giovani-freitag.github.io/select-box/guides/styling/) — the `--sb-*` token surface
 - [Headless vs ready](https://giovani-freitag.github.io/select-box/guides/headless-vs-ready/) — when to drop a tier
 - [Decisions](docs/adr/) — why the design is what it is, and what each choice costs

@@ -20,9 +20,12 @@ every option in a group is disabled, the group header dims along with them
 - **Filtering still matches them.** A disabled row that matches the query stays
   visible (dimmed) — users can see *why* a value is unavailable rather than
   wondering whether they spelled it wrong.
-- **Programmatic `setValue` works.** Disabled is a UI concern, not a data
-  constraint — restoring persisted state still sets the value even if the option
-  is currently disabled.
+- **A disabled option is refused even to the owner.** `setValue` and the
+  initial value both drop it: setting a disabled option leaves the selection
+  empty, and setting a list keeps only the enabled entries. Disabling an option
+  is a statement about the value, not only about the row — so restoring a
+  persisted selection whose option has since been disabled restores nothing.
+  Keep the option enabled if the value has to survive.
 
 ## Next examples
 

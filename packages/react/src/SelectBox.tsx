@@ -31,8 +31,8 @@ import { PopoverSurface } from "./PopoverSurface.js";
 
 /** Rendering style. `"popover"` is the default combobox-with-dropdown surface;
  * `"inline"` renders every option as a toggleable chip with no popover, no
- * trigger input, and no search. Selection cardinality (`multi`) is orthogonal
- * — both surfaces work in single and multi modes. Mutable at runtime. */
+ * trigger input, and no search. Orthogonal to `multiple` — both surfaces work
+ * in single and multi modes. Mutable at runtime. */
 export type SelectBoxSurface = "popover" | "inline";
 
 /**
