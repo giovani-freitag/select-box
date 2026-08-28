@@ -88,12 +88,9 @@ header.header {
 
 /* ---------- Splash template: full-bleed landing ---------- */
 
-.sb-layout.is-splash .sb-doc {
-    padding: 0;
-}
-
-.sb-layout.is-splash .sb-doc-container,
-.sb-layout.is-splash .sb-doc-content-inner,
+/* The reading-column caps are undone in TwoColumnContent, which owns them.
+   What is left here is Starlight's own markup, which no component of ours
+   scopes. */
 .sb-layout.is-splash .content-panel,
 .sb-layout.is-splash .content-panel .sl-container {
     max-width: none;

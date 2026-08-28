@@ -1,8 +1,10 @@
 ---
-const hasToc = Astro.locals.starlightRoute.toc !== undefined;
+const { entry, toc } = Astro.locals.starlightRoute;
+const hasToc = toc !== undefined;
+const isSplash = entry.data.template === "splash";
 ---
 
-<div class:list={["sb-doc", { "has-aside": hasToc }]}>
+<div class:list={["sb-doc", { "has-aside": hasToc, "is-splash": isSplash }]}>
     <div class="sb-doc-container">
         {
             hasToc && (
@@ -125,5 +127,23 @@ const hasToc = Astro.locals.starlightRoute.toc !== undefined;
             width: 100%;
             max-width: 100%;
         }
+    }
+
+    /* ---------- Splash template: no reading column ----------
+     * A landing page manages its own width section by section, so the caps
+     * above have to come off. They live here, next to the rules they undo and
+     * carrying one class more, rather than in the global sheet: there they tied
+     * on specificity and won or lost on whichever file the bundler emitted
+     * last. */
+    .sb-doc.is-splash {
+        padding: 0;
+    }
+
+    .sb-doc.is-splash:not(.has-aside) .sb-doc-container,
+    .sb-doc.is-splash.has-aside .sb-doc-container,
+    .sb-doc.is-splash:not(.has-aside) .sb-doc-content-inner,
+    .sb-doc.is-splash.has-aside .sb-doc-content-inner {
+        max-width: none;
+        margin-inline: 0;
     }
 </style>
