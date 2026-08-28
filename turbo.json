@@ -56,6 +56,12 @@
                 "test-results/**"
             ],
             "cache": false
+        },
+        "check:packaging": {
+            "dependsOn": [
+                "build"
+            ],
+            "outputs": []
         }
     }
 }

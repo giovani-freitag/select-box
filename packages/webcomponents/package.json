@@ -21,23 +21,44 @@
     ],
     "description": "Web Components wrapper for the select-box library — exports SelectBoxElement and defineSelectBoxElement.",
     "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
         },
         "./define": {
-            "types": "./dist/define.d.ts",
-            "import": "./dist/define.js",
-            "require": "./dist/define.cjs"
+            "import": {
+                "types": "./dist/define.d.ts",
+                "default": "./dist/define.js"
+            },
+            "require": {
+                "types": "./dist/define.d.cts",
+                "default": "./dist/define.cjs"
+            }
+        }
+    },
+    "typesVersions": {
+        "*": {
+            "define": [
+                "./dist/define.d.ts"
+            ]
         }
     },
     "files": [
-        "dist"
+        "dist",
+        "LICENSE"
     ],
     "sideEffects": [
         "./dist/define.js",
@@ -45,11 +66,12 @@
     ],
     "scripts": {
         "build": "tsup",
-        "typecheck": "tsc --noEmit",
+        "check:packaging": "attw --pack . --profile node16 && publint --strict",
+        "clean": "rm -rf dist .turbo",
+        "lint": "eslint src tests",
         "test": "vitest run",
         "test:watch": "vitest",
-        "lint": "eslint src tests",
-        "clean": "rm -rf dist .turbo"
+        "typecheck": "tsc --noEmit"
     },
     "peerDependencies": {
         "@select-box/core": "workspace:*",

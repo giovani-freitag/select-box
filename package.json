@@ -20,6 +20,7 @@
     "packageManager": "pnpm@11.0.9",
     "scripts": {
         "build": "turbo run build",
+        "check:packaging": "turbo run check:packaging",
         "clean": "turbo run clean && rm -rf node_modules",
         "e2e": "turbo run e2e",
         "e2e:docs": "turbo run e2e:docs",
@@ -28,9 +29,11 @@
         "typecheck": "turbo run typecheck"
     },
     "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.5",
         "@select-box/eslint-config": "workspace:*",
         "@types/node": "^26.4.0",
         "eslint": "^10.9.1",
+        "publint": "^0.3.24",
         "turbo": "^2.10.12",
         "typescript": "^5.9.3"
     }

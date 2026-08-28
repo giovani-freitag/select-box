@@ -15,22 +15,32 @@
     "bugs": "https://github.com/giovani-freitag/select-box/issues",
     "description": "Select-box addon that saves and restores the selection through web storage.",
     "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
         }
     },
     "files": [
-        "dist"
+        "dist",
+        "LICENSE"
     ],
     "sideEffects": false,
     "scripts": {
         "build": "tsup",
+        "check:packaging": "attw --pack . --profile node16 && publint --strict",
         "clean": "rm -rf dist .turbo",
         "lint": "eslint src tests",
         "test": "vitest run",

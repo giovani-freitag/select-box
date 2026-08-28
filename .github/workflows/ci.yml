@@ -87,6 +87,11 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # What a consumer resolves, rather than what the repo compiles: an exports
+      # map can typecheck here and hand a CommonJS caller the wrong declarations.
+      - name: Check packaging
+        run: pnpm check:packaging
+
   e2e:
     name: Matrix E2E (${{ matrix.framework }})
     needs: scope

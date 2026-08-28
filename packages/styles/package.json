@@ -20,20 +20,25 @@
         "stylesheet"
     ],
     "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
     "description": "Base stylesheet shared by every select-box wrapper.",
     "exports": {
         ".": "./select-box.css",
         "./select-box.css": "./select-box.css"
     },
     "files": [
-        "select-box.css"
+        "select-box.css",
+        "LICENSE"
     ],
     "sideEffects": [
         "*.css"
     ],
     "scripts": {
-        "test": "vitest run",
+        "check:packaging": "publint --strict",
         "lint": "eslint tests",
+        "test": "vitest run",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
