@@ -84,6 +84,7 @@ new CreateOptionAddon({
 | `label` | ``(query) => `Add "${query}"` `` | Builds the row's label |
 | `groupLabel` | — | Header for the group the row is offered under |
 | `when` | `"whenEmpty"` | `"always"` offers it alongside the matches |
+| `trim` | `true` | Refuses text that is only whitespace |
 
 `onCreate` is where the new option joins the list you own — typically through
 `setOptions`. The addon never mutates the controller, so creation stays
@@ -118,6 +119,7 @@ new HoistSelectedAddon({ groupLabel: "Selected", separator: false })
 |---|---|---|
 | `groupLabel` | `"Selected"` | Header of the pinned group |
 | `separator` | `false` | Signals that a wrapper may draw a divider under the pinned section |
+| `when` | `"always"` | `"popoverOpen"` pins only while the popover is open, so a closed snapshot keeps the original order |
 
 There is a [dedicated page](../../examples/hoist-selected/) with it running.
 
@@ -156,6 +158,14 @@ import { PersistAddon, restoreSelection } from "@select-box/addon-persist";
 | `area` | `"local"` | `"session"` for `sessionStorage`. Ignored when `storage` is given |
 | `storage` | — | Any `getItem`/`setItem`/`removeItem` object, for a custom store |
 
+`restoreSelection` takes the same options plus the mode the value is going into,
+since a single box wants a value and a multi box wants a list:
+
+```js
+restoreSelection({ key: "fruit" });                   // string | null
+restoreSelection({ key: "fruit", mode: "multi" });    // ReadonlyArray<string>
+```
+
 **Restoring is deliberately not the addon's job.** An addon never holds the
 controller, so it cannot set a value; `restoreSelection` reads the stored
 selection and you pass it as the initial value. That also keeps the restore
@@ -184,5 +194,5 @@ export class CountAddon extends AbstractAddon {
 
 Whatever `extendSnapshot` returns appears at `snapshot.addons["count"]` in all
 five wrappers. The hooks that reshape the list (`transformGroups`), claim keys
-(`onKey`) and gate opening and closing (`interceptOpen`, `interceptClose`) are
+(`onKeyDown`) and gate opening and closing (`interceptOpen`, `interceptClose`) are
 in the [API reference](../../api/).

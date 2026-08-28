@@ -6,8 +6,10 @@ description: Dim individual options or entire groups — keyboard nav skips them
 import Demo from "../../../components/demos/disabled/Demo.astro";
 
 Set `disabled: true` on an option to keep it visible but uncommittable. When
-every option in a group is disabled, the group header dims along with them
-(keyboard nav skips the whole block).
+every option in a group is disabled, the group itself is marked `disabled` in
+the snapshot and keyboard navigation skips the whole block. The shipped
+stylesheet does not dim the header — read `group.disabled` and style it if you
+want that.
 
 <Demo />
 

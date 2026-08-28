@@ -50,7 +50,7 @@ wrapper gets it in the same commit.
 - 🔌 **Seven opt-in addons** — fuzzy matching, hoist selected, clear button, create option, remove button, restore on backspace, persistence. Hooks are pure transformers, so reentrancy is structurally impossible.
 - 🎨 **One stylesheet, themed by tokens** — restyling is redefining `--sb-*` custom properties, not overriding rules.
 - 🪜 **Two tiers per wrapper** — drop in the styled component, or take the headless controller and render your own markup.
-- 🧪 **570 matrix specs** — 62 parity scenarios and 52 browser specs run against every wrapper, so cross-framework drift fails a column instead of reaching users.
+- 🧪 **630 matrix specs** — 70 parity scenarios and 56 browser specs run against every wrapper, so cross-framework drift fails a column instead of reaching users.
 
 ## 🚀 Quick start
 

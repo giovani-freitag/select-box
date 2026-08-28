@@ -2,8 +2,18 @@
     "$schema": "https://typedoc.org/schema.json",
     "entryPoints": [
         "../packages/core/src/index.ts",
+        "../packages/dom/src/index.ts",
         "../packages/react/src/index.ts",
-        "../packages/webcomponents/src/index.ts"
+        "../packages/lit/src/index.ts",
+        "../packages/webcomponents/src/index.ts",
+        "../packages/jquery/src/index.ts",
+        "../packages/addon-clear-button/src/index.ts",
+        "../packages/addon-create-option/src/index.ts",
+        "../packages/addon-fuzzy/src/index.ts",
+        "../packages/addon-hoist-selected/src/index.ts",
+        "../packages/addon-persist/src/index.ts",
+        "../packages/addon-remove-button/src/index.ts",
+        "../packages/addon-restore-on-backspace/src/index.ts"
     ],
     "entryPointStrategy": "resolve",
     "out": "src/content/docs/api",

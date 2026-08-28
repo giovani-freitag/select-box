@@ -30,16 +30,24 @@ the same; in React, `inputId` lets a `<label for>` point at the trigger input:
 
 | Element | What it carries |
 |---|---|
-| Trigger input | `role="combobox"`, `aria-expanded`, `aria-haspopup="listbox"`, `aria-autocomplete="list"` |
+| Combobox | `role="combobox"`, `aria-expanded`, `aria-haspopup="listbox"`, `aria-autocomplete="list"` |
 | Popover | `role="listbox"`, and `aria-multiselectable` in multi mode |
 | Each row | `role="option"` and `aria-selected` |
 | The active row | Pointed at by `aria-activedescendant` on the combobox |
 | Option groups | A `role="group"` container carrying the group's own label |
 | A row that refuses input | `aria-disabled="true"` |
-| Clear control | An accessible name, `"Clear selection"` by default |
+| Clear control | An accessible name — `"Clear all"` for the one multi mode ships, `"Clear selection"` for the one the clear-button addon asks for |
 | Each chip's remove control | Named after its own option — "Remove Pear", not seven identical buttons |
 
-Two of those deserve a word.
+**Which element is the combobox depends on the mode.** In single mode it is the
+trigger input itself. In multi mode the input is a `role="searchbox"` for
+filtering, and the combobox role — with `aria-expanded` and `aria-haspopup` —
+moves out to the trigger around it, because the chips are part of the control's
+value and the input is only how you search it. Exactly one node claims the role
+either way, and nothing stale is left behind when the mode flips; the parity
+suite holds all five wrappers to that.
+
+Two more deserve a word.
 
 **Rows stay out of the tab order.** Focus never leaves the trigger input; the
 active row is pointed at with `aria-activedescendant`, which is what the

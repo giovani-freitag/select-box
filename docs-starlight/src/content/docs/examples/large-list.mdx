@@ -13,9 +13,11 @@ regenerate the dataset.
 
 ## How it stays fast
 
-- **Only visible rows are in the DOM.** The default 240 px popover with 28 px
-  rows keeps about a dozen nodes live at any moment — the window plus a small
-  overscan — regardless of the source array's size.
+- **Only visible rows are in the DOM.** Rows start from an estimated height and
+  are then measured for real, so the window follows whatever your stylesheet
+  makes them. With the shipped one — a 240 px list and rows that land at 28 px —
+  that is a dozen nodes live at any moment, window plus overscan, regardless of
+  how long the source array is.
 - **Each label is normalised once, not once per keystroke.** Lower-casing and
   stripping diacritics is the expensive half of a substring match, so the result
   is cached per option, and the cache is filled ahead of time in the browser's
