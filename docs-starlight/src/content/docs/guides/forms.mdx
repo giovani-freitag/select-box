@@ -1,0 +1,133 @@
+---
+title: Forms
+description: The select box submits, resets and validates the way a native form control does, in all five wrappers.
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+Give the box a `name` and it behaves like a `<select>`: `FormData` picks the
+value up, a reset puts it back where it started, and `required` blocks
+submission while it is empty. No hidden input to wire, no `onSubmit` handler to
+write.
+
+The two custom elements reach the form through `ElementInternals`; React, Vue
+and jQuery mirror the selection into a real `<select>` inside their own tree.
+Different mechanism, same behaviour — which is why the guarantees below are
+stated once rather than five times.
+
+## Submitting
+
+<Tabs>
+  <TabItem label="React">
+
+```tsx
+<form onSubmit={onSubmit}>
+    <SelectBox name="fruit" options={fruits} placeholder="Pick a fruit" />
+    <button type="submit">Send</button>
+</form>
+```
+
+  </TabItem>
+  <TabItem label="Vue">
+
+```vue
+<form @submit="onSubmit">
+    <SelectBox name="fruit" :options="fruits" placeholder="Pick a fruit" />
+    <button type="submit">Send</button>
+</form>
+```
+
+  </TabItem>
+  <TabItem label="Custom element">
+
+```html
+<form id="picker">
+    <select-box name="fruit" placeholder="Pick a fruit"></select-box>
+    <button type="submit">Send</button>
+</form>
+```
+
+  </TabItem>
+  <TabItem label="jQuery">
+
+```js
+jQuery("#fruit").selectBox({ name: "fruit", options: fruits });
+```
+
+  </TabItem>
+</Tabs>
+
+Reading it back is ordinary `FormData`:
+
+```js
+const data = new FormData(document.querySelector("#picker"));
+data.get("fruit"); // "pear"
+```
+
+**Multi mode submits one entry per selection**, the way a multiple `<select>`
+does — `data.getAll("fruit")` returns `["pear", "lemon"]`. **Without a `name`
+the box stays out of the form data entirely**, so a filter control next to a
+form never pollutes what gets sent.
+
+## Resetting
+
+A form reset returns the box to the value it was built with, not to empty:
+
+```jsx
+<SelectBox name="fruit" defaultValue="apple" options={fruits} />
+```
+
+Pick `Pear`, hit reset, and the box shows `Apple` again — `defaultValue` is the
+seed the reset restores, exactly like the `selected` attribute on a native
+`<option>`. Built without one, a reset empties it.
+
+In multi mode every seeded option comes back, and anything picked since is
+dropped.
+
+## Required and validity
+
+```jsx
+<SelectBox name="fruit" required options={fruits} />
+```
+
+While nothing is selected the control is invalid, so `form.checkValidity()`
+returns `false` and the browser refuses to submit. Commit an option and the form
+becomes valid. Validity is reported through the control itself, so the browser's
+own "please fill out this field" bubble points at the right place.
+
+## Controlled values and forms
+
+`value` and `name` are independent: `value` is who owns the selection in your
+component tree, `name` is what the form calls it. A controlled box still submits.
+
+```jsx
+<SelectBox name="fruit" value={fruit} onChange={setFruit} options={fruits} />
+```
+
+Passing `value` without `onChange` freezes the box — every pick is reverted. In
+development the React wrapper warns about exactly that, with the read-only case
+exempted, because a fixed value is a legitimate thing to want:
+
+```jsx
+<SelectBox name="fruit" value="apple" readOnly options={fruits} />
+```
+
+A read-only box refuses edits and still submits. A `disabled` one refuses
+everything and, like a disabled native control, submits nothing.
+
+## What is guaranteed
+
+Every line here is held by `e2e/specs/form.spec.ts`, run against all five
+wrappers in a real browser — the only place that can answer it, since a DOM
+simulator either lacks `ElementInternals` or never fires `formResetCallback`.
+
+| Behaviour | Guarantee |
+|---|---|
+| `name` set | The committed value is submitted under it |
+| Multi mode | One entry per selection |
+| No `name` | Nothing is submitted |
+| Form reset | Returns to `defaultValue`, or to empty without one |
+| `required`, empty | `checkValidity()` is `false`; submission blocked |
+| `required`, filled | The form validates |
+| `disabled` | Refuses input, submits nothing |
+| `readOnly` | Refuses input, still submits |

@@ -1,0 +1,188 @@
+---
+title: Addons
+description: Change what the select box does without forking it — the seven first-party addons, and the contract they all follow.
+---
+
+An addon is a plain object handed to the box. It reads the snapshot on its way
+out and may reshape the list, publish extra state, or claim a key — without ever
+holding the controller. That last part is the whole design: an addon cannot set
+a value behind your back, so turning one on can never surprise the owner of the
+selection.
+
+```jsx
+import { SelectBox } from "@select-box/react";
+import { ClearButtonAddon } from "@select-box/addon-clear-button";
+
+<SelectBox options={fruits} addons={[new ClearButtonAddon()]} />
+```
+
+The prop is called `addons` in every wrapper — `.addons` as a property on the
+two custom elements, `addons` in the jQuery options object. Each addon publishes
+its state under `snapshot.addons["<name>"]`, which is what lets a wrapper render
+the control the addon asked for without knowing which addon asked.
+
+The [playground](../../examples/playground/) turns three of them on and off
+against a live box.
+
+## Clear button
+
+`@select-box/addon-clear-button` — offers a control that empties the selection.
+Single mode ships no clear affordance of its own, so this is how you add one.
+
+```js
+new ClearButtonAddon({ label: "×", ariaLabel: "Clear selection", when: "whenSelected" })
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `label` | `"×"` | Glyph the control renders |
+| `ariaLabel` | `"Clear selection"` | Accessible name |
+| `when` | `"whenSelected"` | `"always"` keeps it in the layout so the trigger's width never jumps |
+
+Pass an already-translated `label` and `ariaLabel`; the addon stays
+locale-agnostic rather than shipping a dictionary you would have to override.
+
+## Remove button
+
+`@select-box/addon-remove-button` — a remove control on each row, for pruning a
+multi selection from the list rather than from the chips.
+
+```js
+new RemoveButtonAddon({ ariaLabel: (label) => `Remove ${label}`, when: "multi" })
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `label` | `"×"` | Glyph the control renders |
+| `ariaLabel` | ``(label) => `Remove ${label}` `` | Builds the accessible name from the option's own label |
+| `when` | `"multi"` | `"always"` offers it in single mode too |
+
+The accessible name is a builder, not a string, so each control is named after
+its own option — a screen reader hears "Remove Pear", not seven identical
+"Remove" buttons.
+
+## Create option
+
+`@select-box/addon-create-option` — offers an "add the typed text" row, the way
+a tag input does.
+
+```js
+new CreateOptionAddon({
+    onCreate: (query) => {
+        const option = { value: query.toLowerCase(), label: query };
+        setOptions([...fruits, option]);
+        return option;
+    },
+    label: (query) => `Add "${query}"`,
+    when: "whenEmpty",
+});
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `onCreate` | *required* | Turns the typed text into the option to select. Return `null` to refuse |
+| `label` | ``(query) => `Add "${query}"` `` | Builds the row's label |
+| `groupLabel` | — | Header for the group the row is offered under |
+| `when` | `"whenEmpty"` | `"always"` offers it alongside the matches |
+
+`onCreate` is where the new option joins the list you own — typically through
+`setOptions`. The addon never mutates the controller, so creation stays
+something your code did, not something the box did to you.
+
+## Restore on backspace
+
+`@select-box/addon-restore-on-backspace` — Backspace on an empty query pops the
+last selection back into the search box, so a mistyped pick is corrected in
+place instead of retyped.
+
+```js
+new RestoreOnBackspaceAddon({ restoreAs: "query", key: "Backspace" })
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `restoreAs` | `"query"` | `"remove"` only drops the selection, matching a plain tag input |
+| `key` | `"Backspace"` | Key that triggers it |
+
+## Hoist selected
+
+`@select-box/addon-hoist-selected` — lifts the current selection into a synthetic
+group at the top of the list, so the user always sees their choice first, however
+far down the list it really sits.
+
+```js
+new HoistSelectedAddon({ groupLabel: "Selected", separator: false })
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `groupLabel` | `"Selected"` | Header of the pinned group |
+| `separator` | `false` | Signals that a wrapper may draw a divider under the pinned section |
+
+There is a [dedicated page](../../examples/hoist-selected/) with it running.
+
+## Fuzzy filter
+
+`@select-box/addon-fuzzy` — swaps substring matching for fuzzy (bitap) matching,
+backed by fuse.js, so `nra` still finds "Orange".
+
+```js
+import { FuzzyAddon } from "@select-box/addon-fuzzy";
+
+<SelectBox options={fruits} addons={[new FuzzyAddon()]} />
+```
+
+It ships both an addon and the strategy underneath it (`FuzzyFilterStrategy`),
+so you can hand the strategy straight to the `filter` prop instead if you are
+not otherwise using addons. See [Search](../../examples/search/).
+
+## Persist
+
+`@select-box/addon-persist` — writes the selection to web storage as it changes.
+
+```js
+import { PersistAddon, restoreSelection } from "@select-box/addon-persist";
+
+<SelectBox
+    options={fruits}
+    defaultValue={restoreSelection({ key: "fruit" })}
+    addons={[new PersistAddon({ key: "fruit" })]}
+/>
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `key` | *required* | Key the selection is stored under |
+| `area` | `"local"` | `"session"` for `sessionStorage`. Ignored when `storage` is given |
+| `storage` | — | Any `getItem`/`setItem`/`removeItem` object, for a custom store |
+
+**Restoring is deliberately not the addon's job.** An addon never holds the
+controller, so it cannot set a value; `restoreSelection` reads the stored
+selection and you pass it as the initial value. That also keeps the restore
+inside the first snapshot, instead of flashing an empty box and then filling it.
+
+The addon publishes `{ key, stored }`, where `stored: false` means storage was
+unavailable — a private window, or a quota that is full.
+
+## Writing your own
+
+An addon is anything matching the `SelectBoxAddon` contract from
+`@select-box/core`; extending `AbstractAddon` gives you no-op defaults so you
+implement only the hooks you need.
+
+```ts
+import { AbstractAddon, type AddonHookContext } from "@select-box/core";
+
+export class CountAddon extends AbstractAddon {
+    readonly name = "count";
+
+    override extendSnapshot(context: AddonHookContext) {
+        return { total: context.snapshot.filteredGroups.length };
+    }
+}
+```
+
+Whatever `extendSnapshot` returns appears at `snapshot.addons["count"]` in all
+five wrappers. The hooks that reshape the list (`transformGroups`), claim keys
+(`onKey`) and gate opening and closing (`interceptOpen`, `interceptClose`) are
+in the [API reference](../../api/).

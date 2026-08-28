@@ -7,7 +7,9 @@
     ],
     "entryPointStrategy": "resolve",
     "out": "src/content/docs/api",
-    "plugin": ["typedoc-plugin-markdown"],
+    "plugin": [
+        "typedoc-plugin-markdown"
+    ],
     "entryFileName": "index.md",
     "readme": "none",
     "githubPages": false,
@@ -15,5 +17,10 @@
     "excludePrivate": true,
     "excludeInternal": true,
     "excludeExternals": true,
-    "tsconfig": "../tsconfig.typedoc.json"
+    "tsconfig": "../tsconfig.typedoc.json",
+    "externalSymbolLinkMappings": {
+        "@tanstack/virtual-core": {
+            "Virtualizer": "https://tanstack.com/virtual/latest/docs/api/virtualizer"
+        }
+    }
 }

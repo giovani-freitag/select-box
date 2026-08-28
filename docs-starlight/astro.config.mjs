@@ -41,6 +41,9 @@ export default defineConfig({
                     label: "Guide",
                     items: [
                         { label: "Getting started", link: "/guides/getting-started/" },
+                        { label: "Forms", link: "/guides/forms/" },
+                        { label: "Addons", link: "/guides/addons/" },
+                        { label: "Accessibility", link: "/guides/accessibility/" },
                         { label: "Styling", link: "/guides/styling/" },
                         { label: "Headless vs ready", link: "/guides/headless-vs-ready/" },
                     ],

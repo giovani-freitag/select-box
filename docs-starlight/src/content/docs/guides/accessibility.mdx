@@ -1,0 +1,92 @@
+---
+title: Accessibility
+description: What the box announces, what the keyboard does, and what you still have to supply.
+---
+
+The box implements the ARIA combobox pattern, and the same one in all five
+wrappers — the markup comes from one contract, so a fix in the core reaches
+every wrapper rather than four of them.
+
+## What you have to supply
+
+One thing: a name.
+
+```jsx
+<SelectBox aria-label="Fruit" options={fruits} />
+<SelectBox aria-labelledby="fruit-label" options={fruits} />
+```
+
+A `placeholder` is not a name. Without `aria-label` or `aria-labelledby` a
+screen reader reaches the control and announces "combobox" with nothing else,
+and the box cannot invent one for you. On the custom elements the attributes are
+the same; in React, `inputId` lets a `<label for>` point at the trigger input:
+
+```jsx
+<label htmlFor="fruit-input">Fruit</label>
+<SelectBox inputId="fruit-input" options={fruits} />
+```
+
+## What the box supplies
+
+| Element | What it carries |
+|---|---|
+| Trigger input | `role="combobox"`, `aria-expanded`, `aria-haspopup="listbox"`, `aria-autocomplete="list"` |
+| Popover | `role="listbox"`, and `aria-multiselectable` in multi mode |
+| Each row | `role="option"` and `aria-selected` |
+| The active row | Pointed at by `aria-activedescendant` on the combobox |
+| Option groups | A `role="group"` container carrying the group's own label |
+| A row that refuses input | `aria-disabled="true"` |
+| Clear control | An accessible name, `"Clear selection"` by default |
+| Each chip's remove control | Named after its own option — "Remove Pear", not seven identical buttons |
+
+Two of those deserve a word.
+
+**Rows stay out of the tab order.** Focus never leaves the trigger input; the
+active row is pointed at with `aria-activedescendant`, which is what the
+combobox pattern asks for and what keeps `Tab` meaning "leave this control"
+rather than "walk two thousand options".
+
+**A disabled row carries `aria-disabled`, not the native `disabled`
+attribute.** The row's role is already overridden to `option`, so the state
+belongs in ARIA beside it. It also keeps the row focusable and hoverable — what
+a read-only control does — and puts the refusal in one code path for both the
+option's own flag and the control's.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| `↓` / `↑` | Move the active option, skipping disabled rows. Closed, `↓` also opens the popover |
+| `Enter` | Commit the active option |
+| `Escape` | Close the popover |
+| `Backspace` | With `@select-box/addon-restore-on-backspace`, pops the last selection back into the query |
+
+Typing filters. Clicking outside closes.
+
+## Groups are structural
+
+Grouping in ARIA is not a label on a heading — the options have to sit inside a
+named container. A bare `<div>` between a listbox and its options is not a valid
+child: the browser drops it, and the grouping is on screen but absent from the
+accessibility tree. So each group renders as a `role="group"` with the group's
+label as its accessible name, and an ungrouped run renders as a presentational
+container rather than an unnamed group.
+
+## How this is checked
+
+The ARIA attributes are asserted in every wrapper's unit suite and in the shared
+parity suite, so a wrapper cannot quietly drop one.
+
+Attributes are not the same as what a browser actually exposes, though. The
+group case above passed every attribute assertion while the tree was wrong —
+which is why `e2e/specs/aria.spec.ts` reads the real accessibility tree through
+the Chrome DevTools Protocol (`Accessibility.getFullAXTree`) and asserts that
+each group is announced. That is the only layer that can answer the question.
+
+## Where it stops
+
+The box does not manage a live region, so a screen reader is not told "seven
+results" as you type — the option count is in the snapshot if you want to
+announce it yourself. Colour contrast comes from the `--sb-*` tokens: the
+shipped defaults follow the reader's light/dark preference through CSS system
+colours, but a custom theme is yours to check.
