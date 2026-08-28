@@ -8,35 +8,37 @@ import type { SelectBoxAddon } from "@select-box/core";
 import { buildSnippet } from "./build-snippet.js";
 import { DEFAULT_CONFIG, optionsFor, type AddonKey, type PlaygroundConfig } from "./fixtures.js";
 
+// Every knob renders inline, so each label has to read as a chip: the value it
+// sets, and nothing else. What each one means is the preview underneath.
 const SURFACES = [
-    { value: "popover", label: "Popover — opens over the page" },
-    { value: "inline", label: "Inline — every option on screen" },
+    { value: "popover", label: "Popover" },
+    { value: "inline", label: "Inline" },
 ];
 
 const CARDINALITIES = [
-    { value: "single", label: "Single — one pick, closes on commit" },
-    { value: "multi", label: "Multi — toggles, stays open" },
+    { value: "single", label: "Single" },
+    { value: "multiple", label: "Multiple" },
 ];
 
 const SHAPES = [
-    { value: "grouped", label: "Grouped under headers" },
-    { value: "flat", label: "Flat list" },
+    { value: "grouped", label: "Grouped" },
+    { value: "flat", label: "Flat" },
 ];
 
 const ROW_STATES = [
-    { value: "all", label: "Every row selectable" },
-    { value: "some-disabled", label: "Two rows disabled" },
+    { value: "all", label: "All selectable" },
+    { value: "some-disabled", label: "Two disabled" },
 ];
 
 const INTERACTIVITY = [
     { value: "enabled", label: "Enabled" },
-    { value: "disabled", label: "Disabled — refuses everything" },
-    { value: "readOnly", label: "Read-only — submits, refuses edits" },
+    { value: "disabled", label: "Disabled" },
+    { value: "readOnly", label: "Read-only" },
 ];
 
 const ADDONS = [
     { value: "clear-button", label: "Clear button" },
-    { value: "hoist-selected", label: "Hoist selected to the top" },
+    { value: "hoist-selected", label: "Hoist selected" },
     { value: "fuzzy", label: "Fuzzy search" },
 ];
 
@@ -62,6 +64,7 @@ function Knob({ label, options, value, onPick }: KnobProps): ReactElement {
                 {label}
             </span>
             <SelectBox
+                surface="inline"
                 options={options}
                 defaultValue={value}
                 aria-label={label}
@@ -122,8 +125,8 @@ export default function Playground(): JSX.Element {
                 <Knob
                     label="Selection"
                     options={CARDINALITIES}
-                    value={config.multiple ? "multi" : "single"}
-                    onPick={(next) => update("multiple", next === "multi")}
+                    value={config.multiple ? "multiple" : "single"}
+                    onPick={(next) => update("multiple", next === "multiple")}
                 />
                 <Knob
                     label="Options"
@@ -151,10 +154,10 @@ export default function Playground(): JSX.Element {
                     </span>
                     <SelectBox
                         multiple
+                        surface="inline"
                         options={ADDONS}
                         defaultValue={[]}
                         aria-label="Addons"
-                        placeholder="None"
                         onChange={(values) => update("addons", values as ReadonlyArray<AddonKey>)}
                     />
                 </div>

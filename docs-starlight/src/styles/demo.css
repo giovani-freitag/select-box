@@ -188,10 +188,12 @@ select-box-lit,
     gap: 1.5rem;
 }
 
+/* Inline knobs are as wide as their chips, so they pack rather than sit in a
+   fixed grid of half-empty columns. */
 .sb-playground-knobs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.75rem;
 }
 
 .sb-knob {
