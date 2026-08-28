@@ -96,6 +96,35 @@ for (const demo of DEMO_PAGES) {
     });
 }
 
+/**
+ * The inline demo is a toggle group, and only says so through one attribute.
+ *
+ * A wrapper that misses it renders a perfectly working single-select, so every
+ * other assertion here passes — which is how one of these demos spent a while
+ * opting into a mode name the element stopped observing.
+ */
+test("the inline demo keeps both picks, as a toggle group does", async ({ page }) => {
+    await page.goto(`${SITE_BASE}/examples/inline-select/`);
+
+    for (const tab of FRAMEWORK_TABS) {
+        await page.getByRole("tab", { name: tab, exact: true }).first().click();
+        const root = page
+            .locator('[role="tabpanel"]:not([hidden])')
+            .filter({ has: page.locator("[data-select-root]") })
+            .first()
+            .locator("[data-select-root]")
+            .first();
+
+        await root.locator("[data-select-chip]").nth(0).click();
+        await root.locator("[data-select-chip]").nth(1).click();
+
+        await expect(
+            root.locator("[data-select-selected]"),
+            `${tab} inline demo is not multi-select`,
+        ).toHaveCount(2);
+    }
+});
+
 test("the demo output reports the committed value", async ({ page }) => {
     const failures = watchForFailures(page);
     await page.goto(`${SITE_BASE}/examples/simple/`);
