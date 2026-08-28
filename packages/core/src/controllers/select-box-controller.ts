@@ -63,6 +63,14 @@ export class SelectBoxController<
     private currentReadOnly: boolean;
     private currentQuery = "";
     private readonly defaultValueInput: SelectionValueInput;
+    /**
+     * The last selection anyone asked for, as handed in.
+     *
+     * `currentValue` is what the option list could answer; this is what was
+     * requested. They differ only while an option is missing, which is what lets
+     * a list loaded after mount still honour the request.
+     */
+    private requestedValueInput: SelectionValueInput;
     /** Which transition an async gate is currently deciding, if any. */
     private pendingKind: "open" | "close" | null = null;
     /**
@@ -94,6 +102,9 @@ export class SelectBoxController<
         // whatever options are loaded then, the way a native control's default
         // lives in the markup rather than in a snapshot taken at startup.
         this.defaultValueInput = config.defaultValue ?? null;
+        // Same reason, for the live value: a selection is a request that the
+        // option list may not be able to answer yet.
+        this.requestedValueInput = config.defaultValue ?? null;
         this.currentValue = this.resolveValueFromInput(config.defaultValue);
         this.currentDisabled = config.disabled ?? false;
         this.currentReadOnly = config.readOnly ?? false;
@@ -123,6 +134,7 @@ export class SelectBoxController<
         this.currentMode = nextMode;
         this.driver = nextDriver;
         this.currentValue = carried;
+        this.requestedValueInput = carried;
         this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
         if (this.currentOpen) {
             this.currentActiveIndex = this.initialActiveIndexOnOpen();
@@ -148,7 +160,11 @@ export class SelectBoxController<
             ungroupedLabel: this.ungroupedLabel,
         });
         this.optionsByValue = indexOptionsByValue(this.allGroups);
-        this.currentValue = this.resolveValueFromInput(this.currentValue);
+        // Resolved from the request rather than from the current value: a value
+        // the previous list could not answer was pruned to empty, and re-resolving
+        // that would keep answering "nothing" forever. Options loaded after mount
+        // are the ordinary case, not an edge one.
+        this.currentValue = this.resolveValueFromInput(this.requestedValueInput);
         this.currentActiveIndex = this.indexOfActiveCandidate(previousActive);
         this.prepareFilterStrategy();
         this.publish();
@@ -169,7 +185,12 @@ export class SelectBoxController<
         if (nextDisabled === this.currentDisabled && nextReadOnly === this.currentReadOnly) return;
         this.currentDisabled = nextDisabled;
         this.currentReadOnly = nextReadOnly;
-        if (!this.canChange) this.currentOpen = false;
+        if (!this.canChange) {
+            this.currentOpen = false;
+            // A gate still waiting on an addon would otherwise answer for a
+            // control that has since stopped accepting anything, and reopen it.
+            this.cancelPendingGate();
+        }
         this.publish();
     }
 
@@ -290,6 +311,7 @@ export class SelectBoxController<
         const next = this.driver.commit(this.currentValue, option);
         if (Object.is(next, this.currentValue)) return;
         this.currentValue = next;
+        this.requestedValueInput = next;
         if (this.driver.closeOnCommit) {
             this.currentOpen = false;
             this.currentQuery = "";
@@ -305,6 +327,7 @@ export class SelectBoxController<
      */
     commitValue(input: SelectionValueInput): void {
         if (!this.canChange) return;
+        this.requestedValueInput = input;
         const next = this.resolveValueFromInput(input);
         if (this.isSameSelection(next, this.currentValue)) return;
         this.currentValue = next;
@@ -329,6 +352,7 @@ export class SelectBoxController<
      *   disabled keys are dropped.
      */
     setValue(input: SelectionValueInput): void {
+        this.requestedValueInput = input;
         const next = this.resolveValueFromInput(input);
         if (this.isSameSelection(next, this.currentValue)) return;
         this.currentValue = next;
@@ -348,11 +372,12 @@ export class SelectBoxController<
      * `clear()` respects.
      */
     reset(): void {
+        this.requestedValueInput = this.defaultValueInput;
         this.currentValue = this.resolveValueFromInput(this.defaultValueInput);
         this.currentQuery = "";
         this.currentOpen = false;
         this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
-        this.publish();
+        this.cancelPendingGate();
     }
 
     clear(): void {
@@ -360,6 +385,7 @@ export class SelectBoxController<
         const empty = this.driver.empty();
         if (Object.is(empty, this.currentValue) && this.currentQuery === "") return;
         this.currentValue = empty;
+        this.requestedValueInput = empty;
         this.currentQuery = "";
         this.currentActiveIndex = SelectBoxController.NO_ACTIVE_INDEX;
         this.publish();
@@ -375,6 +401,9 @@ export class SelectBoxController<
     destroy(): void {
         if (this.destroyed) return;
         this.destroyed = true;
+        // After the flag, so the cancellation cannot publish on the way out; the
+        // point is only that a gate still in flight finds itself stale.
+        this.cancelPendingGate();
         for (const addon of this.registeredAddons) {
             addon.detach?.();
         }

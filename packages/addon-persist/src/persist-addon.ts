@@ -57,11 +57,27 @@ export class PersistAddon<TExtra extends object = object>
         const serialized = JSON.stringify(context.snapshot.value);
         // Every publish reaches here — a keystroke included — so the write is
         // gated on the selection actually having moved.
-        if (serialized !== this.lastWritten) {
+        if (serialized !== this.lastWritten && this.mayWrite(context)) {
             this.lastWritten = serialized;
             this.service.write(context.snapshot.value);
         }
         return { key: this.key, stored: this.service.read() !== null };
+    }
+
+    /**
+     * Whether an empty selection is worth recording.
+     *
+     * A box whose options have not arrived yet publishes an empty selection
+     * because it cannot answer for one, not because the user emptied it —
+     * writing that would erase what a previous visit stored, and the user would
+     * come back to nothing. An empty list is not an answer, so it is not saved.
+     *
+     * @param context - The snapshot on its way out.
+     * @returns Whether the write should go ahead.
+     */
+    private mayWrite(context: AddonHookContext<TExtra>): boolean {
+        if (context.snapshot.selectedOptions.length > 0) return true;
+        return context.snapshot.filteredGroups.length > 0 || this.lastWritten !== null;
     }
 
     override detach(): void {
