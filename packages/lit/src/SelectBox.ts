@@ -80,6 +80,10 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private pendingValue: SelectionValueInput = null;
     private keyDispatcher: SelectBoxKeyDispatcher<TExtra, SelectionValue> | null = null;
     private previousOpen = false;
+    /** Message the page set through `setCustomValidity`; empty means none. */
+    private customValidity = "";
+    /** Whether an ancestor fieldset is disabling this control. */
+    private formDisabled = false;
     private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this });
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
@@ -162,12 +166,34 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         return this.internals.reportValidity();
     }
 
+    /**
+     * Sets a validation message of the page's own, or clears it with `""`.
+     *
+     * @param message - The message to report, or `""` to hand validity back to
+     *   the control's own rule.
+     */
+    setCustomValidity(message: string): void {
+        this.customValidity = message;
+        if (message === "") {
+            this.syncValidity();
+            return;
+        }
+        this.internals.setValidity({ customError: true }, message);
+    }
+
     formResetCallback(): void {
         this.reactiveController?.core.reset();
     }
 
     formDisabledCallback(disabled: boolean): void {
-        this.disabled = disabled;
+        // Kept beside the property rather than written into it: this is the form
+        // telling us an ancestor is disabled, and reflecting it would overwrite
+        // what the page itself asked for.
+        this.formDisabled = disabled;
+        this.reactiveController?.core.setInteractivity({
+            disabled: this.disabled || disabled,
+            readOnly: this.readOnly,
+        });
     }
 
     protected override createRenderRoot(): HTMLElement {
@@ -224,7 +250,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             // The controller owns the refusal; the element only mirrors its own
             // properties into it.
             this.reactiveController.core.setInteractivity({
-                disabled: this.disabled,
+                disabled: this.disabled || this.formDisabled,
                 readOnly: this.readOnly,
             });
         }
@@ -282,7 +308,7 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
             ...(this.addons !== undefined ? { addons: this.addons } : {}),
             ...(this.filter !== undefined ? { filter: this.filter } : {}),
             ungroupedLabel: this.ungroupedLabel,
-            disabled: this.disabled,
+            disabled: this.disabled || this.formDisabled,
             readOnly: this.readOnly,
             defaultValue: this.pendingValue,
         });
@@ -321,6 +347,12 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private syncValidity(): void {
+        // A message the page set outranks the built-in rule until the page
+        // clears it, the way `setCustomValidity` behaves on a native control.
+        if (this.customValidity !== "") {
+            this.internals.setValidity({ customError: true }, this.customValidity);
+            return;
+        }
         if (!this.required || this.disabled || this.readOnly) {
             this.internals.setValidity({});
             return;

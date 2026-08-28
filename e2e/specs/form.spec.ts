@@ -140,3 +140,82 @@ test("allows submission once a required control is filled", async ({ selectBox, 
     );
     expect(formValid).toBe(true);
 });
+
+/**
+ * The parts of form association that only the two custom elements implement,
+ * and that only a real browser calls.
+ */
+const ELEMENT_ASSOCIATED = ["lit", "webcomponents"];
+
+test.describe("element-associated behaviour", () => {
+    test.beforeEach(({ framework }) => {
+        test.skip(!ELEMENT_ASSOCIATED.includes(framework), "not an element-associated wrapper");
+    });
+
+    test("renaming the field moves what the form submits", async ({ selectBox, page }) => {
+        await selectBox.open({ name: "fruit" });
+        await selectBox.openPopover();
+        await selectBox.options.filter({ hasText: "Pear" }).click();
+        expect(await submitted(page)).toEqual([["fruit", "pear"]]);
+
+        await selectBox.root.evaluate((element) => element.setAttribute("name", "produce"));
+
+        expect(await submitted(page)).toEqual([["produce", "pear"]]);
+    });
+
+    test("renaming moves every entry in multi mode", async ({ selectBox, page }) => {
+        await selectBox.open({ name: "fruit", multiple: true });
+        await selectBox.openPopover();
+        await selectBox.options.filter({ hasText: "Pear" }).click();
+        await selectBox.options.filter({ hasText: "Lemon" }).click();
+
+        await selectBox.root.evaluate((element) => element.setAttribute("name", "produce"));
+
+        expect(await submitted(page)).toEqual([
+            ["produce", "pear"],
+            ["produce", "lemon"],
+        ]);
+    });
+
+    test("a message the page sets survives the next repaint", async ({ selectBox, page }) => {
+        await selectBox.open({ name: "fruit" });
+        await selectBox.root.evaluate((element) => {
+            (element as HTMLObjectElement).setCustomValidity("Pick something else.");
+        });
+
+        // Any interaction republishes the snapshot, which is where the message
+        // used to be wiped.
+        await selectBox.openPopover();
+        await page.keyboard.press("Escape");
+
+        const state = await selectBox.root.evaluate((element) => ({
+            valid: (element as HTMLObjectElement).checkValidity(),
+            message: (element as HTMLObjectElement).validationMessage,
+        }));
+        expect(state.valid).toBe(false);
+        expect(state.message).toBe("Pick something else.");
+    });
+
+    test("a disabled fieldset refuses the control without rewriting its attribute", async ({
+        selectBox,
+        page,
+    }) => {
+        await selectBox.open({ name: "fruit" });
+        await page.evaluate(() => {
+            const form = document.querySelector("#host-form")!;
+            const fieldset = document.createElement("fieldset");
+            form.append(fieldset);
+            fieldset.append(document.querySelector("[data-select-root]")!);
+            fieldset.disabled = true;
+        });
+
+        const state = await selectBox.root.evaluate((element) => ({
+            ownAttribute: element.hasAttribute("disabled"),
+            refuses: element.querySelector("[data-select-input]")!.getAttribute("aria-readonly"),
+        }));
+
+        // The fieldset disables it; the element's own attribute still says what
+        // the page wrote, which is nothing.
+        expect(state.ownAttribute).toBe(false);
+    });
+});

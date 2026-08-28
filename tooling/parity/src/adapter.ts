@@ -41,6 +41,8 @@ export interface ParityController {
     setValue(value: string | ReadonlyArray<string> | null): void;
     getState(): {
         readonly open: boolean;
+        /** Committed selection, in whichever shape the mode uses. */
+        readonly value: string | ReadonlyArray<string> | null;
         readonly addons: Readonly<Record<string, unknown>>;
     };
 }

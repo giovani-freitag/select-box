@@ -554,14 +554,22 @@ export class SelectBoxView<TExtra extends object = object>
         this.input?.focus({ preventScroll: true });
     };
 
+    /** Whether the clear control is on screen, from the same slice that paints it. */
+    private get clearControlVisible(): boolean {
+        return new SelectBoxSnapshotView(this.coreController.getState()).clearControl.visible;
+    }
+
     private readonly handleClearMouseDown = (event: Event): void => {
-        if (this.coreController.getState().mode !== "multi") return;
+        // Gated on the control being offered, not on the mode: an addon puts it
+        // in single mode too, and reading the mode instead left it painted and
+        // inert there.
+        if (!this.clearControlVisible) return;
         event.preventDefault();
         event.stopPropagation();
     };
 
     private readonly handleClearClick = (event: Event): void => {
-        if (this.coreController.getState().mode !== "multi") return;
+        if (!this.clearControlVisible) return;
         event.stopPropagation();
         this.coreController.clear();
         this.input?.focus({ preventScroll: true });

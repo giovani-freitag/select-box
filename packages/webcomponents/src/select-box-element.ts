@@ -57,6 +57,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     private unsubscribeFromStore: (() => void) | null = null;
     private refs: SelectBoxRefs | null = null;
     private previousOpen = false;
+    /** Message the page set through `setCustomValidity`; empty means none. */
+    private customValidity = "";
+    /** Whether an ancestor fieldset is disabling this control. */
+    private formDisabled = false;
     private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this });
     private previousValueKey: string = SelectBoxSnapshotView.valueKey(null);
 
@@ -141,11 +145,17 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             this.applyValueAttribute();
             return;
         }
+        if (name === "name") {
+            // The field name is only read while writing the form value, so a
+            // rename has to push it again or the form keeps the old key.
+            this.syncFormState(this.coreController!.getState());
+            return;
+        }
         if (name === "disabled" || name === "required" || name === "readonly") {
             // The controller owns the refusal; this element only mirrors its own
             // attributes into it.
             this.coreController?.setInteractivity({
-                disabled: this.disabled,
+                disabled: this.disabled || this.formDisabled,
                 readOnly: this.readOnly,
             });
             this.syncValidity();
@@ -271,11 +281,12 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     setCustomValidity(message: string): void {
+        this.customValidity = message;
         if (message === "") {
             this.syncValidity();
             return;
         }
-        this.internals.setValidity({ customError: true }, message);
+        this.internals.setValidity({ customError: true }, message, this.refs?.input);
     }
 
     get labels(): NodeList {
@@ -288,8 +299,15 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     formDisabledCallback(disabled: boolean): void {
-        if (disabled) this.setAttribute("disabled", "");
-        else this.removeAttribute("disabled");
+        // Kept beside the attribute rather than written into it: this is the
+        // form telling us an ancestor is disabled, and reflecting it would
+        // overwrite what the page itself asked for.
+        this.formDisabled = disabled;
+        this.coreController?.setInteractivity({
+            disabled: this.disabled || disabled,
+            readOnly: this.readOnly,
+        });
+        if (this.coreController) this.handleSnapshotChange();
     }
 
     formStateRestoreCallback(state: FormStateValue, _mode: "restore" | "autocomplete"): void {
@@ -409,7 +427,7 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
             ...(this.pendingFilter !== undefined ? { filter: this.pendingFilter } : {}),
             ungroupedLabel: this.getAttribute("ungrouped-label") ?? "",
             defaultValue: this.seededValue(),
-            disabled: this.disabled,
+            disabled: this.disabled || this.formDisabled,
             readOnly: this.readOnly,
         });
     }
@@ -572,6 +590,16 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     private syncValidity(): void {
+        // A message the page set outranks the built-in rule until the page
+        // clears it, the way `setCustomValidity` behaves on a native control.
+        if (this.customValidity !== "") {
+            this.internals.setValidity(
+                { customError: true },
+                this.customValidity,
+                this.refs?.input,
+            );
+            return;
+        }
         if (!this.required || this.disabled || this.readOnly) {
             this.internals.setValidity({});
             return;

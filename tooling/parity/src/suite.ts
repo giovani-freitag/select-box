@@ -821,9 +821,10 @@ export function describeParitySuite(adapter: ParityAdapter): void {
 
                 await mounted.clickElement(clearControl(mounted)!);
 
-                expect(
-                    mounted.queryScope().querySelector("[data-select-selected]"),
-                ).toBeNull();
+                // The committed value, not the rendered rows: single mode keeps
+                // the popover closed, so there is no row in the DOM either way
+                // and asking the tree would pass without the control working.
+                expect(mounted.publicController()!.getState().value).toBeNull();
             });
 
             test("the addon can take the control away in multi mode", async () => {
