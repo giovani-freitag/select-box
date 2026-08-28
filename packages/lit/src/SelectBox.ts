@@ -82,6 +82,8 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     private previousOpen = false;
     /** Message the page set through `setCustomValidity`; empty means none. */
     private customValidity = "";
+    /** Set by a disconnect, so a reconnect knows to build a controller again. */
+    private rebuildOnReconnect = false;
     /** Whether an ancestor fieldset is disabling this control. */
     private formDisabled = false;
     private readonly placement = new PopoverPlacementWatcher({ getRoot: () => this });
@@ -204,9 +206,17 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
         super.connectedCallback();
         this.dataset["selectRoot"] = "";
         this.classList.add("select-box");
-        // Popover-only side effects: outside-click closes the popover and the
-        // virtualizer drives the list. Inline surface needs neither.
-        if (this.isInline) return;
+        // Only on a reconnect: the first mount lets `willUpdate` build it, and
+        // building here too would attach every addon twice.
+        if (this.rebuildOnReconnect) {
+            this.rebuildOnReconnect = false;
+            this.rebuildController();
+        }
+        // Wired whatever the surface is: `surface` is a reactive property, so a
+        // box mounted inline can become a popover at any point, and building
+        // these only for a popover mount left that one blank for good. The
+        // listener answers nothing while the popover is closed, and the
+        // virtualizer does no work until it is mounted.
         document.addEventListener("mousedown", this.handleOutsideMouseDown);
         this.virtualizer = new SelectBoxListVirtualizer({
             getScrollElement: () => this.listRef.value ?? null,
@@ -218,7 +228,13 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     override disconnectedCallback(): void {
+        // Read before `super`, which is what tears the controller down: a
+        // disconnect may be a reparent, and the element has to come back holding
+        // what it held rather than empty.
+        this.pendingValue = this.reactiveController?.state.value ?? this.pendingValue;
         super.disconnectedCallback();
+        this.reactiveController = null;
+        this.rebuildOnReconnect = true;
         document.removeEventListener("mousedown", this.handleOutsideMouseDown);
         this.unsubscribeFromVirtualizer?.();
         this.unsubscribeFromVirtualizer = null;
@@ -302,6 +318,15 @@ export class SelectBox<TExtra extends object = object> extends LitElement {
     }
 
     private rebuildController(): void {
+        const previous = this.reactiveController;
+        if (previous !== null) {
+            // Carry the live selection across, and retire the old one: Lit keeps
+            // every controller ever added to a host, and its core keeps its
+            // addons attached, so replacing without removing leaks both.
+            this.pendingValue = previous.state.value;
+            this.removeController(previous);
+            previous.core.destroy();
+        }
         this.reactiveController = new SelectBoxReactiveController<TExtra, SelectionValue>(this, {
             mode: this.multiple ? "multi" : "single",
             ...(this.options !== undefined ? { options: this.options } : {}),

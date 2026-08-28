@@ -113,6 +113,10 @@ export class SelectBoxElement<TExtra extends object = object> extends HTMLElemen
     }
 
     disconnectedCallback(): void {
+        // Read before the teardown: a disconnect may be a reparent, and
+        // `connectedCallback` rebuilds from this rather than from the attribute,
+        // so the element comes back holding what it held.
+        this.pendingValue = this.coreController?.getState().value ?? this.pendingValue;
         this.unlisten();
         this.coreController?.destroy();
         this.coreController = null;
