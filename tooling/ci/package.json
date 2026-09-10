@@ -29,7 +29,7 @@
         "@select-box/eslint-config": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "eslint": "^10.9.1",
-        "tsx": "^4.23.12",
+        "tsx": "^4.23.13",
         "typescript": "^5.9.3",
         "vitest": "^4.1.11"
     }
