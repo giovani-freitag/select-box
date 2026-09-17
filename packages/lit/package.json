@@ -84,7 +84,7 @@
         "@select-box/parity": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
         "element-internals-polyfill": "^3.0.2",
-        "eslint": "^10.9.1",
+        "eslint": "^10.10.0",
         "jsdom": "^30.0.1",
         "lit": "^3.3.3",
         "tsup": "^8.5.1",
