@@ -60,7 +60,7 @@
         "@select-box/core": "workspace:*",
         "@select-box/eslint-config": "workspace:*",
         "@select-box/tsconfig": "workspace:*",
-        "eslint": "^10.9.1",
+        "eslint": "^10.10.0",
         "happy-dom": "^20.11.12",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
