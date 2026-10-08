@@ -22,7 +22,7 @@
         "typecheck": "vue-tsc --noEmit"
     },
     "devDependencies": {
-        "@playwright/test": "^1.62.1",
+        "@playwright/test": "^1.63.0",
         "@select-box/eslint-config": "workspace:*",
         "@select-box/jquery": "workspace:*",
         "@select-box/lit": "workspace:*",
@@ -32,19 +32,19 @@
         "@select-box/vue": "workspace:*",
         "@select-box/webcomponents": "workspace:*",
         "@types/jquery": "^4.0.1",
-        "@types/node": "^26.4.0",
-        "@types/react": "^19.2.18",
-        "@types/react-dom": "^19.2.5",
-        "@vitejs/plugin-react": "^6.1.0",
-        "@vitejs/plugin-vue": "^6.0.8",
-        "eslint": "^10.9.1",
+        "@types/node": "^26.6.3",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.1.1",
+        "@vitejs/plugin-vue": "^6.0.9",
+        "eslint": "^10.11.0",
         "jquery": "^4.0.0",
         "lit": "^3.3.3",
-        "react": "^19.2.8",
-        "react-dom": "^19.2.8",
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0",
         "typescript": "^5.9.3",
-        "vite": "^8.2.2",
-        "vue": "^3.5.42",
+        "vite": "^8.3.1",
+        "vue": "^3.5.43",
         "vue-tsc": "^2.2.12"
     }
 }

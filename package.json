@@ -31,10 +31,10 @@
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",
         "@select-box/eslint-config": "workspace:*",
-        "@types/node": "^26.4.0",
-        "eslint": "^10.9.1",
+        "@types/node": "^26.6.3",
+        "eslint": "^10.11.0",
         "publint": "^0.3.24",
-        "turbo": "^2.10.12",
+        "turbo": "^2.11.6",
         "typescript": "^5.9.3"
     }
 }
