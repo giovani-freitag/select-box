@@ -85,7 +85,7 @@
         "@select-box/tsconfig": "workspace:*",
         "element-internals-polyfill": "^3.0.2",
         "eslint": "^10.9.1",
-        "happy-dom": "20.3.2",
+        "happy-dom": "21.0.4",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
         "vitest": "^4.1.11"
